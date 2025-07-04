@@ -1,0 +1,6 @@
+{
+  "skip": ["node_modules", "dist"],
+  "plugins": [],
+  "scripts": [],
+  "playUrl": "http://localhost:5173"
+}
