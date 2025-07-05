@@ -104,6 +104,8 @@ new Phaser.Game({
   render: {
     pixelArt: true
   },
+  autoRound: true,
+  disableContextMenu: true,
   plugins: {
     scene: [
       { key: 'WeaponPlugin', plugin: WeaponPlugin, mapping: 'weapons' }
