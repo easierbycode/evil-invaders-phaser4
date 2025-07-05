@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import {
+  Player
+} from "https://codepen.io/CodeMonkeyGames/pen/MWRrLqy.js";
 import { WIDTH, HEIGHT } from './constants';
 import { WeaponPlugin } from './weapons/weapon-plugin/index';
 
@@ -6,10 +9,14 @@ class GameScene extends Phaser.Scene {
   [x: string]: any
   preload() {
     // this.load.pack("pack", "assets/asset-pack.json"); // ← created in the IDE
+    this.load.setBaseURL("https://assets.codepen.io/11817390/");
+    this.load.atlas("atlas", "atlas.png", "atlas.json");
   }
   create() {
 
     window.gameScene = this;
+    window.gameScene.GAME_WIDTH = WIDTH;
+    window.gameScene.GAME_HEIGHT = HEIGHT;
 
     // Initialize plugins
     if (!this.weapons) {
@@ -29,17 +36,10 @@ class GameScene extends Phaser.Scene {
     this.input.gamepad?.on('connected', (gamepad: Phaser.Input.Gamepad.Gamepad) => {
       // Create a new player for this gamepad
       const playerIndex = this.players.getLength();
-      const offsetX = playerIndex % 2 === 0 ? -100 : 100;
-      const offsetY = playerIndex < 2 ? -100 : 100;
 
-      // const newPlayer = new Player(
-      //   gamepad, 
-      //   this, 
-      //   (WIDTH / 2) + offsetX, 
-      //   (HEIGHT / 2) + offsetY
-      // );
+      const newPlayer = new Player(this);
 
-      // this.players.add(newPlayer);
+      this.players.add(newPlayer);
 
       // If this is the first player, start the game
       if (playerIndex === 0) {
