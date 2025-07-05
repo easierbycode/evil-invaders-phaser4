@@ -98,7 +98,8 @@ new Phaser.Game({
   parent: "game",
   scene: [GameScene],
   input: {
-    gamepad: true
+    gamepad: true,
+    touch: true
   },
   render: {
     pixelArt: true
