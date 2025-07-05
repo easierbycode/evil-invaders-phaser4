@@ -8,7 +8,9 @@ class GameScene extends Phaser.Scene {
     // this.load.pack("pack", "assets/asset-pack.json"); // ← created in the IDE
   }
   create() {
+    
     window.gameScene = this;
+
     // Initialize plugins
     if (!this.weapons) {
       this.plugins.installScenePlugin('WeaponPlugin', WeaponPlugin, 'weapons', this);
