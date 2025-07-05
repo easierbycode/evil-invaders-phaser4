@@ -67,6 +67,7 @@
                             } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
                                 document.documentElement.msRequestFullscreen();
                             }
+                            document.getElementById("gamepadAlert").style.display = "none";
                             fullscreenToggled = true;
                         }
                     }

@@ -8,7 +8,7 @@ class GameScene extends Phaser.Scene {
     // this.load.pack("pack", "assets/asset-pack.json"); // ← created in the IDE
   }
   create() {
-    
+
     window.gameScene = this;
 
     // Initialize plugins
@@ -43,7 +43,6 @@ class GameScene extends Phaser.Scene {
 
       // If this is the first player, start the game
       if (playerIndex === 0) {
-        document.getElementById("gamepadAlert")!.style.display = "none";
         // this.player = newPlayer;
         this.startGame();
       }
