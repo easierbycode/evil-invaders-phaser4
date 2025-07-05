@@ -1,16 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="utf-8" />
     <title>Phaser 4 Starter</title>
     <link rel="shortcut icon" href="https://assets.codepen.io/11817390/favicon.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Include Bootstrap CSS for styling UI elements -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-      body { background-color: #3c3c3c; margin:0 }
+        body {
+            background-color: #3c3c3c;
+            margin: 0;
+            padding: 0;
+        }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="game"></div>
+    <!-- gamepad not connected alert (automatically hidden) -->
+    <div id="gamepadAlert" class="alert alert-info text-center" style="position:absolute; top:0; width:100%;">
+        🎮 PLEASE <strong>CONNECT GAMEPAD</strong> 🎮
+    </div>
     <script type="module" src="/src/main.ts"></script>
-  </body>
+    <script>
+        let prevButtonStates = [];
+        let fullscreenToggled = false; // Flag to ensure fullscreen is toggled only once
+
+        window.addEventListener("gamepadconnected", (e) => {
+            prevButtonStates[e.gamepad.index] = [];
+            requestAnimationFrame(pollGamepads);
+        });
+
+        function pollGamepads() {
+            const gamepads = navigator.getGamepads();
+            for (let i = 0; i < gamepads.length; i++) {
+                const gp = gamepads[i];
+                if (!gp) continue;
+                if (!prevButtonStates[gp.index]) prevButtonStates[gp.index] = [];
+                gp.buttons.forEach((btn, idx) => {
+                    const prev = prevButtonStates[gp.index][idx] || false;
+                    if (btn.pressed && !prev) {
+                        // Restart - Select button (typically index 8)
+                        if (idx === 8) window.gameScene.scene.restart();
+
+                        // Pause - Start button (typically index 9)
+                        if (idx === 9) {
+                            if (window.gameScene.scene.isPaused()) {
+                                window.gameScene.scene.resume();
+                            } else {
+                                window.gameScene.scene.pause();
+                            }
+                        }
+
+                        // Reload - Left Trigger button (typically index 10)
+                        if (idx === 10) location.reload();
+
+                        if (!fullscreenToggled) {
+                            if (document.documentElement.requestFullscreen) {
+                                document.documentElement.requestFullscreen();
+                            } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+                                document.documentElement.mozRequestFullScreen();
+                            } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                                document.documentElement.webkitRequestFullscreen();
+                            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                                document.documentElement.msRequestFullscreen();
+                            }
+                            fullscreenToggled = true;
+                        }
+                    }
+                    prevButtonStates[gp.index][idx] = btn.pressed;
+                });
+            }
+            requestAnimationFrame(pollGamepads);
+        }
+    </script>
+</body>
+
 </html>

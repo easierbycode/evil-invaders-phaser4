@@ -1,4 +1,7 @@
 {
+  "compiler": {
+    "outputLanguage": "typescript"
+  },
   "skip": ["node_modules", "dist"],
   "plugins": [],
   "scripts": [],
