@@ -43,7 +43,7 @@ class GameScene extends Phaser.Scene {
 
       // If this is the first player, start the game
       if (playerIndex === 0) {
-        // this.player = newPlayer;
+        this.player = newPlayer;
         this.startGame();
       }
     });
