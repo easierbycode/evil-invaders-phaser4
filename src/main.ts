@@ -5,6 +5,7 @@ import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
 
 class GameScene extends Phaser.Scene {
+  #startBtn!: Phaser.GameObjects.Sprite
   player!: Player;
 
   constructor() {
@@ -14,6 +15,8 @@ class GameScene extends Phaser.Scene {
   create() {
     // @ts-ignore
     window.gameScene = this;
+
+    this.#startBtn = this.add.sprite(WIDTH / 2, 330, "game_ui", "titleStartText.gif");
 
     /**
      * Instantiate the player once we detect a game-pad.
