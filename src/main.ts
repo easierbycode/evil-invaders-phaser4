@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
 import { WIDTH, HEIGHT } from "./constants";
-import { WeaponPlugin } from "./weapons/weapon-plugin/index";
 import { Player } from "./game-objects/player";
 
 class GameScene extends Phaser.Scene {
@@ -91,11 +90,6 @@ new Phaser.Game({
   autoRound: true,
   roundPixels: true,
   disableContextMenu: true,
-  plugins: {
-    scene: [
-      { key: "WeaponPlugin", plugin: WeaponPlugin, mapping: "weapons" },
-    ],
-  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
