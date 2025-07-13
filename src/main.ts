@@ -3,9 +3,10 @@ import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
+import { requestFullscreen } from "./utils/fullscreen";
 
 class GameScene extends Phaser.Scene {
-  #startBtn!: Phaser.GameObjects.Sprite
+  #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
 
   constructor() {
@@ -16,7 +17,17 @@ class GameScene extends Phaser.Scene {
     // @ts-ignore
     window.gameScene = this;
 
-    this.#startBtn = this.add.sprite(WIDTH / 2, 330, "game_ui", "titleStartText.gif");
+    this.#startBtn = this.physics.add.sprite(WIDTH / 2, 330, "game_ui", "titleStartText.gif");
+
+    this.#startBtn.setInteractive();
+    this.#startBtn.on('pointerup', () => {
+      requestFullscreen(this.game.canvas);
+      this.#startBtn.destroy();
+      const pads = this.input.gamepad.gamepads;
+      createPlayer(pads[0] || null);
+      const alert = document.getElementById("gamepadAlert");
+      if (alert) alert.style.display = "none";
+    });
 
     /**
      * Instantiate the player once we detect a game-pad.
