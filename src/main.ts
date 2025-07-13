@@ -21,27 +21,18 @@ class GameScene extends Phaser.Scene {
       this.plugins.installScenePlugin('WeaponPlugin', WeaponPlugin, 'weapons', this);
     }
 
-    const createPlayer = () => {
+    const createPlayer = (gamepad: Phaser.Input.Gamepad.Gamepad) => {
       if (this.player) return;
       this.player = new Player(this, WIDTH / 2, HEIGHT - 48);
-      this.add.existing(this.player);
+      this.player.gamepad = gamepad;
     }
 
     // If a gamepad is already connected, let the player use it
     const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
-    if (firstPad) {
-      createPlayer();
-      // The Player class from CodePen auto‑detects the pad when constructed,
-      // but if you expose a setter like `setPad` you could call it here.
-      // (Remove this block if your Player handles input internally.)
-      // this.player.setPad(firstPad);
-    }
+    if (firstPad)  createPlayer(firstPad);
 
     // Listen for the first pad to connect afterwards
-    this.input.gamepad.once('connected', pad => {
-      createPlayer();
-      // this.player.setPad(pad);
-    });
+    this.input.gamepad.once('connected', pad => createPlayer(pad));
   }
 }
 
