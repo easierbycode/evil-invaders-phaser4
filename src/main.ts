@@ -25,6 +25,15 @@ class GameScene extends Phaser.Scene {
       if (this.player) return;
       this.player = new Player(this, WIDTH / 2, HEIGHT - 48);
       this.player.gamepad = gamepad;
+      this.player.speed = 150;
+      this.player.update = (time, delta) => {
+        this.player.body.stop();
+        if (this.player.gamepad.left || this.player.gamepad.leftStick.x < -0.1) {
+            this.player.body.velocity.x = -this.player.speed;
+        } else if (this.player.gamepad.right || this.player.gamepad.leftStick.x > 0.1) {
+            this.player.body.velocity.x = this.player.speed;
+        }
+      }
     }
 
     // If a gamepad is already connected, let the player use it
@@ -33,6 +42,11 @@ class GameScene extends Phaser.Scene {
 
     // Listen for the first pad to connect afterwards
     this.input.gamepad.once('connected', pad => createPlayer(pad));
+  }
+
+  update() {
+    if (!this.player) return;
+    this.player.update();
   }
 }
 
@@ -57,6 +71,7 @@ new Phaser.Game({
     pixelArt: true
   },
   autoRound: true,
+  roundPixels: true,
   disableContextMenu: true,
   plugins: {
     scene: [
