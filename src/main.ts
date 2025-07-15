@@ -17,16 +17,11 @@ class GameScene extends Phaser.Scene {
     // @ts-ignore
     window.gameScene = this;
 
-    this.#startBtn = this.physics.add.sprite(WIDTH / 2, 330, "game_ui", "titleStartText.gif");
-
-    this.#startBtn.setInteractive();
+    this.#startBtn = this.physics.add.sprite(WIDTH / 2, 330, "game_ui", "titleStartText.gif").setInteractive();
     this.#startBtn.on('pointerup', () => {
       requestFullscreen(this.game.canvas);
-      this.#startBtn.destroy();
       const pads = this.input.gamepad.gamepads;
       createPlayer(pads[0] || null);
-      const alert = document.getElementById("gamepadAlert");
-      if (alert) alert.style.display = "none";
     });
 
     /**
@@ -34,6 +29,10 @@ class GameScene extends Phaser.Scene {
      */
     const createPlayer = (gamepad: Phaser.Input.Gamepad.Gamepad) => {
       if (this.player) return;
+
+      if (this.#startBtn)  this.#startBtn.destroy();
+      const alert = document.getElementById("gamepadAlert");
+      if (alert) alert.style.display = "none";
 
       var d = PROPERTIES.resource.recipe.data.playerData;
 
