@@ -1,12 +1,14 @@
+import { fetchAtlasOverrides, saveAtlasOverrides } from '../utils/helper-applyAtlasOverrides';
+
 export class EditorScene extends Phaser.Scene {
     private editorDiv!: HTMLDivElement;
     private overrides: Record<string, string> = {};
 
     constructor() { super('editor-scene'); }
 
-    create() {
-        // Pull any previously saved overrides to pre‑populate previews.
-        this.overrides = JSON.parse(localStorage.getItem('atlasOverrides') || '{}');
+    async create() {
+        // Pull any previously saved overrides from Firebase to pre-populate previews
+        this.overrides = await fetchAtlasOverrides();
 
         // Build the overlay DOM.
         this.buildDomUI();
@@ -39,9 +41,9 @@ export class EditorScene extends Phaser.Scene {
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Save';
         saveBtn.style.marginRight = '12px';
-        saveBtn.onclick = () => {
-            localStorage.setItem('atlasOverrides', JSON.stringify(this.overrides));
-            alert('Overrides saved to localStorage.');
+        saveBtn.onclick = async () => {
+            await saveAtlasOverrides(this.overrides);
+            alert('Overrides saved to Firebase.');
         };
 
         const playBtn = document.createElement('button');
