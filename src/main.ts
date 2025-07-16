@@ -1,81 +1,78 @@
 import Phaser from "phaser";
 import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
+import { EditorScene } from './scenes/EditorScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
 import { requestFullscreen } from "./utils/fullscreen";
+import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 
-class GameScene extends Phaser.Scene {
+export class GameScene extends Phaser.Scene
+{
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
 
-  constructor() {
-    super('title-scene');
-  }
+  constructor() { super('title-scene'); }
 
-  create() {
+  async create()
+  {
+    // 1️⃣  Apply any local overrides before we use the atlas.
+    await applyAtlasOverrides(this);
+
+    // ⬇️ existing title‑screen logic (unchanged apart from this one line)
     // @ts-ignore
     window.gameScene = this;
 
-    this.#startBtn = this.physics.add.sprite(WIDTH / 2, 330, "game_ui", "titleStartText.gif").setInteractive();
+    this.#startBtn = this.physics
+      .add.sprite(WIDTH / 2, 330, 'game_ui', 'titleStartText.gif')
+      .setInteractive();
+
     this.#startBtn.on('pointerup', () => {
       requestFullscreen(this.game.canvas);
       const pads = this.input.gamepad.gamepads;
       createPlayer(pads[0] || null);
     });
 
-    /**
-     * Instantiate the player once we detect a game-pad.
-     */
     const createPlayer = (gamepad: Phaser.Input.Gamepad.Gamepad) => {
       if (this.player) return;
 
-      if (this.#startBtn)  this.#startBtn.destroy();
-      const alert = document.getElementById("gamepadAlert");
-      if (alert) alert.style.display = "none";
+      if (this.#startBtn) this.#startBtn.destroy();
+      const alert = document.getElementById('gamepadAlert');
+      if (alert) alert.style.display = 'none';
 
-      var d = PROPERTIES.resource.recipe.data.playerData;
+      const d = PROPERTIES.resource.recipe.data.playerData;
 
       this.player = new Player(d);
       this.player.setPosition(WIDTH / 2, HEIGHT - 48);
       this.player.gamepad = gamepad;
       this.player.speed = 150;
 
-      // --- Custom player update ---
       this.player.update = () => {
         const pad = this.player.gamepad;
         if (!pad) return;
-
         const DEAD_ZONE = 0.1;
-        const left =
-          pad.left || pad.leftStick.x < -DEAD_ZONE;
-        const right =
-          pad.right || pad.leftStick.x > DEAD_ZONE;
+        const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
+        const right = pad.right || pad.leftStick.x > DEAD_ZONE;
 
-        if (left) {
-          this.player.body.setVelocityX(-this.player.speed);
-        } else if (right) {
-          this.player.body.setVelocityX(this.player.speed);
-        } else {
-          // Smoothly come to rest when no input present
-          this.player.body.setVelocityX(0);
-        }
+        if (left)       this.player.body.setVelocityX(-this.player.speed);
+        else if (right) this.player.body.setVelocityX(this.player.speed);
+        else            this.player.body.setVelocityX(0);
       };
     };
 
-    // Use an already-connected pad if present
-    const firstPad = this.input.gamepad.gamepads.find((p) => p?.connected);
+    // Existing game‑pad hookup
+    const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
     if (firstPad) createPlayer(firstPad);
+    this.input.gamepad.once('connected', pad => createPlayer(pad));
 
-    // Otherwise wait for the first connection
-    this.input.gamepad.once("connected", (pad) => createPlayer(pad));
+    // 2️⃣  Hot‑key to open the atlas editor.
+    this.input.keyboard.on('keydown-E', () => {
+      this.scene.pause();              // freeze gameplay
+      this.scene.launch('editor-scene');
+    });
   }
 
-  update() {
-    if (this.player) {
-      this.player.update();
-    }
-  }
+  update() { if (this.player) this.player.update(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +89,7 @@ new Phaser.Game({
     },
   },
   parent: "game",
-  scene: [LoadScene, GameScene],
+  scene: [LoadScene, GameScene, EditorScene],
   input: {
     gamepad: true,
     touch: true,
