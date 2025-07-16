@@ -1,4 +1,4 @@
-import { fetchAtlasOverrides, saveAtlasOverrides } from '../utils/helper-applyAtlasOverrides';
+import { fetchAtlasOverrides, saveAtlasOverrides, applyAtlasOverrides } from '../utils/helper-applyAtlasOverrides';
 
 export class EditorScene extends Phaser.Scene {
     private editorDiv!: HTMLDivElement;
@@ -48,7 +48,9 @@ export class EditorScene extends Phaser.Scene {
 
         const playBtn = document.createElement('button');
         playBtn.textContent = 'Play';
-        playBtn.onclick = () => {
+        playBtn.onclick = async () => {
+            // Apply overrides before resuming game
+            await applyAtlasOverrides(this.scene.get('title-scene'));
             // Close editor and resume game
             this.scene.stop();
             this.scene.resume('title-scene');
