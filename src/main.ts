@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
+import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
@@ -12,7 +13,7 @@ export class GameScene extends Phaser.Scene
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
 
-  constructor() { super('title-scene'); }
+  constructor() { super('game-scene'); }
 
   async create()
   {
@@ -89,7 +90,7 @@ new Phaser.Game({
     },
   },
   parent: "game",
-  scene: [LoadScene, GameScene, EditorScene],
+  scene: [LoadScene, OverloadScene, GameScene, EditorScene],
   input: {
     gamepad: true,
     touch: true,
