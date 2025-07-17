@@ -1,20 +1,7 @@
 
 import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  get,
-} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-const firebaseConfig = {
-  apiKey: "AIzaSyAOWwht5ieLYlbgk_pOYdEQeEAscAxXmeY",
-  authDomain: "spritehub-c3a33.firebaseapp.com",
-  projectId: "spritehub-c3a33",
-  storageBucket: "spritehub-c3a33.firebasestorage.app",
-  messagingSenderId: "957606226872",
-  appId: "1:957606226872:web:d5244182e4d6a66090bd4d",
-};
+import { getDB, ref, get } from '../utils/firebase-config';
 
 
 export class OverloadScene extends Phaser.Scene {
@@ -33,8 +20,7 @@ export class OverloadScene extends Phaser.Scene {
     }
 
     async create() {
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const db = getDB();
 
         try {
             // First, fetch the character data
