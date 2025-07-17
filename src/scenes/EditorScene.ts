@@ -50,10 +50,10 @@ export class EditorScene extends Phaser.Scene {
         playBtn.textContent = 'Play';
         playBtn.onclick = async () => {
             // Apply overrides before resuming game
-            await applyAtlasOverrides(this.scene.get('title-scene'));
+            await applyAtlasOverrides(this.scene.get('game-scene'));
             // Close editor and resume game
             this.scene.stop();
-            this.scene.resume('title-scene');
+            this.scene.resume('game-scene');
         };
 
         this.editorDiv.appendChild(saveBtn);

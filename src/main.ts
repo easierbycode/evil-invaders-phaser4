@@ -89,6 +89,13 @@ export class GameScene extends Phaser.Scene
     
     this.scene.pause();              // freeze gameplay
     this.scene.launch('editor-scene');
+
+    // Re-enable input when editor scene stops
+    this.scene.get('editor-scene').events.once('shutdown', () => {
+      if (this.#startBtn) {
+        this.#startBtn.setInteractive();
+      }
+    });
   }
 }
 
