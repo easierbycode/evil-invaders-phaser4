@@ -7,6 +7,7 @@ import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
 import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
+import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 
 export class GameScene extends Phaser.Scene
 {
@@ -20,35 +21,16 @@ export class GameScene extends Phaser.Scene
 
   async create()
   {
-    // Setup touch handlers for editor access
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      const touchX = pointer.x;
-      const touchY = pointer.y;
-      
-      // Check bottom left corner (within 50px square)
-      if (touchX < 50 && touchY > HEIGHT - 50) {
-        this.bottomLeftTouched = true;
-      }
-      // Check top right corner (within 50px square)
-      if (touchX > WIDTH - 50 && touchY < 50) {
-        this.topRightTouched = true;
-      }
-      
-      // Launch editor if both corners touched
-      if (this.bottomLeftTouched && this.topRightTouched) {
-        this.scene.pause();
-        this.scene.launch('editor-scene');
-      }
-    });
 
-    this.input.on('pointerup', () => {
-      this.bottomLeftTouched = false;
-      this.topRightTouched = false;
-    });
-    // 1️⃣  Apply any local overrides before we use the atlas.
+    // 0️⃣  Secret touch to launch editor.
+    setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
+
+    // 1️⃣  Hot‑key to launch editor.
+    this.input.keyboard.on('keydown-E', () => this.launchEditor());
+    
+    // 2️⃣  Apply overrides before we use the atlas.
     await applyAtlasOverrides(this);
 
-    // ⬇️ existing title‑screen logic (unchanged apart from this one line)
     // @ts-ignore
     window.gameScene = this;
 
@@ -93,15 +75,21 @@ export class GameScene extends Phaser.Scene
     const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
     if (firstPad) createPlayer(firstPad);
     this.input.gamepad.once('connected', pad => createPlayer(pad));
-
-    // 2️⃣  Hot‑key to open the atlas editor.
-    this.input.keyboard.on('keydown-E', () => {
-      this.scene.pause();              // freeze gameplay
-      this.scene.launch('editor-scene');
-    });
   }
 
   update() { if (this.player) this.player.update(); }
+
+  async launchEditor() {
+    // Flash screen red and shake to indicate secret found
+    this.cameras.main.flash(500, 255, 0, 0);
+    this.cameras.main.shake(500, 0.02);
+    
+    // Wait for effects to complete before showing editor
+    await new Promise(resolve => this.time.delayedCall(600, resolve));
+    
+    this.scene.pause();              // freeze gameplay
+    this.scene.launch('editor-scene');
+  }
 }
 
 // ---------------------------------------------------------------------------
