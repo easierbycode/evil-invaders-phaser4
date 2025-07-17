@@ -13,10 +13,38 @@ export class GameScene extends Phaser.Scene
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
 
+  private bottomLeftTouched = false;
+  private topRightTouched = false;
+
   constructor() { super('game-scene'); }
 
   async create()
   {
+    // Setup touch handlers for editor access
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      const touchX = pointer.x;
+      const touchY = pointer.y;
+      
+      // Check bottom left corner (within 50px square)
+      if (touchX < 50 && touchY > HEIGHT - 50) {
+        this.bottomLeftTouched = true;
+      }
+      // Check top right corner (within 50px square)
+      if (touchX > WIDTH - 50 && touchY < 50) {
+        this.topRightTouched = true;
+      }
+      
+      // Launch editor if both corners touched
+      if (this.bottomLeftTouched && this.topRightTouched) {
+        this.scene.pause();
+        this.scene.launch('editor-scene');
+      }
+    });
+
+    this.input.on('pointerup', () => {
+      this.bottomLeftTouched = false;
+      this.topRightTouched = false;
+    });
     // 1️⃣  Apply any local overrides before we use the atlas.
     await applyAtlasOverrides(this);
 
@@ -93,7 +121,17 @@ new Phaser.Game({
   scene: [LoadScene, OverloadScene, GameScene, EditorScene],
   input: {
     gamepad: true,
-    touch: true,
+    /*
+     * Pointer 0 is always reserved for the mouse.
+     * We want two fingers at the same time, so we need
+     * mouse (0) + finger‑1 + finger‑2  → 3 total.
+     * On mobile the “mouse” pointer never fires, but
+     * it still counts toward the total.
+     */
+    activePointers: 3,
+
+    // Optional but useful: stop the page scrolling
+    touch: { capture: true }
   },
   render: {
     pixelArt: true,
