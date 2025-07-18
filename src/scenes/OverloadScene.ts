@@ -23,38 +23,53 @@ export class OverloadScene extends Phaser.Scene {
         const db = getDB();
 
         try {
-            // First, fetch the character data
-                const characterRef = ref(db, "characters/enemyR");
-                const characterSnapshot = await get(characterRef);
+            // Fetch character data and atlas simultaneously
+            const [enemySnapshot, playerSnapshot, enemyAtlasSnapshot, dukeAtlasSnapshot] = await Promise.all([
+                get(ref(db, "characters/enemyR")),
+                get(ref(db, "characters/dukeNukem")),
+                get(ref(db, "atlases/enemyr_atlas")),
+                get(ref(db, "atlases/duke"))
+            ]);
 
-                if (characterSnapshot.exists()) {
-                    // Assign the character data to enemyR
-                    PROPERTIES.resource.recipe.data.enemyData.enemyR = characterSnapshot.val();
-                } else {
-                    console.log("Character data not found");
+            if (enemySnapshot.exists()) {
+                PROPERTIES.resource.recipe.data.enemyData.enemyR = enemySnapshot.val();
+            } else {
+                console.log("Enemy character data not found");
+            }
+
+            if (playerSnapshot.exists()) {
+                PROPERTIES.resource.recipe.data.playerData = playerSnapshot.val();
+            } else {
+                console.log("Player character data not found");
+            }
+
+            if (enemyAtlasSnapshot.exists()) {
+                const enemyAtlasData = enemyAtlasSnapshot.val();
+                try {
+                    const enemyJsonData = JSON.parse(enemyAtlasData.json);
+                    const enemyImageObj = await this.createImageFromBase64(enemyAtlasData.png);
+                    this.textures.addAtlas("enemyr_atlas", enemyImageObj as HTMLImageElement, enemyJsonData);
+                    console.log("enemyr_atlas loaded successfully!");
+                } catch (imgErr) {
+                    console.error("Error loading enemyr_atlas image:", imgErr);
                 }
+            } else {
+                console.log("enemyr_atlas data not found");
+            }
 
-                // Second, fetch the enemy atlas
-                const atlasRef = ref(db, "atlases/enemyr_atlas");
-                const atlasSnapshot = await get(atlasRef);
-
-                if (atlasSnapshot.exists()) {
-                    const atlasData = atlasSnapshot.val();
-
-                    try {
-                        // Create and load the image properly before using it
-                        const jsonData = JSON.parse(atlasData.json);
-                        const imageObj = await this.createImageFromBase64(atlasData.png);
-
-                        // Now that the image is loaded, add it to the texture manager
-                        this.textures.addAtlas("enemyr_atlas", imageObj, jsonData);
-                        console.log("enemyr_atlas loaded successfully!");
-                    } catch (imgErr) {
-                        console.error("Error loading enemyr_atlas image:", imgErr);
-                    }
-                } else {
-                    console.log("enemyr_atlas data not found");
+            if (dukeAtlasSnapshot.exists()) {
+                const dukeAtlasData = dukeAtlasSnapshot.val();
+                try {
+                    const dukeJsonData = JSON.parse(dukeAtlasData.json);
+                    const dukeImageObj = await this.createImageFromBase64(dukeAtlasData.png);
+                    this.textures.addAtlas("duke_atlas", dukeImageObj as HTMLImageElement, dukeJsonData);
+                    console.log("duke_atlas loaded successfully!");
+                } catch (imgErr) {
+                    console.error("Error loading duke_atlas image:", imgErr);
                 }
+            } else {
+                console.log("duke_atlas data not found");
+            }
         } catch (error) {
             console.error("Error fetching data from Firebase:", error);
         }

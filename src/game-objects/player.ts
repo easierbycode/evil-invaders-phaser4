@@ -19,7 +19,7 @@ export class Character extends Phaser.GameObjects.Sprite {
       opts.scene || window.gameScene,
       0,
       0,
-      opts.texture || "game_asset",
+      opts.textureKey || "game_asset",
       characterTextures[0]
     );
 
@@ -52,7 +52,7 @@ export class Character extends Phaser.GameObjects.Sprite {
       key: "default",
       frames: [
         ...characterTextures.map((k) => {
-          return { key: opts.texture || "game_asset", frame: k };
+          return { key: opts.textureKey || "game_asset", frame: k };
         })
       ],
       frameRate: opts.frameRate || 6,
@@ -108,7 +108,14 @@ export class Character extends Phaser.GameObjects.Sprite {
 
 export class Player extends Character {
   constructor(t) {
-    super(t.texture, t.explosion);
+    super(
+      t.texture, 
+      {
+        ...t,
+        autoPlay: true,
+        physics: true
+      }
+    );
     var o = this;
     (t.barrierEffectTexture = "shieldEffect.png"),
       (t.hit = ["hit0.gif", "hit1.gif", "hit2.gif", "hit3.gif", "hit4.gif"]),
