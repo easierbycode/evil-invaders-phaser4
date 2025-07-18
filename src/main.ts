@@ -14,9 +14,6 @@ export class GameScene extends Phaser.Scene
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
 
-  private bottomLeftTouched = false;
-  private topRightTouched = false;
-
   constructor() { super('game-scene'); }
 
   async create()
