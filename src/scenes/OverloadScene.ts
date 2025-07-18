@@ -1,6 +1,5 @@
 
 import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
-import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
 import { getDB, ref, get } from '../utils/firebase-config';
 
 
