@@ -9,12 +9,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "editor": "phasereditor2d-launcher -project . -disable-open-browser -public -port 1959"
+    "editor": "phasereditor2d-launcher -project . -disable-open-browser -public -port 1959",
+    "build:android": "vite build && cordova-icon && cordova-splash && cordova build android"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cordova-android": "^14.0.1",
     "phaser": "^4.0.0-rc.4"
   },
   "devDependencies": {

@@ -98,7 +98,13 @@ export class GameScene extends Phaser.Scene
 
 // ---------------------------------------------------------------------------
 
-new Phaser.Game({
+function onDeviceReady() {
+  const appElement = document.getElementsByClassName("app")[0];
+  if (appElement) {
+    appElement.setAttribute("style", "display:none");
+  }
+
+  globalThis.__PHASER_GAME__ = new Phaser.Game({
   width: WIDTH,
   height: HEIGHT,
   physics: {
@@ -135,4 +141,13 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-});
+})};
+
+document.addEventListener('deviceready', onDeviceReady, false);
+
+if (!window.cordova) {
+  setTimeout(() => {
+    const event = new Event('deviceready');
+    document.dispatchEvent(event);
+  }, 50);
+}
