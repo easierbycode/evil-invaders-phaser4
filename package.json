@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "editor": "phasereditor2d-launcher -project . -disable-open-browser -public -port 1959",
+    "mcp": "tsc --project tsconfig.server.json && node dist/server/server.js",
     "build:android": "vite build && cordova-icon && cordova-splash && cordova build android"
   },
   "keywords": [],
@@ -17,10 +18,16 @@
   "license": "ISC",
   "dependencies": {
     "cordova-android": "^14.0.1",
+    "express": "^5.1.0",
+    "glob": "^11.0.3",
     "phaser": "^4.0.0-rc.4"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/glob": "^8.1.0",
+    "@types/node": "^24.0.15",
     "phasereditor2d-launcher": "^3.67.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^7.0.1"
   }
