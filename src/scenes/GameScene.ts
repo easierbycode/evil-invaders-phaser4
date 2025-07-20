@@ -29,6 +29,8 @@ class GameScene extends Phaser.Scene {
 	create() {
 		this.player = new Player({ scene: this, texture: 'player' });
 
+		this.player.shootStart();
+
 		this.input.on('pointerdown', () => {
 			this.player.fireBullet();
 		});
