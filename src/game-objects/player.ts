@@ -487,6 +487,12 @@ export class Player extends Character {
         tint: 16777215
       });
   }
+  handleGamepadInput(gamepad: Phaser.Input.Gamepad.Gamepad) {
+    if (gamepad.buttons.some(button => button.pressed)) {
+      this.fireBullet();
+    }
+  }
+
   fireBullet() {
     const bullet = new Bullet(this.scene, this.x, this.y, 'bullet');
     this.bulletList.push(bullet);
