@@ -1,3 +1,4 @@
+import { Bullet } from './bullet';
 import CONSTANTS from "https://codepen.io/CodeMonkeyGames/pen/MWMxmOq.js";
 import {
   Graphics
@@ -260,62 +261,7 @@ export class Player extends Character {
     }
   }
   shoot() {
-    switch (this.shootMode) {
-      case Player.SHOOT_NAME_NORMAL:
-        ((o = new Bullet(this.shootNormalData)).rotation =
-          (270 * Math.PI) / 180),
-          this.scene.updateBody(o),
-          (o.x = this.x),
-          (o.y = this.getTopCenter().y),
-          (o.name = Player.SHOOT_NAME_NORMAL),
-          (o.id = this.bulletIdCnt++),
-          o.on(Character.CUSTOM_EVENT_DEAD, this.bulletRemove.bind(this, o)),
-          o.on(
-            Character.CUSTOM_EVENT_DEAD_COMPLETE,
-            this.bulletRemoveComplete.bind(this, o)
-          ),
-          this.bulletList.push(o);
-        break;
-      case Player.SHOOT_NAME_BIG:
-        ((o = new Bullet(this.shootBigData)).rotation = (270 * Math.PI) / 180),
-          this.scene.updateBody(o),
-          (o.x = this.x),
-          (o.y = this.getTopCenter().y),
-          (o.name = Player.SHOOT_NAME_BIG),
-          (o.id = this.bulletIdCnt++),
-          o.on(Character.CUSTOM_EVENT_DEAD, this.bulletRemove.bind(this, o)),
-          o.on(
-            Character.CUSTOM_EVENT_DEAD_COMPLETE,
-            this.bulletRemoveComplete.bind(this, o)
-          ),
-          this.bulletList.push(o);
-        break;
-      case Player.SHOOT_NAME_3WAY:
-        const y = this.getTopCenter().y;
-        for (var t = 0; t < 3; t++) {
-          var o = new Bullet(this.shoot3wayData);
-          this.scene.updateBody(o),
-            0 == t ?
-              ((o.rotation = (280 * Math.PI) / 180),
-                (o.x = this.x - 4),
-                (o.y = y)) :
-              1 == t ?
-                ((o.rotation = (270 * Math.PI) / 180),
-                  (o.x = this.x),
-                  (o.y = y)) :
-                2 == t &&
-                ((o.rotation = (260 * Math.PI) / 180),
-                  (o.x = this.x + 4),
-                  (o.y = y)),
-            (o.id = this.bulletIdCnt++),
-            o.on(Character.CUSTOM_EVENT_DEAD, this.bulletRemove.bind(this, o)),
-            o.on(
-              Character.CUSTOM_EVENT_DEAD_COMPLETE,
-              this.bulletRemoveComplete.bind(this, o)
-            ),
-            this.bulletList.push(o);
-        }
-    }
+    this.fireBullet();
   }
   bulletRemove(t) {
     for (var e = 0; e < this.bulletList.length; e++)
@@ -541,6 +487,12 @@ export class Player extends Character {
         tint: 16777215
       });
   }
+  fireBullet() {
+    const bullet = new Bullet(this.scene, this.x, this.y, 'bullet');
+    this.bulletList.push(bullet);
+    this.scene.add.existing(bullet);
+  }
+
   caFire() { }
   onDamage(t) {
     if (this.barrierFlg);
