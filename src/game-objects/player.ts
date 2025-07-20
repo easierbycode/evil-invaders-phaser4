@@ -189,6 +189,7 @@ export class Player extends Character {
       (o.beforeY = 0),
       (o.keyDownFlg = 0),
       (o.keyDownCode = ""),
+      (o.theWorldFlg = false),
       o
     );
   }
@@ -250,6 +251,7 @@ export class Player extends Character {
       (this.barrier.y = this.y),
       this.bulletFrameCnt++,
       this.shootOn &&
+      !this.theWorldFlg &&
       this.bulletFrameCnt % (this.shootInterval - this.shootSpeed) == 0 &&
       this.shoot();
     for (var t = 0; t < this.bulletList.length; t++) {
