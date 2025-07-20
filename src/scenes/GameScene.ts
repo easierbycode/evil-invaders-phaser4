@@ -38,6 +38,12 @@ class GameScene extends Phaser.Scene {
 		this.editorCreate();
 	}
 
+	update() {
+		if (this.input.gamepad.total) {
+			this.player.handleGamepadInput(this.input.gamepad.getPad(0));
+		}
+	}
+
 	/* END-USER-CODE */
 }
 
