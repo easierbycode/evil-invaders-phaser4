@@ -5,6 +5,7 @@ import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
+import { Starfield } from "./game-objects/starfield";
 import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
@@ -13,11 +14,13 @@ export class GameScene extends Phaser.Scene
 {
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
+  starfield!: Starfield;
 
   constructor() { super('game-scene'); }
 
   async create()
   {
+    this.starfield = new Starfield(this);
 
     // 0️⃣  Secret touch to launch editor.
     setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
@@ -74,7 +77,10 @@ export class GameScene extends Phaser.Scene
     this.input.gamepad.once('connected', pad => createPlayer(pad));
   }
 
-  update() { if (this.player) this.player.update(); }
+  update() {
+    if (this.player) this.player.update();
+    if (this.starfield) this.starfield.update();
+  }
 
   async launchEditor() {
     // Flash screen red and shake to indicate secret found
