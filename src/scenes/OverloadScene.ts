@@ -27,7 +27,7 @@ export class OverloadScene extends Phaser.Scene {
                 get(ref(db, "characters/enemyR")),
                 get(ref(db, "characters/dukeNukem")),
                 get(ref(db, "atlases/enemyr_atlas")),
-                get(ref(db, "atlases/duke"))
+                get(ref(db, "atlases/axe-murderer"))
             ]);
 
             if (enemySnapshot.exists()) {
