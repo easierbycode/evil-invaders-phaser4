@@ -5,7 +5,6 @@ import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
-import Stars from "./game-objects/stars";
 import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
@@ -14,7 +13,6 @@ export class GameScene extends Phaser.Scene
 {
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
-  stars!: Stars;
 
   constructor() { super('game-scene'); }
 
@@ -24,8 +22,6 @@ export class GameScene extends Phaser.Scene
 
   async create()
   {
-    this.stars = new Stars({ scene: this });
-
     // 0️⃣  Secret touch to launch editor.
     setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
 
