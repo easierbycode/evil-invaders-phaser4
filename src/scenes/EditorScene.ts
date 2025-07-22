@@ -93,7 +93,6 @@ export class EditorScene extends Phaser.Scene {
 
             const info = document.createElement('div');
             info.style.fontSize = '12px';
-            const sizeDisplay = character.size ? `${character.size.x}x${character.size.y}` : 'N/A';
             const typeDisplay = character.maxHp !== undefined ? 'Player' : 'Enemy';
             const hpDisplay = character.maxHp || character.hp || 'N/A';
 
@@ -101,7 +100,6 @@ export class EditorScene extends Phaser.Scene {
     <div>Type: ${typeDisplay}</div>
     <div>Texture Key: ${character.textureKey}</div>
     <div>Frames: ${character.texture.length}</div>
-    <div>Size: ${sizeDisplay}</div>
     <div>HP: ${hpDisplay}</div>
 `;
 
