@@ -5,7 +5,7 @@ import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
-import { Starfield } from "./game-objects/starfield";
+import Stars from "./game-objects/stars";
 import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
@@ -14,13 +14,17 @@ export class GameScene extends Phaser.Scene
 {
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
-  starfield!: Starfield;
+  stars!: Stars;
 
   constructor() { super('game-scene'); }
 
+  preload() {
+    this.load.pack("pack", "assets/asset-pack.json"); // ← created in the IDE
+  }
+
   async create()
   {
-    this.starfield = new Starfield(this);
+    this.stars = new Stars({ scene: this });
 
     // 0️⃣  Secret touch to launch editor.
     setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
@@ -79,7 +83,6 @@ export class GameScene extends Phaser.Scene
 
   update() {
     if (this.player) this.player.update();
-    if (this.starfield) this.starfield.update();
   }
 
   async launchEditor() {
