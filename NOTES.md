@@ -56,9 +56,9 @@ is the atlas being completely overridden? (should I even load the first one?)
 
 
 > 
-overrides can be applied to playerData or an enemy in enemyData
+overrides can be applied to playerData or an enemy in enemyData (PROPERTIES.resource.recipe.data.playerData or PROPERTIES.resource.recipe.data.enemyData)
 
-overrides fetch an atlas (JSON + PNG) and character (JSON)
+overrides fetch an atlas (JSON + PNG) and character (JSON) from Firebase
 
 PROBLEM: atlas frames are out of sync with character frames (texture[])
 
@@ -68,9 +68,8 @@ i.e. character/dukeNukem textureKey duke fetches atlases/duke
 create a process and UI which allows user to select a character, then the 
 enemy or playerData to be replaced
 ensure character texture[] frames all exist in atlas.
-if not, create a new atlas by letting user select from ref(db, "sprites"). also let
-user select a subset of those sprites for the character texture[], which are used for
-it's "default" animation
+if not, create a new atlas by letting user select from ref(db, "sprites"). after creating atlas let
+user select a subset of it's frames for the character texture[], which is used for the character's "default" animation
 
 
 
