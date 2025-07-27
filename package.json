@@ -1,20 +1,26 @@
 {
   "name": "phaser4-starter",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A Phaser 4 starter project with Electron.",
+  "main": "electron.cjs",
   "private": true,
   "type": "module",
+  "homepage": "./",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "editor": "phasereditor2d-launcher -project . -disable-open-browser -public -port 1959",
     "mcp": "tsc --project tsconfig.server.json && node dist/server/server.js",
-    "build:android": "vite build && cordova-icon && cordova-splash && cordova build android"
+    "build:android": "vite build && cordova-icon && cordova-splash && cordova build android",
+    "electron": "vite --config vite.electron.config.ts",
+    "build:linux": "vite build && electron-builder"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
   "license": "ISC",
   "dependencies": {
     "cordova-android": "^14.0.1",
@@ -29,6 +35,23 @@
     "phasereditor2d-launcher": "^3.67.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "vite": "^7.0.1"
+    "vite": "^7.0.1",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.example.phaser4-starter",
+    "productName": "Phaser4 Starter",
+    "files": [
+      "dist/**/*",
+      "electron.cjs",
+      "preload.js"
+    ],
+    "linux": {
+      "target": [
+        "rpm"
+      ],
+      "category": "Game"
+    }
   }
 }
