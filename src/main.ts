@@ -13,6 +13,10 @@ export class GameScene extends Phaser.Scene
 {
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
+  waveInterval = 80;
+  frameCnt = 0;
+  waveCount = 0;
+  
 
   constructor() { super('game-scene'); }
 
@@ -75,10 +79,78 @@ export class GameScene extends Phaser.Scene
     const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
     if (firstPad) createPlayer(firstPad);
     this.input.gamepad.once('connected', pad => createPlayer(pad));
+
+
+    this.enemyGroup = this.physics.add.group();
+
+    this.stageEnemyPositionList = PROPERTIES.resource.recipe.data[
+      "stage" + PROPERTIES.stageId
+    ].enemylist
+      .slice()
+      .reverse();
   }
 
   update() {
+    this.frameCnt++;
+
     if (this.player) this.player.update();
+
+    // launch enemyWave() every 80 frames
+    if (this.frameCnt % this.waveInterval === 0)  this.enemyWave();
+  }
+
+  enemyWave() {
+    if (this.waveCount >= this.stageEnemyPositionList.length) {
+      console.log("All waves completed");
+      return;
+    }
+
+    const wave = this.stageEnemyPositionList[this.waveCount];
+    wave.forEach((enemyCode, positionIndex) => {
+      if (enemyCode !== "00") {
+        const enemyType = String(enemyCode).substr(0, 1);
+        const itemType = String(enemyCode).substr(1, 2);
+
+        const enemyData = PROPERTIES.resource.recipe.data.enemyData[
+          `enemy${enemyType}`
+        ];
+        if (!enemyData) {
+          console.warn(`Enemy type ${enemyType} not found.`);
+          return;
+        }
+
+        console.log({enemyData});
+
+        // const enemy = new Enemy({
+        //   name: enemyData.name,
+        //   interval: enemyData.interval,
+        //   score: enemyData.score,
+        //   hp: enemyData.hp,
+        //   speed: enemyData.speed,
+        //   cagage: enemyData.cagage,
+        //   texture: enemyData.texture,
+        //   explosion: enemyData.explosionTextures,
+        //   projectileData: enemyData.projectileData,
+        //   physics: enemyData.physics,
+        //   autoPlay: enemyData.autoPlay,
+        //   itemName: itemType,
+        //   itemTexture: enemyData.itemTexture || null
+        // });
+
+        // enemy.x = enemy.width / 2 + 32 * positionIndex;
+        // enemy.y = -32;
+
+        // this.enemyGroup.add(enemy);
+        // enemy.on(Enemy.CUSTOM_EVENT_PROJECTILE_ADD, () => {
+        //   console.log(`Projectile added by ${enemy.name}`);
+        // });
+        // enemy.on(Enemy.CUSTOM_EVENT_DEAD_COMPLETE, () => {
+        //   console.log(`${enemy.name} is completely destroyed.`);
+        // });
+      }
+    });
+
+    this.waveCount++;
   }
 
   async launchEditor() {
