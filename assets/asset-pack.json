@@ -2,6 +2,16 @@
     "section1": {
         "files": [
             {
+                "url": "assets/bullet.png",
+                "type": "image",
+                "key": "bullet"
+            },
+            {
+                "url": "assets/flares.png",
+                "type": "image",
+                "key": "flares"
+            },
+            {
                 "url": "assets/star.png",
                 "type": "image",
                 "key": "star"
