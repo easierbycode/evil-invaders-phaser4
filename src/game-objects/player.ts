@@ -36,6 +36,10 @@ export class Character extends Phaser.GameObjects.Sprite {
       };
     }
 
+    if (void 0 !== opts.originX) {
+      this.setOrigin(opts.originX, opts.originY || 0);
+    }
+
     if (void 0 !== opts.explosionTextures) {
       this.explosion = new Character(opts.explosionTextures, {
         autoPlay: false,
