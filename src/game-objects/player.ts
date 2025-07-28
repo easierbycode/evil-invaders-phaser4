@@ -501,7 +501,7 @@ export class Player extends Character {
 
   fireBullet() {
     const bulletTexture = this.shootData.texture?.[0] || 'bullet';
-    const bullet = new Bullet(this.scene, this.x, this.y - this.height/2, bulletTexture);
+    const bullet = new Bullet(this.scene, this.x, this.y - this.height * this.originY, bulletTexture);
     bullet.id = ++this.bulletIdCnt;
     bullet.rotation = -Math.PI / 2; // Point upward
     this.bulletList.push(bullet);
@@ -509,7 +509,7 @@ export class Player extends Character {
     
     // Fire the bullet upward
     if (bullet.fire) {
-        bullet.fire(this.x, this.y - this.height/2, this.x, -100);
+        bullet.fire(this.x, this.y - this.height * this.originY, this.x, -100);
     }
   }
 
