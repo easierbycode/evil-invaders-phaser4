@@ -64,6 +64,8 @@ export class GameScene extends Phaser.Scene
       this.player.gamepad = gamepad;
       this.player.speed = 150;
 
+  this.player.body.setCollideWorldBounds(true);
+
   const originalUpdate = this.player.update.bind(this.player);
   this.player.update = () => {
     if (!this.player || !this.player.body) return;
@@ -78,11 +80,22 @@ export class GameScene extends Phaser.Scene
     const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
     const right = pad.right || pad.leftStick.x > DEAD_ZONE;
 
-    if (left)       this.player.body.setVelocityX(-this.player.speed);
-    else if (right) this.player.body.setVelocityX(this.player.speed);
-    else            this.player.body.setVelocityX(0);
+    const moveSpeed = 6; // pixels per frame
+    if (left) {
+      this.player.unitX -= moveSpeed;
+    } else if (right) {
+      this.player.unitX += moveSpeed;
+    }
     
-    // Call original update to handle shooting logic
+    // Clamp unitX to screen bounds accounting for player width
+    // When origin is (0,0): ensure the full sprite stays on screen
+    this.player.unitX = Phaser.Math.Clamp(
+      this.player.unitX,
+      0,
+      WIDTH - this.player.width
+    );
+
+    // Call original update to handle movement lerp and shooting logic
     originalUpdate();
   };
 };
@@ -252,4 +265,3 @@ if (!window.cordova) {
     document.dispatchEvent(event);
   }, 50);
 }
-    

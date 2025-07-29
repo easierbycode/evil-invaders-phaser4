@@ -6,8 +6,8 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
     id: number = 0;
     end_direction = new Phaser.Math.Vector2(0, 0);
 
-    constructor(scene, x, y, texture = "bullet") {
-        super(scene, x, y, texture);
+    constructor(scene, x, y, textureKey = "game_asset", frame = "bullet") {
+        super(scene, x, y, textureKey, frame);
         this.speed = 450; // Store speed as a value, not a function
         
         // Only add bloom if postFX is available
@@ -31,13 +31,8 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
         this.setActive(true);
         this.setVisible(true);
 
-        // Calculate direction towards target
-        if (targetX === 1 && targetY === 0) {
-            this.body.setVelocity(this.speed, 0);
-        } else {
-            this.end_direction.setTo(targetX - x, targetY - y).normalize();
-            this.body.setVelocity(this.end_direction.x * this.speed, this.end_direction.y * this.speed);
-        }
+        // Always fire straight up for player bullets
+        this.body.setVelocity(0, -this.speed);
     }
 
     destroyBullet ()

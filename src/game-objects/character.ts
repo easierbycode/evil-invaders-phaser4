@@ -7,6 +7,7 @@ export class Character extends Phaser.GameObjects.Sprite {
   deadFlg = 0;
   explosion?: Character;
   tl?: any;
+  textureKey: string;
 
   constructor(
     characterTextures: string[],
@@ -22,6 +23,8 @@ export class Character extends Phaser.GameObjects.Sprite {
       opts.textureKey || "game_asset",
       characterTextures[0]
     );
+
+    this.textureKey = opts.textureKey || "game_asset";
 
     // Ensure pixel-perfect rendering
     this.setTexture(opts.textureKey || "game_asset", characterTextures[0]);

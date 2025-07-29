@@ -140,9 +140,8 @@ export class Player extends Character {
     });
     this.scene.time.addEvent({
       callback: () => {
-        // o.body.setSize(o.width - 14, o.height - 40),
-        o.body.setSize(o.height - 40, o.width - 14),
-          // o.body.setOffset(7 + o.width / 2, 20 + o.height / 2),
+        o.body.setSize(o.width - 14, o.height - 40),
+          o.body.setOffset(7, 20),
           (o.barrier.visible = false);
         o.barrierEffect.visible = false;
       }
@@ -241,19 +240,9 @@ export class Player extends Character {
     (this.keyDownFlg = 0), t.preventDefault();
   }
   update() {
-    if (this.keyDownFlg) {
-      switch (this.keyDownCode) {
-        case 37:
-          this.unitX -= 6;
-          break;
-        case 39:
-          this.unitX += 6;
-      }
-      this.unitX <= this.body.width / 2 && (this.unitX = this.body.width / 2),
-        this.unitX >= CONSTANTS.GAME_WIDTH - this.body.width / 2 &&
-        (this.unitX = CONSTANTS.GAME_WIDTH - this.body.width / 2);
-    }
-    (this.x = Math.round(this.x + 0.09 * (this.unitX - (this.x + this.body.width / 2)))),
+    // Keyboard input is now handled by gamepad emulation or separate handlers
+    // When origin is (0,0), this.x already represents the left edge
+    (this.x = Math.round(this.x + 0.09 * (this.unitX - this.x))),
       (this.y = Math.round(this.y + 0.09 * (this.unitY - this.y))),
       (this.barrier.x = this.x),
       (this.barrier.y = this.y),
@@ -264,9 +253,9 @@ export class Player extends Character {
       this.shoot();
     for (var t = 0; t < this.bulletList.length; t++) {
       var e = this.bulletList[t];
-      (e.x += 3.5 * Math.cos(e.rotation)),
-        (e.y += 3.5 * Math.sin(e.rotation)),
-        (e.y <= 40 || e.x <= -e.width || e.x >= CONSTANTS.GAME_WIDTH) &&
+      // Let physics handle bullet movement - remove manual position updates
+      // Check if bullet is out of bounds
+      (e.y <= -50 || e.x <= -50 || e.x >= CONSTANTS.GAME_WIDTH + 200) &&
         (this.bulletRemove(e), this.bulletRemoveComplete(e));
     }
   }
@@ -508,19 +497,19 @@ export class Player extends Character {
 
   fireBullet() {
     const bulletTexture = this.shootData.texture?.[0] || 'bullet';
-    // When origin is (0,0): this.x is left edge, this.y is top edge
-    const bulletX = this.x + this.width;  // Full width to get right edge
-    const bulletY = this.y;               // Already at top edge
+    // Use full sprite width for consistent bullet spawn position
+    const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
+    const bulletY = this.y + 10;  // Slightly below top edge for better visual
     
-    const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
+    const bullet = new Bullet(this.scene, bulletX, bulletY, this.textureKey || 'game_asset', bulletTexture);
     bullet.id = ++this.bulletIdCnt;
     bullet.rotation = -Math.PI / 2; // Point upward
     this.bulletList.push(bullet);
     this.scene.add.existing(bullet);
     
-    // Fire the bullet upward
-    if (bullet.fire) {
-        bullet.fire(bulletX, bulletY, bulletX, -100);
+    // Fire the bullet straight upward
+    if (bullet.body) {
+        bullet.body.setVelocity(0, -this.shootData.speed || -450);
     }
 }
 
