@@ -494,14 +494,21 @@ export class Player extends Character {
       });
   }
   handleGamepadInput(gamepad: Phaser.Input.Gamepad.Gamepad) {
-    if (gamepad.buttons.some((button, index) => button.pressed && index < 4)) {
-      this.shoot();
+    const shootButton = gamepad.buttons.some((button, index) => button.pressed && index < 4);
+    if (shootButton && !this.shootOn) {
+      this.shootStart();
+    } else if (!shootButton && this.shootOn) {
+      this.shootStop();
     }
   }
 
   fireBullet() {
     const bulletTexture = this.shootData.texture?.[0] || 'bullet';
-    const bullet = new Bullet(this.scene, this.x, this.y - this.height * this.originY, bulletTexture);
+    // When origin is (0,0): this.x is left edge, this.y is top edge
+    const bulletX = this.x + this.width;  // Full width to get right edge
+    const bulletY = this.y;               // Already at top edge
+    
+    const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
     bullet.id = ++this.bulletIdCnt;
     bullet.rotation = -Math.PI / 2; // Point upward
     this.bulletList.push(bullet);
@@ -509,9 +516,9 @@ export class Player extends Character {
     
     // Fire the bullet upward
     if (bullet.fire) {
-        bullet.fire(this.x, this.y - this.height * this.originY, this.x, -100);
+        bullet.fire(bulletX, bulletY, bulletX, -100);
     }
-  }
+}
 
   caFire() { }
   onDamage(t) {
@@ -659,6 +666,51 @@ export class Player extends Character {
       (this.keyDownListener = null),
       (this.keyUpListener = null);
   }
+  destroy() {
+    // Clean up event listeners
+    if (this.keyDownListener) {
+      document.removeEventListener("keydown", this.keyDownListener);
+      this.keyDownListener = null;
+    }
+    if (this.keyUpListener) {
+      document.removeEventListener("keyup", this.keyUpListener);
+      this.keyUpListener = null;
+    }
+    
+    // Clean up drag area
+    if (this.dragAreaRect) {
+      this.dragAreaRect.destroy();
+      this.dragAreaRect = null;
+    }
+    
+    // Clean up barrier and effects
+    if (this.barrier) {
+      this.barrier.destroy();
+      this.barrier = null;
+    }
+    if (this.barrierEffect) {
+      this.barrierEffect.destroy();
+      this.barrierEffect = null;
+    }
+    
+    // Clean up bullets
+    for (let i = 0; i < this.bulletList.length; i++) {
+      if (this.bulletList[i]) {
+        this.bulletList[i].destroy();
+      }
+    }
+    this.bulletList = [];
+    
+    // Clean up timeline
+    if (this.tl) {
+      this.tl.kill();
+      this.tl = null;
+    }
+    
+    // Call parent destroy
+    super.destroy();
+  }
+  
   get percent() {
     return this._percent;
   }

@@ -63,8 +63,14 @@ export class GameScene extends Phaser.Scene
       this.player.speed = 150;
 
       this.player.update = () => {
+        if (!this.player || !this.player.body) return;
+        
         const pad = this.player.gamepad;
         if (!pad) return;
+        
+        // Handle shooting
+        this.player.handleGamepadInput(pad);
+        
         const DEAD_ZONE = 0.1;
         const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
         const right = pad.right || pad.leftStick.x > DEAD_ZONE;
@@ -93,7 +99,7 @@ export class GameScene extends Phaser.Scene
   update() {
     this.frameCnt++;
 
-    if (this.player) this.player.update();
+    if (this.player && this.player.active) this.player.update();
 
     // launch enemyWave() every 80 frames
     if (this.frameCnt % this.waveInterval === 0)  this.enemyWave();
@@ -171,6 +177,14 @@ export class GameScene extends Phaser.Scene
       }
     });
   }
+
+  shutdown() {
+    // Clean up player when scene shuts down
+    if (this.player) {
+      this.player.destroy();
+      this.player = null;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +214,7 @@ function onDeviceReady() {
      * Pointer 0 is always reserved for the mouse.
      * We want two fingers at the same time, so we need
      * mouse (0) + finger‑1 + finger‑2  → 3 total.
-     * On mobile the “mouse” pointer never fires, but
+     * On mobile the "mouse" pointer never fires, but
      * it still counts toward the total.
      */
     activePointers: 3,
