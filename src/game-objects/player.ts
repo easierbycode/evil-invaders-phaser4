@@ -497,9 +497,19 @@ export class Player extends Character {
 
   fireBullet() {
     const bulletTexture = 'bullet'; // Always use the bullet.png from asset-pack.json
+
+    // Grab either the new spec actuator or the legacy one
+    const actuator =
+      this.gamepad?.vibrationActuator ||
+      (this.gamepad?.hapticActuators &&
+        this.gamepad.hapticActuators.length > 0
+        ? this.gamepad.hapticActuators[0]
+        : null);
+
+    // Spawn bullet ------------------------------------------
     // Use full sprite width for consistent bullet spawn position
     const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
-    const bulletY = this.y + 10;  // Slightly below top edge for better visual
+    const bulletY = this.y + 10;              // Slightly below top edge
     
     const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
     bullet.id = ++this.bulletIdCnt;
@@ -507,11 +517,43 @@ export class Player extends Character {
     this.bulletList.push(bullet);
     this.scene.add.existing(bullet);
     
+    // Enhanced haptic feedback ------------------------------
+    if (actuator) {
+      const damage = this.shootData?.damage ?? 1;
+
+      // Base values
+      let duration = 20;            // ms
+      let strongMagnitude = 0.4;    // 0-1
+      let weakMagnitude   = 0.0;
+
+      if (damage >= 2) {            // Big / high-damage shot
+        duration        = 35;
+        strongMagnitude = 0.9;
+        weakMagnitude   = 0.2;
+      }
+
+      // Slight positional flavour – shots from edges feel different
+      const edgeFactor = Math.abs(this.x - CONSTANTS.GAME_WIDTH / 2) / (CONSTANTS.GAME_WIDTH / 2);
+      strongMagnitude = Math.min(1, strongMagnitude + edgeFactor * 0.1);
+
+      // Try new spec first (playEffect), fallback to legacy pulse
+      if (typeof actuator.playEffect === 'function') {
+        actuator.playEffect('dual-rumble', {
+          startDelay: 0,
+          duration,
+          strongMagnitude,
+          weakMagnitude
+        }).catch(() => {}); // silently ignore failures
+      } else if (typeof actuator.pulse === 'function') {
+        actuator.pulse(strongMagnitude, duration);
+      }
+    }
+
     // Fire the bullet straight upward
     if (bullet.body) {
-        bullet.body.setVelocity(0, -this.shootData.speed || -450);
+      bullet.body.setVelocity(0, -(this.shootData?.speed ?? 450));
     }
-}
+  }
 
   caFire() { }
   onDamage(t) {

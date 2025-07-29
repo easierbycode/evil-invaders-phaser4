@@ -14,7 +14,8 @@
     "mcp": "tsc --project tsconfig.server.json && node dist/server/server.js",
     "build:android": "vite build && cordova-icon && cordova-splash && cordova build android",
     "electron": "vite --config vite.electron.config.ts",
-    "build:linux": "vite build && electron-builder"
+    "build:linux": "vite build && electron-builder",
+    "ngrok": "ngrok http 5173 --authtoken=7TyVYr6rw5hXcJt3pH6NX_5k5BcKw4jUFnEncQbNRoY --domain=d.codemonkey.games"
   },
   "keywords": [],
   "author": {
@@ -32,6 +33,7 @@
     "@types/express": "^5.0.3",
     "@types/glob": "^8.1.0",
     "@types/node": "^24.0.15",
+    "ngrok": "^5.0.0-beta.2",
     "phasereditor2d-launcher": "^3.67.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",

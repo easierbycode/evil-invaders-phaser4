@@ -7,8 +7,13 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
     end_direction = new Phaser.Math.Vector2(0, 0);
 
     constructor(scene, x, y, textureKey = "game_asset", frame = "bullet") {
-        // If frame is provided, use it; otherwise textureKey is a standalone image
-        if (frame !== undefined) {
+        // Decide at runtime whether to pass a frame. Stand-alone images only
+        // have one frame, so passing a frame name will throw an error.
+        const tex = scene.textures.exists(textureKey) ? scene.textures.get(textureKey) : null;
+        const hasMultipleFrames = tex ? tex.frameTotal > 1 : false;
+        const isValidFrame      = hasMultipleFrames && typeof tex.has === 'function' && tex.has(frame);
+
+        if (frame !== undefined && isValidFrame) {
             super(scene, x, y, textureKey, frame);
         } else {
             super(scene, x, y, textureKey);
