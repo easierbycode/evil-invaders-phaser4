@@ -494,8 +494,8 @@ export class Player extends Character {
       });
   }
   handleGamepadInput(gamepad: Phaser.Input.Gamepad.Gamepad) {
-    if (gamepad.buttons.some(button => button.pressed)) {
-      this.fireBullet();
+    if (gamepad.buttons.some((button, index) => button.pressed && index < 4)) {
+      this.shoot();
     }
   }
 
