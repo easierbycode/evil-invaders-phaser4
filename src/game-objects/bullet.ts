@@ -7,7 +7,16 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
     end_direction = new Phaser.Math.Vector2(0, 0);
 
     constructor(scene, x, y, textureKey = "game_asset", frame = "bullet") {
-        super(scene, x, y, textureKey, frame);
+        // If frame is provided, use it; otherwise textureKey is a standalone image
+        if (frame !== undefined) {
+            super(scene, x, y, textureKey, frame);
+        } else {
+            super(scene, x, y, textureKey);
+        }
+        
+        // Ensure bullet maintains its square aspect ratio (8x8)
+        
+        
         this.speed = 450; // Store speed as a value, not a function
         
         // Only add bloom if postFX is available
@@ -20,6 +29,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
         // Enable physics for the bullet
         scene.physics.add.existing(this);
         this.body.allowGravity = false;
+        
+        // Set physics body to match display size
+        this.body.setSize(8, 8);
     }
 
     fire (x, y, targetX = 1, targetY = 0, bullet_texture = "bullet")

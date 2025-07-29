@@ -3,6 +3,7 @@ import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
 import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
+import { GameScene } from './scenes/GameScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
 import { requestFullscreen } from "./utils/fullscreen";
@@ -215,6 +216,7 @@ function onDeviceReady() {
   }
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
+  parent: "game",
   width: WIDTH,
   height: HEIGHT,
   physics: {
@@ -225,7 +227,6 @@ function onDeviceReady() {
       gravity: { x: 0, y: 0 },
     },
   },
-  parent: "game",
   scene: [LoadScene, OverloadScene, GameScene, EditorScene],
   input: {
     gamepad: true,
@@ -254,6 +255,9 @@ function onDeviceReady() {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+    parent: 'game',
+    width: WIDTH,
+    height: HEIGHT
   },
 })};
 

@@ -496,12 +496,12 @@ export class Player extends Character {
   }
 
   fireBullet() {
-    const bulletTexture = this.shootData.texture?.[0] || 'bullet';
+    const bulletTexture = 'bullet'; // Always use the bullet.png from asset-pack.json
     // Use full sprite width for consistent bullet spawn position
     const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
     const bulletY = this.y + 10;  // Slightly below top edge for better visual
     
-    const bullet = new Bullet(this.scene, bulletX, bulletY, this.textureKey || 'game_asset', bulletTexture);
+    const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
     bullet.id = ++this.bulletIdCnt;
     bullet.rotation = -Math.PI / 2; // Point upward
     this.bulletList.push(bullet);

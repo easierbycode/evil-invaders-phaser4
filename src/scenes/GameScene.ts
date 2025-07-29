@@ -1,22 +1,13 @@
-import Phaser from "phaser";
-import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
-import { Player } from "../game-objects/player";
-import { WIDTH, HEIGHT } from "../constants";
-import { requestFullscreen } from "../utils/fullscreen";
-import { applyAtlasOverrides } from '../utils/helper-applyAtlasOverrides';
-import { setupSecretTouchHandler } from "../utils/helper-checkForSecretTouch";
+import Phaser from 'phaser';
+import { WIDTH, HEIGHT } from '../constants';
 
 export class GameScene extends Phaser.Scene {
-	#startBtn!: Phaser.GameObjects.Sprite;
-	player!: Player;
-	waveInterval = 80;
-	frameCnt = 0;
-	waveCount = 0;
-	enemyGroup!: Phaser.Physics.Arcade.Group;
-	stageEnemyPositionList: any[];
-
+	player: any;
+	enemyGroup: any;
+	stageEnemyPositionList: any;
+	
 	constructor() {
-	super('game-scene');
+	super({ key: 'game-scene' });
 	}
 
 	preload() {
@@ -24,138 +15,44 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	async create() {
-	// Setup pixel-perfect camera
+	// Set pixel-perfect camera settings
 	this.cameras.main.setRoundPixels(true);
 	
-	// 0️⃣  Secret touch to launch editor.
-	setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
-
-	// 1️⃣  Hot‑key to launch editor.
-	this.input.keyboard.on('keydown-E', () => this.launchEditor());
+	// Calculate and apply integer scaling
+	this.setupIntegerScaling();
 	
-	// 2️⃣  Apply overrides before we use the atlas.
-	await applyAtlasOverrides(this);
-
-	// @ts-ignore
-	window.gameScene = this;
-
-	this.#startBtn = this.physics
-		.add.sprite(WIDTH / 2, 330, 'game_ui', 'titleStartText.gif')
-		.setInteractive();
-
-	this.#startBtn.on('pointerup', () => {
-		requestFullscreen(this.game.canvas);
-		const pads = this.input.gamepad.gamepads;
-		createPlayer(pads[0] || null);
-	});
-
-	const createPlayer = (gamepad: Phaser.Input.Gamepad.Gamepad | null) => {
-		if (this.player) return;
-
-		if (this.#startBtn) this.#startBtn.destroy();
-		const alert = document.getElementById('gamepadAlert');
-		if (alert) alert.style.display = 'none';
-
-		const d = PROPERTIES.resource.recipe.data.playerData;
-
-		this.player = new Player(d);
-		this.player.setPosition(Math.round(WIDTH / 2), Math.round(HEIGHT - 48));
-		this.player.gamepad = gamepad;
-		this.player.speed = 150;
-
-		this.player.update = () => {
-		if (!this.player || !this.player.body) return;
-		
-		const pad = this.player.gamepad;
-		if (!pad) return;
-		
-		// Handle shooting
-		this.player.handleGamepadInput(pad);
-		
-		const DEAD_ZONE = 0.1;
-		const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
-		const right = pad.right || pad.leftStick.x > DEAD_ZONE;
-
-		if (left)       this.player.body.setVelocityX(-this.player.speed);
-		else if (right) this.player.body.setVelocityX(this.player.speed);
-		else            this.player.body.setVelocityX(0);
-		};
-	};
-
-	// Existing game‑pad hookup
-	const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
-	if (firstPad) createPlayer(firstPad);
-	this.input.gamepad.once('connected', pad => createPlayer(pad));
-
-	this.enemyGroup = this.physics.add.group();
-
-	this.stageEnemyPositionList = PROPERTIES.resource.recipe.data[
-		"stage" + PROPERTIES.stageId
-	].enemylist
-		.slice()
-		.reverse();
+	// Listen for resize events
+	this.scale.on('resize', this.setupIntegerScaling, this);
 	}
-
+	
+	setupIntegerScaling() {
+	const { width, height } = this.scale.gameSize;
+	const { width: parentWidth, height: parentHeight } = this.scale.parentSize;
+	
+	// Calculate the maximum integer scale that fits
+	const scaleX = Math.floor(parentWidth / WIDTH);
+	const scaleY = Math.floor(parentHeight / HEIGHT);
+	const scale = Math.max(1, Math.min(scaleX, scaleY));
+	
+	// Apply integer zoom to camera
+	this.cameras.main.setZoom(scale);
+	
+	// Center the camera
+	const scaledWidth = WIDTH * scale;
+	const scaledHeight = HEIGHT * scale;
+	const offsetX = (parentWidth - scaledWidth) / 2;
+	const offsetY = (parentHeight - scaledHeight) / 2;
+	
+	// Adjust camera viewport to center the game
+	this.cameras.main.setViewport(
+		offsetX,
+		offsetY,
+		scaledWidth,
+		scaledHeight
+	);
+	}
+	
 	update() {
-	this.frameCnt++;
-
-	if (this.player && this.player.active) this.player.update();
-
-	// launch enemyWave() every 80 frames
-	if (this.frameCnt % this.waveInterval === 0) this.enemyWave();
-	}
-
-	enemyWave() {
-	if (this.waveCount >= this.stageEnemyPositionList.length) {
-		console.log("All waves completed");
-		return;
-	}
-
-	const wave = this.stageEnemyPositionList[this.waveCount];
-	wave.forEach((enemyCode: string, positionIndex: number) => {
-		if (enemyCode !== "00") {
-		const enemyType = String(enemyCode).substr(0, 1);
-		const itemType = String(enemyCode).substr(1, 2);
-
-		const enemyData = PROPERTIES.resource.recipe.data.enemyData[
-			`enemy${enemyType}`
-		];
-		if (!enemyData) {
-			console.warn(`Enemy type ${enemyType} not found.`);
-			return;
-		}
-
-		console.log({enemyData});
-		}
-	});
-
-	this.waveCount++;
-	}
-
-	async launchEditor() {
-	// Flash screen red and shake to indicate secret found
-	this.cameras.main.flash(500, 255, 0, 0);
-	this.cameras.main.shake(500, 0.02);
-	
-	// Wait for effects to complete before showing editor
-	await new Promise(resolve => this.time.delayedCall(600, resolve));
-	
-	this.scene.pause();
-	this.scene.launch('editor-scene');
-
-	// Re-enable input when editor scene stops
-	this.scene.get('editor-scene').events.once('shutdown', () => {
-		if (this.#startBtn) {
-		this.#startBtn.setInteractive();
-		}
-	});
-	}
-
-	shutdown() {
-	// Clean up player when scene shuts down
-	if (this.player) {
-		this.player.destroy();
-		this.player = null;
-	}
+	// Update logic handled in main.ts
 	}
 }
