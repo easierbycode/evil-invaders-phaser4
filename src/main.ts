@@ -28,9 +28,15 @@ export class GameScene extends Phaser.Scene
     const baseUrl = import.meta.env.BASE_URL || '/';
     this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
     
-    // Load space background images from stg-game-engine
-    this.load.image('background-deepest', `${baseUrl}assets/background/stars.png`);
-    this.load.image('background-middleLayer', `${baseUrl}assets/background/corridor.png`);
+    // Load space background images - these need to be in your assets folder
+    // You'll need to copy these from stg-game-engine/images/background/
+    this.load.image('stars-bg', `${baseUrl}assets/background/stars.png`);
+    this.load.image('corridor-bg', `${baseUrl}assets/background/corridor.png`);
+    
+    // Add error handling for missing assets
+    this.load.on('loaderror', (file) => {
+      console.warn(`Failed to load: ${file.key} from ${file.url}`);
+    });
   }
 
   async create()
@@ -38,15 +44,24 @@ export class GameScene extends Phaser.Scene
     // 0️⃣  Secret touch to launch editor.
     setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
     
-    // Create background layers
-    this.backgroundDeepest = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'background-deepest');
-    this.backgroundDeepest.setOrigin(0, 0);
-    this.backgroundDeepest.setScrollFactor(0);
+    // Create background layers only if textures are loaded
+    if (this.textures.exists('stars-bg')) {
+      this.backgroundDeepest = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'stars-bg');
+      this.backgroundDeepest.setOrigin(0, 0);
+      this.backgroundDeepest.setScrollFactor(0);
+      this.backgroundDeepest.setDepth(-2); // Ensure it's behind everything
+    } else {
+      console.warn('Stars background not found - using solid color fallback');
+      this.cameras.main.setBackgroundColor('#000033');
+    }
     
-    this.backgroundMiddle = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'background-middleLayer');
-    this.backgroundMiddle.setOrigin(0, 0);
-    this.backgroundMiddle.setScrollFactor(0);
-    this.backgroundMiddle.setAlpha(0.8); // Make middle layer slightly transparent
+    if (this.textures.exists('corridor-bg')) {
+      this.backgroundMiddle = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'corridor-bg');
+      this.backgroundMiddle.setOrigin(0, 0);
+      this.backgroundMiddle.setScrollFactor(0);
+      this.backgroundMiddle.setAlpha(0.6); // Make middle layer semi-transparent
+      this.backgroundMiddle.setDepth(-1); // Above deepest but behind game objects
+    }
 
     // 1️⃣  Hot‑key to launch editor.
     this.input.keyboard.on('keydown-E', () => this.launchEditor());
@@ -141,15 +156,21 @@ export class GameScene extends Phaser.Scene
 
     if (this.player && this.player.active) this.player.update();
     
-    // Parallax scrolling effect
-    const cameraY = this.cameras.main.scrollY;
-    const deltaY = cameraY - this.prevCameraY;
-    
-    // Scroll backgrounds at different speeds for parallax effect
-    this.backgroundDeepest.tilePositionY += deltaY * 0.1;  // Slowest (furthest)
-    this.backgroundMiddle.tilePositionY += deltaY * 0.3;   // Medium speed
-    
-    this.prevCameraY = cameraY;
+    // Parallax scrolling effect - only if backgrounds exist
+    if (this.backgroundDeepest || this.backgroundMiddle) {
+      const cameraY = this.cameras.main.scrollY;
+      const deltaY = cameraY - this.prevCameraY;
+      
+      // Scroll backgrounds at different speeds for parallax effect
+      if (this.backgroundDeepest) {
+        this.backgroundDeepest.tilePositionY += deltaY * 0.1;  // Slowest (furthest)
+      }
+      if (this.backgroundMiddle) {
+        this.backgroundMiddle.tilePositionY += deltaY * 0.3;   // Medium speed
+      }
+      
+      this.prevCameraY = cameraY;
+    }
 
     // launch enemyWave() every 80 frames
     if (this.frameCnt % this.waveInterval === 0)  this.enemyWave();
