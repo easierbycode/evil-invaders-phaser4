@@ -59,27 +59,33 @@ export class GameScene extends Phaser.Scene
 
       this.player = new Player(d);
       this.player.setPosition(WIDTH / 2, HEIGHT - 48);
+      this.player.unitX = WIDTH / 2;
+      this.player.unitY = HEIGHT - 48;
       this.player.gamepad = gamepad;
       this.player.speed = 150;
 
-      this.player.update = () => {
-        if (!this.player || !this.player.body) return;
-        
-        const pad = this.player.gamepad;
-        if (!pad) return;
-        
-        // Handle shooting
-        this.player.handleGamepadInput(pad);
-        
-        const DEAD_ZONE = 0.1;
-        const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
-        const right = pad.right || pad.leftStick.x > DEAD_ZONE;
+  const originalUpdate = this.player.update.bind(this.player);
+  this.player.update = () => {
+    if (!this.player || !this.player.body) return;
+    
+    const pad = this.player.gamepad;
+    if (!pad) return;
+    
+    // Handle gamepad input for shooting
+    this.player.handleGamepadInput(pad);
+    
+    const DEAD_ZONE = 0.1;
+    const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
+    const right = pad.right || pad.leftStick.x > DEAD_ZONE;
 
-        if (left)       this.player.body.setVelocityX(-this.player.speed);
-        else if (right) this.player.body.setVelocityX(this.player.speed);
-        else            this.player.body.setVelocityX(0);
-      };
-    };
+    if (left)       this.player.body.setVelocityX(-this.player.speed);
+    else if (right) this.player.body.setVelocityX(this.player.speed);
+    else            this.player.body.setVelocityX(0);
+    
+    // Call original update to handle shooting logic
+    originalUpdate();
+  };
+};
 
     // Existing game‑pad hookup
     const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
@@ -246,3 +252,4 @@ if (!window.cordova) {
     document.dispatchEvent(event);
   }, 50);
 }
+    

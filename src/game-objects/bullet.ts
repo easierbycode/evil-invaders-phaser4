@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 export class Bullet extends Phaser.Physics.Arcade.Sprite
 {
     speed;
-    flame;
+    id: number = 0;
     end_direction = new Phaser.Math.Vector2(0, 0);
 
     constructor(scene, x, y, texture = "bullet") {
@@ -73,4 +73,3 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
             // No need to update position manually, physics engine does it
         }
 }
-    

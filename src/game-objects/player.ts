@@ -182,7 +182,10 @@ export class Player extends Character {
       (o.shootSpeed = 0),
       (o.shootInterval = 0),
       (o.shootData = {}),
-      o.shootMode,
+      // Initialize with default shooting mode
+      (o.shootMode = t.defaultShootName || Player.SHOOT_NAME_NORMAL),
+      (o.shootData = o.shootNormalData),
+      (o.shootInterval = o.shootNormalData.interval),
       (o._percent = 0),
       (o.unitX = 0),
       (o.unitY = 0),
@@ -280,7 +283,7 @@ export class Player extends Character {
         Character.CUSTOM_EVENT_DEAD_COMPLETE,
         this.bulletRemoveComplete.bind(this, t)
       );
-    t.dead();
+    t.destroy();
   }
   shootModeChange(t) {
     switch (((this.shootMode = t), this.shootMode)) {
