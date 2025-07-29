@@ -63,6 +63,7 @@ export class GameScene extends Phaser.Scene
       this.player.unitX = WIDTH / 2;
       this.player.unitY = HEIGHT - 48;
       this.player.gamepad = gamepad;
+      this.player.gamepadIndex = gamepad.index;
       this.player.gamepadVibration = gamepad?.vibrationActuator;
       this.player.speed = 150;
 

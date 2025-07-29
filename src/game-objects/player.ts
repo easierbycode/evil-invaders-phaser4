@@ -196,10 +196,12 @@ export class Player extends Character {
       (o.beforeY = 0),
       (o.keyDownFlg = 0),
       (o.keyDownCode = ""),
-      (o.theWorldFlg = false),
-      o
-    );
-  }
+    (o.theWorldFlg = false),
+    (o.gamepad = null),
+    (o.gamepadIndex = -1),
+    o
+  );
+}
   static SHOOT_NAME_NORMAL = "normal";
   static SHOOT_NAME_BIG = "big";
   static SHOOT_NAME_3WAY = "3way";
@@ -208,6 +210,7 @@ export class Player extends Character {
   static BARRIER = "barrier";
   onScreenDragStart(pointer, localX, localY, event) {
     (this.unitX = localX), (this.screenDragFlg = 1);
+    this.shootStart();
   }
   onScreenDragMove(pointer, localX, localY, event) {
     if (this.screenDragFlg) {
@@ -221,6 +224,7 @@ export class Player extends Character {
   }
   onScreenDragEnd(t) {
     this.screenDragFlg = 0;
+    this.shootStop();
   }
   onKeyDown(t) {
     // TV remote - channel up/down to move, 0 for special
@@ -498,13 +502,21 @@ export class Player extends Character {
   fireBullet() {
     const bulletTexture = 'bullet'; // Always use the bullet.png from asset-pack.json
 
-    // Grab either the new spec actuator or the legacy one
-    const actuator =
-      this.gamepad?.vibrationActuator ||
-      (this.gamepad?.hapticActuators &&
-        this.gamepad.hapticActuators.length > 0
-        ? this.gamepad.hapticActuators[0]
-        : null);
+    let actuator: any = null; // Use 'any' to avoid type conflicts between specs
+    if (navigator.getGamepads && this.gamepadIndex > -1) {
+        const pad = navigator.getGamepads()[this.gamepadIndex];
+
+        if (pad && pad.connected) {
+            // Modern spec
+            if (pad.vibrationActuator) {
+                actuator = pad.vibrationActuator;
+            }
+            // Older spec
+            else if (pad.hapticActuators && pad.hapticActuators.length > 0) {
+                actuator = pad.hapticActuators[0];
+            }
+        }
+    }
 
     // Spawn bullet ------------------------------------------
     // Use full sprite width for consistent bullet spawn position
@@ -521,31 +533,27 @@ export class Player extends Character {
     if (actuator) {
       const damage = this.shootData?.damage ?? 1;
 
-      // Base values
-      let duration = 20;            // ms
-      let strongMagnitude = 0.4;    // 0-1
-      let weakMagnitude   = 0.0;
+      const durationBase = 25;                     // ms
+      const magnitudeBase = 0.4;                  // normal shot
+      const duration = durationBase + (damage - 1) * 10;
+      let strongMagnitude = Math.min(1, magnitudeBase + (damage - 1) * 0.45);
+      let weakMagnitude   = strongMagnitude * 0.35;
 
-      if (damage >= 2) {            // Big / high-damage shot
-        duration        = 35;
-        strongMagnitude = 0.9;
-        weakMagnitude   = 0.2;
-      }
-
-      // Slight positional flavour – shots from edges feel different
+      // Slight positional flavour (more rumble the further from centre)
       const edgeFactor = Math.abs(this.x - CONSTANTS.GAME_WIDTH / 2) / (CONSTANTS.GAME_WIDTH / 2);
-      strongMagnitude = Math.min(1, strongMagnitude + edgeFactor * 0.1);
+      weakMagnitude = Math.min(1, weakMagnitude + edgeFactor * 0.2);
 
-      // Try new spec first (playEffect), fallback to legacy pulse
-      if (typeof actuator.playEffect === 'function') {
-        actuator.playEffect('dual-rumble', {
-          startDelay: 0,
-          duration,
-          strongMagnitude,
-          weakMagnitude
-        }).catch(() => {}); // silently ignore failures
-      } else if (typeof actuator.pulse === 'function') {
-        actuator.pulse(strongMagnitude, duration);
+      if (typeof (actuator as any).playEffect === 'function') {
+        (actuator as any)
+          .playEffect('dual-rumble', {
+            startDelay: 0,
+            duration,
+            strongMagnitude,
+            weakMagnitude
+          })
+          .catch(() => {}); // ignore unsupported devices
+      } else if (typeof (actuator as any).pulse === 'function') {
+        (actuator as any).pulse(strongMagnitude, duration);
       }
     }
 
