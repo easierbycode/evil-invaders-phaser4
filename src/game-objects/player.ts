@@ -133,6 +133,7 @@ export class Player extends Character {
       ]);
     o.barrier = new Character(t.barrier.texture);
     o.barrier.animationSpeed = 0.25;
+    o.barrier.setScale(Math.round(o.barrier.scale * 100) / 100);
     o.barrierEffect = new Character([t.barrierEffectTexture], {
       autoPlay: false,
       physics: false
@@ -249,8 +250,8 @@ export class Player extends Character {
         this.unitX >= CONSTANTS.GAME_WIDTH - this.body.width / 2 &&
         (this.unitX = CONSTANTS.GAME_WIDTH - this.body.width / 2);
     }
-    (this.x += 0.09 * (this.unitX - (this.x + this.body.width / 2))),
-      (this.y += 0.09 * (this.unitY - this.y)),
+    (this.x = Math.round(this.x + 0.09 * (this.unitX - (this.x + this.body.width / 2)))),
+      (this.y = Math.round(this.y + 0.09 * (this.unitY - this.y))),
       (this.barrier.x = this.x),
       (this.barrier.y = this.y),
       this.bulletFrameCnt++,
@@ -352,10 +353,10 @@ export class Player extends Character {
       (this.barrierEffect.y = this.y),
       (this.barrierEffect.alpha = 1),
       (this.barrierEffect.visible = true),
-      this.barrierEffect.setScale(0.5),
+      this.barrierEffect.setScale(1),
       TweenMax.to(this.barrierEffect, 0.4, {
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: 2,
+        scaleY: 2,
         ease: Quint.easeOut
       }),
       TweenMax.to(this.barrierEffect, 0.5, {

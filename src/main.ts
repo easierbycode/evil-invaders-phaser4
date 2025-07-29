@@ -224,6 +224,10 @@ function onDeviceReady() {
   },
   render: {
     pixelArt: true,
+    antialias: false,
+    antialiasGL: false,
+    mipmapFilter: 'NEAREST',
+    roundPixels: true
   },
   autoRound: true,
   roundPixels: true,
