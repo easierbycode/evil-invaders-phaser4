@@ -17,6 +17,9 @@ export class GameScene extends Phaser.Scene
   waveInterval = 80;
   frameCnt = 0;
   waveCount = 0;
+  backgroundDeepest!: Phaser.GameObjects.TileSprite;
+  backgroundMiddle!: Phaser.GameObjects.TileSprite;
+  prevCameraY = 0;
   
 
   constructor() { super('game-scene'); }
@@ -24,12 +27,26 @@ export class GameScene extends Phaser.Scene
   preload() {
     const baseUrl = import.meta.env.BASE_URL || '/';
     this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
+    
+    // Load space background images from stg-game-engine
+    this.load.image('background-deepest', `${baseUrl}assets/background/stars.png`);
+    this.load.image('background-middleLayer', `${baseUrl}assets/background/corridor.png`);
   }
 
   async create()
   {
     // 0️⃣  Secret touch to launch editor.
     setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
+    
+    // Create background layers
+    this.backgroundDeepest = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'background-deepest');
+    this.backgroundDeepest.setOrigin(0, 0);
+    this.backgroundDeepest.setScrollFactor(0);
+    
+    this.backgroundMiddle = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'background-middleLayer');
+    this.backgroundMiddle.setOrigin(0, 0);
+    this.backgroundMiddle.setScrollFactor(0);
+    this.backgroundMiddle.setAlpha(0.8); // Make middle layer slightly transparent
 
     // 1️⃣  Hot‑key to launch editor.
     this.input.keyboard.on('keydown-E', () => this.launchEditor());
@@ -123,6 +140,16 @@ export class GameScene extends Phaser.Scene
     this.frameCnt++;
 
     if (this.player && this.player.active) this.player.update();
+    
+    // Parallax scrolling effect
+    const cameraY = this.cameras.main.scrollY;
+    const deltaY = cameraY - this.prevCameraY;
+    
+    // Scroll backgrounds at different speeds for parallax effect
+    this.backgroundDeepest.tilePositionY += deltaY * 0.1;  // Slowest (furthest)
+    this.backgroundMiddle.tilePositionY += deltaY * 0.3;   // Medium speed
+    
+    this.prevCameraY = cameraY;
 
     // launch enemyWave() every 80 frames
     if (this.frameCnt % this.waveInterval === 0)  this.enemyWave();

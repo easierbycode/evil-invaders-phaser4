@@ -7,6 +7,11 @@
                 "key": "bullet"
             },
             {
+                "url": "assets/clouds.png",
+                "type": "image",
+                "key": "clouds"
+            },
+            {
                 "url": "assets/flares.png",
                 "type": "image",
                 "key": "flares"
