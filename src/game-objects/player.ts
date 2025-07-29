@@ -529,13 +529,13 @@ export class Player extends Character {
     this.bulletList.push(bullet);
     this.scene.add.existing(bullet);
     
-    // Enhanced haptic feedback ------------------------------
+    const damage = this.shootData?.damage ?? 1;
+    const durationBase = 25;                     // ms
+    const duration = durationBase + (damage - 1) * 10;
+    
+    // Gamepad haptic feedback
     if (actuator) {
-      const damage = this.shootData?.damage ?? 1;
-
-      const durationBase = 25;                     // ms
       const magnitudeBase = 0.4;                  // normal shot
-      const duration = durationBase + (damage - 1) * 10;
       let strongMagnitude = Math.min(1, magnitudeBase + (damage - 1) * 0.45);
       let weakMagnitude   = strongMagnitude * 0.35;
 
@@ -556,6 +556,13 @@ export class Player extends Character {
         (actuator as any).pulse(strongMagnitude, duration);
       }
     }
+    
+    // Mobile device vibration (in sync with gamepad haptics)
+    if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
+      cordova.plugins.vibration.vibrate(duration);
+    } else if (navigator.vibrate) {
+      navigator.vibrate(duration);
+    }
 
     // Fire the bullet straight upward
     if (bullet.body) {
@@ -567,44 +574,54 @@ export class Player extends Character {
   onDamage(t) {
     if (this.barrierFlg);
     else if (!0 !== this.damageAnimationFlg) {
-      let weakMagnitude = this.x / CONSTANTS.GAME_WIDTH;
-      let strongMagnitude = 1 - weakMagnitude;
-      if (
-        ((this.hp -= t),
-          this.hp <= 0 && (this.hp = 0),
-          (this._percent = this.hp / this.maxHp),
-          this.hp <= 0)
-      )
+      this.hp -= t;
+      if (this.hp <= 0) this.hp = 0;
+      this._percent = this.hp / this.maxHp;
+      
+      const weakMagnitude = this.x / CONSTANTS.GAME_WIDTH;
+      const strongMagnitude = 1 - weakMagnitude;
+      
+      if (this.hp <= 0) {
+        // Death vibration - long duration
+        const deathDuration = 777;
+        
+        // Gamepad vibration
         if (this.gamepadVibration) {
           this.gamepadVibration.playEffect("dual-rumble", {
             startDelay: 0,
-            duration: 777,
+            duration: deathDuration,
             weakMagnitude,
             strongMagnitude
           });
-          this.dead();
-        } else {
-          if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
-            cordova.plugins.vibration.vibrate(777);
-          } else {
-            navigator.vibrate?.(777);
-          }
-          this.dead();
         }
-      else {
+        
+        // Mobile vibration (runs simultaneously)
+        if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
+          cordova.plugins.vibration.vibrate(deathDuration);
+        } else if (navigator.vibrate) {
+          navigator.vibrate(deathDuration);
+        }
+        
+        this.dead();
+      } else {
+        // Damage vibration - short duration
+        const damageDuration = 150;
+        
+        // Gamepad vibration
         if (this.gamepadVibration) {
           this.gamepadVibration.playEffect("dual-rumble", {
             startDelay: 0,
-            duration: 150,
+            duration: damageDuration,
             weakMagnitude,
             strongMagnitude
           });
-        } else {
-          if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
-            cordova.plugins.vibration.vibrate(150);
-          } else {
-            navigator.vibrate?.(150);
-          }
+        }
+        
+        // Mobile vibration (runs simultaneously)
+        if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
+          cordova.plugins.vibration.vibrate(damageDuration);
+        } else if (navigator.vibrate) {
+          navigator.vibrate(damageDuration);
         }
         var e = new TimelineMax({
           onComplete: function () {
