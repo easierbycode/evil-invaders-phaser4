@@ -66,7 +66,7 @@ async function createIssue(issue: { title: string; body: string; labels: string[
 }
 
 // === MAIN EXECUTION ===
-const issues = await parseIssuesFromReadme("README.md");
+const issues = await parseIssuesFromReadme("ISSUES.md");
 for (const issue of issues) {
   await createIssue(issue);
 }
