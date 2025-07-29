@@ -521,7 +521,7 @@ export class Player extends Character {
     // Spawn bullet ------------------------------------------
     // Use full sprite width for consistent bullet spawn position
     const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
-    const bulletY = this.y + 10;              // Slightly below top edge
+    const bulletY = this.y;                   // Spawn from top edge (no offset)
     
     const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
     bullet.id = ++this.bulletIdCnt;
