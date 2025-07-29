@@ -158,18 +158,13 @@ export class GameScene extends Phaser.Scene
     
     // Parallax scrolling effect - only if backgrounds exist
     if (this.backgroundDeepest || this.backgroundMiddle) {
-      const cameraY = this.cameras.main.scrollY;
-      const deltaY = cameraY - this.prevCameraY;
-      
-      // Scroll backgrounds at different speeds for parallax effect
+      // Continuously scroll backgrounds downward at different speeds
       if (this.backgroundDeepest) {
-        this.backgroundDeepest.tilePositionY += deltaY * 0.1;  // Slowest (furthest)
+        this.backgroundDeepest.tilePositionY -= 0.5;  // Slowest layer (furthest back)
       }
       if (this.backgroundMiddle) {
-        this.backgroundMiddle.tilePositionY += deltaY * 0.3;   // Medium speed
+        this.backgroundMiddle.tilePositionY -= 1.5;   // Faster layer (closer)
       }
-      
-      this.prevCameraY = cameraY;
     }
 
     // launch enemyWave() every 80 frames
