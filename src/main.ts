@@ -22,7 +22,8 @@ export class GameScene extends Phaser.Scene
   constructor() { super('game-scene'); }
 
   preload() {
-    this.load.pack("pack", "assets/asset-pack.json"); // ← created in the IDE
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
   }
 
   async create()
