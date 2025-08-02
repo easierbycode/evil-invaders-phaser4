@@ -34,12 +34,6 @@ export class GameScene extends Phaser.Scene
     this.load.image('stars-bg', `${baseUrl}assets/background/stars.png`);
     this.load.image('corridor-bg', `${baseUrl}assets/background/corridor.png`);
 
-    // 🔽 NEW: core atlas & game data
-    this.load.atlas(
-      'game_asset',
-      'https://assets.codepen.io/11817390/evil_invaders_asset.png',
-      'https://assets.codepen.io/11817390/evil_invaders_asset.json'
-    );
     this.load.json(
       'game.json',
       'https://assets.codepen.io/11817390/evil_invaders.json'
