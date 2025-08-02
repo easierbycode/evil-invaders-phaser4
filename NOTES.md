@@ -51,6 +51,18 @@ is the atlas being completely overridden? (should I even load the first one?)
 
 
 
+TODO
+====
+
+load game_asset from Firebase atlases/game_asset
+
+
+
+
+
+
+
+
 
 
 
