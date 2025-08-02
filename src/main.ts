@@ -3,12 +3,12 @@ import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
 import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
-import { GameScene } from './scenes/GameScene';
 import { WIDTH, HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
 import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
+import { PackerScene } from "./scenes/PackerScene";
 
 export class GameScene extends Phaser.Scene
 {
@@ -234,10 +234,12 @@ export class GameScene extends Phaser.Scene
     await new Promise(resolve => this.time.delayedCall(600, resolve));
     
     this.scene.pause();              // freeze gameplay
-    this.scene.launch('editor-scene');
+    // this.scene.launch('editor-scene');
+    this.scene.launch('packer-scene');
 
     // Re-enable input when editor scene stops
-    this.scene.get('editor-scene').events.once('shutdown', () => {
+    // this.scene.get('editor-scene').events.once('shutdown', () => {
+    this.scene.get('packer-scene').events.once('shutdown', () => {
       if (this.#startBtn) {
         this.#startBtn.setInteractive();
       }
@@ -273,7 +275,7 @@ function onDeviceReady() {
       gravity: { x: 0, y: 0 },
     },
   },
-  scene: [LoadScene, OverloadScene, GameScene, EditorScene],
+  scene: [LoadScene, OverloadScene, GameScene, EditorScene, PackerScene],
   input: {
     gamepad: true,
     /*

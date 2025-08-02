@@ -29,7 +29,7 @@ export interface CharacterData {
 }
 
 export interface AtlasData {
-    json: string;
+    json: object;
     png: string;
 }
 
