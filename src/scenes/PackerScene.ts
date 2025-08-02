@@ -456,6 +456,47 @@ export class PackerScene extends Phaser.Scene {
             const newAtlasJson = createAtlasJson(spriteDimensions) as AtlasJsonData;
             const newAtlasPng = await createAtlasPng(allSprites, newAtlasJson);
 
+            /* ---------- NEW BLOCK: Ensure image/format/size/scale are under textures[0] ---------- */
+            if (newAtlasJson) {
+                // Make sure textures array exists
+                if (!Array.isArray(newAtlasJson.textures) || newAtlasJson.textures.length === 0) {
+                    newAtlasJson.textures = [{
+                        image: `${this.selectedAtlasKey}.png`,
+                        format: 'RGBA8888',
+                        size: { w: 0, h: 0 },
+                        scale: 1,
+                        frames: []
+                    }];
+                }
+
+                const tex0: any = newAtlasJson.textures[0];
+
+                // Keys we may need to relocate
+                const relocateKeys: Array<keyof any> = ['image', 'format', 'size', 'scale', 'frames'];
+                relocateKeys.forEach(key => {
+                    if ((newAtlasJson as any)[key] !== undefined) {
+                        tex0[key] = (newAtlasJson as any)[key];
+                        delete (newAtlasJson as any)[key];
+                    }
+                    if (newAtlasJson.meta && (newAtlasJson.meta as any)[key] !== undefined) {
+                        tex0[key] = (newAtlasJson.meta as any)[key];
+                        delete (newAtlasJson.meta as any)[key];
+                    }
+                });
+
+                // Guarantee defaults
+                tex0.image = tex0.image ?? `${this.selectedAtlasKey}.png`;
+                tex0.format = tex0.format ?? 'RGBA8888';
+                tex0.scale = tex0.scale ?? 1;
+                if (!tex0.size) {
+                    tex0.size = { w: 0, h: 0 };
+                }
+                if (!tex0.frames) {
+                    tex0.frames = [];
+                }
+            }
+            /* ---------- END NEW BLOCK ---------- */
+
             // Helper to turn object frames into array with required fields
             const objectFramesToArray = (obj: Record<string, any> | undefined): AtlasFrame[] => {
                 if (!obj) return [];

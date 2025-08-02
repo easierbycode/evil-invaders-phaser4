@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
-import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
+// import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
+import { LoadScene } from "./scenes/LoadScene";
 import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
 import { WIDTH, HEIGHT } from "./constants";
@@ -32,6 +33,23 @@ export class GameScene extends Phaser.Scene
     // You'll need to copy these from stg-game-engine/images/background/
     this.load.image('stars-bg', `${baseUrl}assets/background/stars.png`);
     this.load.image('corridor-bg', `${baseUrl}assets/background/corridor.png`);
+
+    // 🔽 NEW: core atlas & game data
+    this.load.atlas(
+      'game_asset',
+      'https://assets.codepen.io/11817390/evil_invaders_asset.png',
+      'https://assets.codepen.io/11817390/evil_invaders_asset.json'
+    );
+    this.load.json(
+      'game.json',
+      'https://assets.codepen.io/11817390/evil_invaders.json'
+    );
+
+    this.load.atlas(
+      'game_ui',
+      'https://assets.codepen.io/11817390/game_ui.png',
+      'https://assets.codepen.io/11817390/game_ui.json'
+    );
     
     // Add error handling for missing assets
     this.load.on('loaderror', (file) => {
@@ -95,9 +113,9 @@ export class GameScene extends Phaser.Scene
       this.player.setPosition(WIDTH / 2, HEIGHT - 48);
       this.player.unitX = WIDTH / 2;
       this.player.unitY = HEIGHT - 48;
-      this.player.gamepad = gamepad;
-      this.player.gamepadIndex = gamepad.index;
-      this.player.gamepadVibration = gamepad?.vibrationActuator;
+      this.player.gamepad = gamepad ?? null;
+      this.player.gamepadIndex = gamepad ? gamepad.index : -1;
+      this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
       this.player.speed = 150;
 
   this.player.body.setCollideWorldBounds(true);
