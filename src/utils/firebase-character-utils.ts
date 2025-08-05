@@ -10,7 +10,7 @@ export interface CharacterData {
     
     // Properties from enemy data
     hp?: number;
-    cagage?: number;
+    spgage?: number;
     interval?: number;
     score?: number;
     shadowOffsetY?: number;
