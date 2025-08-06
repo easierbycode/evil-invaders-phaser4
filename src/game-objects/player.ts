@@ -1,5 +1,5 @@
 import { Bullet } from './bullet';
-import CONSTANTS from "https://codepen.io/CodeMonkeyGames/pen/MWMxmOq.js";
+import { GAME_WIDTH, GAME_HEIGHT } from "./../constants";
 import {
   Graphics
 } from "https://codepen.io/CodeMonkeyGames/pen/MWRrLqy.js";
@@ -152,8 +152,8 @@ export class Player extends Character {
       o.dragAreaRect.fillRect(
         0,
         0,
-        CONSTANTS.GAME_WIDTH,
-        CONSTANTS.GAME_HEIGHT
+        GAME_WIDTH,
+        GAME_HEIGHT
       ),
       o.dragAreaRect.setInteractive({
         useHandCursor: false,
@@ -209,17 +209,12 @@ export class Player extends Character {
   static SHOOT_SPEED_HIGH = "speed_high";
   static BARRIER = "barrier";
   onScreenDragStart(pointer, localX, localY, event) {
-    (this.unitX = localX), (this.screenDragFlg = 1);
+    (this.unitX = localX - this.displayWidth / 2), (this.screenDragFlg = 1);
     this.shootStart();
   }
   onScreenDragMove(pointer, localX, localY, event) {
     if (this.screenDragFlg) {
-      this.unitX = localX;
-      this.unitX = Phaser.Math.Clamp(
-        this.unitX,
-        this.body.width / 2,
-        CONSTANTS.GAME_WIDTH - this.body.width / 2
-      );
+      this.unitX = localX - this.displayWidth / 2;
     }
   }
   onScreenDragEnd(t) {
@@ -259,7 +254,7 @@ export class Player extends Character {
       var e = this.bulletList[t];
       // Let physics handle bullet movement - remove manual position updates
       // Check if bullet is out of bounds
-      (e.y <= -50 || e.x <= -50 || e.x >= CONSTANTS.GAME_WIDTH + 200) &&
+      (e.y <= -50 || e.x <= -50 || e.x >= GAME_WIDTH + 200) &&
         (this.bulletRemove(e), this.bulletRemoveComplete(e));
     }
   }
@@ -470,7 +465,7 @@ export class Player extends Character {
   }
   barrierHitEffect() {
     if (this.gamepadVibration) {
-      let weakMagnitude = this.x / CONSTANTS.GAME_WIDTH;
+      let weakMagnitude = this.x / GAME_WIDTH;
       let strongMagnitude = 1 - weakMagnitude;
       this.gamepadVibration.playEffect("dual-rumble", {
         startDelay: 0,
@@ -540,7 +535,7 @@ export class Player extends Character {
       let weakMagnitude   = strongMagnitude * 0.35;
 
       // Slight positional flavour (more rumble the further from centre)
-      const edgeFactor = Math.abs(this.x - CONSTANTS.GAME_WIDTH / 2) / (CONSTANTS.GAME_WIDTH / 2);
+      const edgeFactor = Math.abs(this.x - GAME_WIDTH / 2) / (GAME_WIDTH / 2);
       weakMagnitude = Math.min(1, weakMagnitude + edgeFactor * 0.2);
 
       if (typeof (actuator as any).playEffect === 'function') {
@@ -578,7 +573,7 @@ export class Player extends Character {
       if (this.hp <= 0) this.hp = 0;
       this._percent = this.hp / this.maxHp;
       
-      const weakMagnitude = this.x / CONSTANTS.GAME_WIDTH;
+      const weakMagnitude = this.x / GAME_WIDTH;
       const strongMagnitude = 1 - weakMagnitude;
       
       if (this.hp <= 0) {

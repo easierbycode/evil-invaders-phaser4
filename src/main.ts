@@ -4,15 +4,14 @@ import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
 import { LoadScene } from "./scenes/LoadScene";
 import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
-import { WIDTH, HEIGHT } from "./constants";
+import { GAME_WIDTH, GAME_HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
 import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
 
-export class GameScene extends Phaser.Scene
-{
+export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
   waveInterval = 80;
@@ -21,14 +20,14 @@ export class GameScene extends Phaser.Scene
   backgroundDeepest!: Phaser.GameObjects.TileSprite;
   backgroundMiddle!: Phaser.GameObjects.TileSprite;
   prevCameraY = 0;
-  
+
 
   constructor() { super('game-scene'); }
 
   preload() {
     const baseUrl = import.meta.env.BASE_URL || '/';
     this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
-    
+
     // Load space background images - these need to be in your assets folder
     // You'll need to copy these from stg-game-engine/images/background/
     this.load.image('stars-bg', `${baseUrl}assets/background/stars.png`);
@@ -44,21 +43,20 @@ export class GameScene extends Phaser.Scene
       'https://assets.codepen.io/11817390/game_ui.png',
       'https://assets.codepen.io/11817390/game_ui.json'
     );
-    
+
     // Add error handling for missing assets
     this.load.on('loaderror', (file) => {
       console.warn(`Failed to load: ${file.key} from ${file.url}`);
     });
   }
 
-  async create()
-  {
+  async create() {
     // 0️⃣  Secret touch to launch editor.
-    setupSecretTouchHandler(this, WIDTH, HEIGHT, this.launchEditor.bind(this));
-    
+    setupSecretTouchHandler(this, GAME_WIDTH, GAME_HEIGHT, this.launchEditor.bind(this));
+
     // Create background layers only if textures are loaded
     if (this.textures.exists('stars-bg')) {
-      this.backgroundDeepest = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'stars-bg');
+      this.backgroundDeepest = this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, 'stars-bg');
       this.backgroundDeepest.setOrigin(0, 0);
       this.backgroundDeepest.setScrollFactor(0);
       this.backgroundDeepest.setDepth(-2); // Ensure it's behind everything
@@ -66,9 +64,9 @@ export class GameScene extends Phaser.Scene
       console.warn('Stars background not found - using solid color fallback');
       this.cameras.main.setBackgroundColor('#000033');
     }
-    
+
     if (this.textures.exists('corridor-bg')) {
-      this.backgroundMiddle = this.add.tileSprite(0, 0, WIDTH, HEIGHT, 'corridor-bg');
+      this.backgroundMiddle = this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, 'corridor-bg');
       this.backgroundMiddle.setOrigin(0, 0);
       this.backgroundMiddle.setScrollFactor(0);
       this.backgroundMiddle.setAlpha(0.6); // Make middle layer semi-transparent
@@ -77,7 +75,7 @@ export class GameScene extends Phaser.Scene
 
     // 1️⃣  Hot‑key to launch editor.
     this.input.keyboard.on('keydown-E', () => this.launchEditor());
-    
+
     // 2️⃣  Apply overrides before we use the atlas.
     await applyAtlasOverrides(this);
 
@@ -85,7 +83,7 @@ export class GameScene extends Phaser.Scene
     window.gameScene = this;
 
     this.#startBtn = this.physics
-      .add.sprite(WIDTH / 2, 330, 'game_ui', 'titleStartText.gif')
+      .add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.gif')
       .setInteractive();
 
     this.#startBtn.on('pointerup', () => {
@@ -104,49 +102,14 @@ export class GameScene extends Phaser.Scene
       const d = PROPERTIES.resource.recipe.data.playerData;
 
       this.player = new Player(d);
-      this.player.setPosition(WIDTH / 2, HEIGHT - 48);
-      this.player.unitX = WIDTH / 2;
-      this.player.unitY = HEIGHT - 48;
+      this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
+      this.player.unitX = GAME_WIDTH / 2;
+      this.player.unitY = GAME_HEIGHT - 48;
       this.player.gamepad = gamepad ?? null;
       this.player.gamepadIndex = gamepad ? gamepad.index : -1;
       this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
       this.player.speed = 150;
-
-  this.player.body.setCollideWorldBounds(true);
-
-  const originalUpdate = this.player.update.bind(this.player);
-  this.player.update = () => {
-    if (!this.player || !this.player.body) return;
-    
-    const pad = this.player.gamepad;
-    if (!pad) return;
-    
-    // Handle gamepad input for shooting
-    this.player.handleGamepadInput(pad);
-    
-    const DEAD_ZONE = 0.1;
-    const left  = pad.left  || pad.leftStick.x < -DEAD_ZONE;
-    const right = pad.right || pad.leftStick.x > DEAD_ZONE;
-
-    const moveSpeed = 6; // pixels per frame
-    if (left) {
-      this.player.unitX -= moveSpeed;
-    } else if (right) {
-      this.player.unitX += moveSpeed;
-    }
-    
-    // Clamp unitX to screen bounds accounting for player width
-    // When origin is (0,0): ensure the full sprite stays on screen
-    this.player.unitX = Phaser.Math.Clamp(
-      this.player.unitX,
-      0,
-      WIDTH - this.player.width
-    );
-
-    // Call original update to handle movement lerp and shooting logic
-    originalUpdate();
-  };
-};
+    };
 
     // Existing game‑pad hookup
     const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
@@ -167,7 +130,7 @@ export class GameScene extends Phaser.Scene
     this.frameCnt++;
 
     if (this.player && this.player.active) this.player.update();
-    
+
     // Parallax scrolling effect - only if backgrounds exist
     if (this.backgroundDeepest || this.backgroundMiddle) {
       // Continuously scroll backgrounds downward at different speeds
@@ -180,7 +143,7 @@ export class GameScene extends Phaser.Scene
     }
 
     // launch enemyWave() every 80 frames
-    if (this.frameCnt % this.waveInterval === 0)  this.enemyWave();
+    if (this.frameCnt % this.waveInterval === 0) this.enemyWave();
   }
 
   enemyWave() {
@@ -202,8 +165,6 @@ export class GameScene extends Phaser.Scene
           console.warn(`Enemy type ${enemyType} not found.`);
           return;
         }
-
-        console.log({enemyData});
 
         // const enemy = new Enemy({
         //   name: enemyData.name,
@@ -241,10 +202,10 @@ export class GameScene extends Phaser.Scene
     // Flash screen red and shake to indicate secret found
     this.cameras.main.flash(500, 255, 0, 0);
     this.cameras.main.shake(500, 0.02);
-    
+
     // Wait for effects to complete before showing editor
     await new Promise(resolve => this.time.delayedCall(600, resolve));
-    
+
     this.scene.pause();              // freeze gameplay
     // this.scene.launch('editor-scene');
     this.scene.launch('packer-scene');
@@ -276,50 +237,51 @@ function onDeviceReady() {
   }
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
-  parent: "game",
-  width: WIDTH,
-  height: HEIGHT,
-  physics: {
-    default: "arcade",
-    arcade: {
-      debug:
-        Number(new URL(window.location.href).searchParams.get("debug")) === 1,
-      gravity: { x: 0, y: 0 },
+    parent: "game",
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
+    physics: {
+      default: "arcade",
+      arcade: {
+        debug:
+          Number(new URL(window.location.href).searchParams.get("debug")) === 1,
+        gravity: { x: 0, y: 0 },
+      },
     },
-  },
-  scene: [LoadScene, OverloadScene, GameScene, EditorScene, PackerScene],
-  input: {
-    gamepad: true,
-    /*
-     * Pointer 0 is always reserved for the mouse.
-     * We want two fingers at the same time, so we need
-     * mouse (0) + finger‑1 + finger‑2  → 3 total.
-     * On mobile the "mouse" pointer never fires, but
-     * it still counts toward the total.
-     */
-    activePointers: 3,
+    scene: [LoadScene, OverloadScene, GameScene, EditorScene, PackerScene],
+    input: {
+      gamepad: true,
+      /*
+       * Pointer 0 is always reserved for the mouse.
+       * We want two fingers at the same time, so we need
+       * mouse (0) + finger‑1 + finger‑2  → 3 total.
+       * On mobile the "mouse" pointer never fires, but
+       * it still counts toward the total.
+       */
+      activePointers: 3,
 
-    // Optional but useful: stop the page scrolling
-    touch: { capture: true }
-  },
-  render: {
-    pixelArt: true,
-    antialias: false,
-    antialiasGL: false,
-    mipmapFilter: 'NEAREST',
-    roundPixels: true
-  },
-  autoRound: true,
-  roundPixels: true,
-  disableContextMenu: true,
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    parent: 'game',
-    width: WIDTH,
-    height: HEIGHT
-  },
-})};
+      // Optional but useful: stop the page scrolling
+      touch: { capture: true }
+    },
+    render: {
+      pixelArt: true,
+      antialias: false,
+      antialiasGL: false,
+      mipmapFilter: 'NEAREST',
+      roundPixels: true
+    },
+    autoRound: true,
+    roundPixels: true,
+    disableContextMenu: true,
+    scale: {
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+      parent: 'game',
+      width: GAME_WIDTH,
+      height: GAME_HEIGHT
+    },
+  })
+};
 
 document.addEventListener('deviceready', onDeviceReady, false);
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { WIDTH, HEIGHT } from '../constants';
+import { GAME_WIDTH, GAME_HEIGHT } from '../constants';
 
 export class GameScene extends Phaser.Scene {
 	player: any;
@@ -30,16 +30,16 @@ export class GameScene extends Phaser.Scene {
 	const { width: parentWidth, height: parentHeight } = this.scale.parentSize;
 	
 	// Calculate the maximum integer scale that fits
-	const scaleX = Math.floor(parentWidth / WIDTH);
-	const scaleY = Math.floor(parentHeight / HEIGHT);
+	const scaleX = Math.floor(parentWidth / GAME_WIDTH);
+	const scaleY = Math.floor(parentHeight / GAME_HEIGHT);
 	const scale = Math.max(1, Math.min(scaleX, scaleY));
 	
 	// Apply integer zoom to camera
 	this.cameras.main.setZoom(scale);
 	
 	// Center the camera
-	const scaledWidth = WIDTH * scale;
-	const scaledHeight = HEIGHT * scale;
+	const scaledWidth = GAME_WIDTH * scale;
+	const scaledHeight = GAME_HEIGHT * scale;
 	const offsetX = (parentWidth - scaledWidth) / 2;
 	const offsetY = (parentHeight - scaledHeight) / 2;
 	
