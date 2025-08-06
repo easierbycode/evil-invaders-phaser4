@@ -19,7 +19,7 @@ export interface CharacterData {
     
     // Properties from player data
     barrier?: any;
-    caDamage?: number;
+    spDamage?: number;
     defaultShootName?: string;
     defaultShootSpeed?: string;
     maxHp?: number;
