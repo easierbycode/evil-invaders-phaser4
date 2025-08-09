@@ -227,16 +227,16 @@ export class Player extends Character {
       case "0":
         return window.gameScene.hud.spFire();
       case "PageUp":
-        this.unitX -= 6;
+        this.unitX -= 6, this.shootOn = 1;
         break;
       case "PageDown":
-        this.unitX += 6;
+        this.unitX += 6, this.shootOn = 1;
         break;
     }
     (this.keyDownFlg = 1), (this.keyDownCode = t.keyCode), t.preventDefault();
   }
   onKeyUp(t) {
-    (this.keyDownFlg = 0), t.preventDefault();
+    (this.keyDownFlg = 0), (this.shootOn = 1), t.preventDefault();
   }
   update() {
     // Keyboard input is now handled by gamepad emulation or separate handlers
@@ -566,6 +566,7 @@ export class Player extends Character {
   }
 
   spFire() { }
+
   onDamage(t) {
     if (this.barrierFlg);
     else if (!0 !== this.damageAnimationFlg) {
