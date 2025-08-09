@@ -565,7 +565,7 @@ export class Player extends Character {
     }
   }
 
-  caFire() { }
+  spFire() { }
   onDamage(t) {
     if (this.barrierFlg);
     else if (!0 !== this.damageAnimationFlg) {
