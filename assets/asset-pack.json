@@ -12,6 +12,11 @@
                 "key": "clouds"
             },
             {
+                "url": "assets/corridor-bg.png",
+                "type": "image",
+                "key": "corridor-bg"
+            },
+            {
                 "url": "assets/flares.png",
                 "type": "image",
                 "key": "flares"
@@ -20,6 +25,11 @@
                 "url": "assets/star.png",
                 "type": "image",
                 "key": "star"
+            },
+            {
+                "url": "assets/stars-bg.png",
+                "type": "image",
+                "key": "stars-bg"
             }
         ]
     },

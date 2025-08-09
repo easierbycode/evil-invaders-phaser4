@@ -8,19 +8,6 @@ export class OverloadScene extends Phaser.Scene {
         super("title-scene");
     }
 
-    preload() {
-        this.load.json(
-            'game.json',
-            'https://evil-invaders-default-rtdb.firebaseio.com/game.json'
-        );
-
-        this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-            const data = this.cache.json.get("game.json");
-            if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
-            PROPERTIES.resource.recipe = { data };
-        });
-    }
-
     // Helper method to create and load an image from base64 data
     createImageFromBase64(base64Data) {
         return new Promise((resolve, reject) => {

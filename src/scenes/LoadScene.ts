@@ -3,100 +3,82 @@ import { getDB, ref, get, set } from '../utils/firebase-config';
 import PROPERTIES from "../properties";
 export class LoadScene extends Phaser.Scene {
 
-    constructor() {
-        super("load-scene");
+  constructor() {
+    super("load-scene");
+  }
+
+  async preload() {
+    const db = getDB();
+
+    // Helper to fetch a base64 png + json atlas from Firebase and queue it
+    const queueAtlasFromFirebase = async (
+      key: string,
+      pngUrl: string,
+      jsonUrl: string
+    ): Promise<boolean> => {
+      try {
+        const [pngRes, jsonRes] = await Promise.all([fetch(pngUrl), fetch(jsonUrl)]);
+        if (!pngRes.ok || !jsonRes.ok) throw new Error(`HTTP ${pngRes.status}/${jsonRes.status}`);
+
+        const [base64Data, atlasJson] = await Promise.all([pngRes.json(), jsonRes.json()]);
+        if (!base64Data || !atlasJson) throw new Error("Empty atlas data");
+
+        const dataUri = "data:image/png;base64," + base64Data;
+        this.load.atlas(key, dataUri, atlasJson);
+        console.log(`Queued ${key} atlas from Firebase`);
+        return true;
+      } catch (err) {
+        console.warn(`Failed to fetch ${key} atlas from Firebase:`, err);
+        return false;
+      }
+    };
+
+    /* ---------------- 1️⃣  Try loading atlases from Firebase (in parallel) ---------------- */
+    const assetAtlasPromise = queueAtlasFromFirebase(
+      "game_asset",
+      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
+      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json"
+    );
+
+    const uiAtlasPromise = queueAtlasFromFirebase(
+      "game_ui",
+      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
+      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json"
+    );
+
+    // Also pull game.json from Firebase while atlases are fetching
+    const gameDataPromise = (async () => {
+      try {
+        const snap = await get(ref(db, "game"));
+        return snap.val();
+      } catch (err) {
+        console.error("Failed to fetch game.json from Firebase:", err);
+        return null;
+      }
+    })();
+
+    const [assetFromFB, uiFromFB, gameData] = await Promise.all([
+      assetAtlasPromise,
+      uiAtlasPromise,
+      gameDataPromise,
+    ]);
+
+    /* ---------------- 2️⃣  Cache game.json (Firebase) or queue fallback ---------------- */
+    if (gameData) {
+      this.cache.json.add("game.json", gameData);
+      if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
+      PROPERTIES.resource.recipe = { data: gameData };
     }
 
-    async preload() {
-        const db = getDB();
+    /* ---------------- 3️⃣  Start the loader once, wait for everything ---------------- */
+    await new Promise<void>((resolve) => {
+      this.load.once(Phaser.Loader.Events.COMPLETE, () => resolve());
+      this.load.start();
+    });
 
-        /* ---------------- 1️⃣  Try loading game_asset atlas from Firebase ---------------- */
-        let atlasTextureData: string | null = null;
-        let atlasJsonData: any = null;
-        let atlasLoadedFromFirebase = false;
-        
-        try {
-            // Fetch the base64 PNG data
-            const pngResponse = await fetch('https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json');
-            const base64Data = await pngResponse.json();
-            
-            // Prepend the data URI prefix
-            atlasTextureData = 'data:image/png;base64,' + base64Data;
-            
-            // Fetch the atlas JSON data
-            const jsonResponse = await fetch('https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json');
-            atlasJsonData = await jsonResponse.json();
-            
-            if (atlasTextureData && atlasJsonData) {
-                console.log("Successfully fetched game_asset atlas from Firebase");
-                
-                // Load the atlas using the base64 data URI
-                this.load.atlas('game_asset', atlasTextureData, atlasJsonData);
-                atlasLoadedFromFirebase = true;
-                
-                // Start the loader to process the queued atlas
-                this.load.start();
-                
-                // Wait for the atlas to fully load
-                await new Promise<void>((resolve) => {
-                    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-                        console.log("game_asset atlas loaded into Phaser");
-                        resolve();
-                    });
-                });
-            }
-        } catch (err) {
-            console.error("Failed to fetch game_asset atlas from Firebase:", err);
-        }
-        
-        // If Firebase failed, load from remote URLs
-        if (!atlasLoadedFromFirebase) {
-            console.log("Falling back to remote URLs for game_asset atlas");
-            this.load.atlas(
-                'game_asset',
-                'https://assets.codepen.io/11817390/evil_invaders_asset.png',
-                'https://assets.codepen.io/11817390/evil_invaders_asset.json'
-            );
-        }
-
-        /* ---------------- 2️⃣  Try Firebase for game.json ---------------- */
-        let gameData: any = null;
-        try {
-            const snap = await get(ref(db, "game"));
-            gameData = snap.val();
-        } catch (err) {
-            console.error("Failed to fetch game.json from Firebase:", err);
-        }
-
-        if (gameData) {
-            // Directly add to cache & PROPERTIES then jump to next scene
-            this.cache.json.add("game.json", gameData);
-            if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
-            PROPERTIES.resource.recipe = { data: gameData };
-
-            this.scene.start("title-scene");
-            return;
-        }
-
-        /* ---------------- 3️⃣  Remote fallback for game.json ---------------- */
-        this.load.json(
-            "game.json",
-            "https://assets.codepen.io/11817390/evil_invaders.json"
-        );
-
-        // Once all loading finishes, cache → PROPERTIES → next scene
-        this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-            const fallbackData = this.cache.json.get("game.json");
-            if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
-            PROPERTIES.resource.recipe = { data: fallbackData };
-
-            this.scene.start("game-scene");
-        });
-        
-        // If we loaded the atlas from Firebase, the loader was already started
-        // If not, we need to start it now for the fallback assets
-        if (!atlasLoadedFromFirebase) {
-            this.load.start();
-        }
+    /* ---------------- 4️⃣  Choose next scene ---------------- */
+    if (gameData) {
+      this.scene.start("title-scene");
     }
+  }
 }

@@ -25,23 +25,7 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     const baseUrl = import.meta.env.BASE_URL || '/';
-    this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
-
-    // Load space background images - these need to be in your assets folder
-    // You'll need to copy these from stg-game-engine/images/background/
-    this.load.image('stars-bg', `${baseUrl}assets/background/stars.png`);
-    this.load.image('corridor-bg', `${baseUrl}assets/background/corridor.png`);
-
-    this.load.atlas(
-      'game_ui',
-      'https://assets.codepen.io/11817390/game_ui.png',
-      'https://assets.codepen.io/11817390/game_ui.json'
-    );
-
-    // Add error handling for missing assets
-    this.load.on('loaderror', (file) => {
-      console.warn(`Failed to load: ${file.key} from ${file.url}`);
-    });    
+    this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);   
   }
 
   async create() {
@@ -77,7 +61,7 @@ export class GameScene extends Phaser.Scene {
     window.gameScene = this;
 
     this.#startBtn = this.physics
-      .add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.gif')
+      .add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.png')
       .setInteractive();
 
     this.#startBtn.on('pointerup', () => {
