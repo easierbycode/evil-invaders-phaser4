@@ -1,10 +1,24 @@
-import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
+
+import PROPERTIES from "../properties";
 import { getDB, ref, get } from '../utils/firebase-config';
 
 
 export class OverloadScene extends Phaser.Scene {
     constructor() {
         super("title-scene");
+    }
+
+    preload() {
+        this.load.json(
+            'game.json',
+            'https://evil-invaders-default-rtdb.firebaseio.com/game.json'
+        );
+
+        this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+            const data = this.cache.json.get("game.json");
+            if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
+            PROPERTIES.resource.recipe = { data };
+        });
     }
 
     // Helper method to create and load an image from base64 data
@@ -29,7 +43,7 @@ export class OverloadScene extends Phaser.Scene {
 
             if (enemySnapshot.exists()) {
                 PROPERTIES.resource.recipe.data.enemyData.enemyR = enemySnapshot.val();
-                
+
                 const enemyChar = enemySnapshot.val();
                 if (enemyChar.textureKey) {
                     const enemyAtlas = await get(ref(db, `atlases/${enemyChar.textureKey}`));
@@ -51,7 +65,7 @@ export class OverloadScene extends Phaser.Scene {
 
             if (playerSnapshot.exists()) {
                 PROPERTIES.resource.recipe.data.playerData = playerSnapshot.val();
-                
+
                 const playerChar = playerSnapshot.val();
                 if (playerChar.textureKey) {
                     const playerAtlas = await get(ref(db, `atlases/${playerChar.textureKey}`));

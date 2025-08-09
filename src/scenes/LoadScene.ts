@@ -1,6 +1,6 @@
-import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
-import { getDB, ref, get } from "../utils/firebase-config";
 
+import { getDB, ref, get, set } from '../utils/firebase-config';
+import PROPERTIES from "../properties";
 export class LoadScene extends Phaser.Scene {
 
     constructor() {

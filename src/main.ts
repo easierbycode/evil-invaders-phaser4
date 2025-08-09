@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
-// import { LoadScene } from "https://codepen.io/CodeMonkeyGames/pen/LYKayQE.js";
+import PROPERTIES from "./properties";
 import { LoadScene } from "./scenes/LoadScene";
 import { OverloadScene } from "./scenes/OverloadScene";
 import { EditorScene } from './scenes/EditorScene';
@@ -33,11 +32,6 @@ export class GameScene extends Phaser.Scene {
     this.load.image('stars-bg', `${baseUrl}assets/background/stars.png`);
     this.load.image('corridor-bg', `${baseUrl}assets/background/corridor.png`);
 
-    this.load.json(
-      'game.json',
-      'https://assets.codepen.io/11817390/evil_invaders.json'
-    );
-
     this.load.atlas(
       'game_ui',
       'https://assets.codepen.io/11817390/game_ui.png',
@@ -47,7 +41,7 @@ export class GameScene extends Phaser.Scene {
     // Add error handling for missing assets
     this.load.on('loaderror', (file) => {
       console.warn(`Failed to load: ${file.key} from ${file.url}`);
-    });
+    });    
   }
 
   async create() {
