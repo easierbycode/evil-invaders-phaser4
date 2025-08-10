@@ -78,7 +78,7 @@ export class LoadScene extends Phaser.Scene {
 
     /* ---------------- 4️⃣  Choose next scene ---------------- */
     if (gameData) {
-      this.scene.start("title-scene");
+      this.scene.start("overload-scene");
     }
   }
 }
