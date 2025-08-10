@@ -1,23 +1,32 @@
-name: Build & Deploy (GH Pages + Cordova Android)
+name: Build & Deploy (GitHub Pages + Cordova)
 
 on:
   push:
-    branches: [main]        # adjust if you publish from another branch
+    branches: [main]
   workflow_dispatch:
 
-jobs:
+# Needed for the official Pages deploy
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-  # ---------- Web build & GitHub Pages ----------
+# Avoid overlapping deploys
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # ---------- Build static site for Pages ----------
   web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - run: npm ci
 
@@ -26,26 +35,33 @@ jobs:
           BUILD_TARGET: web
         run: npm run build -- --mode production
 
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
-          force_orphan: true       # start branch clean each push
+          path: ./dist
 
-  # ---------- Cordova Android build ----------
+  # ---------- Deploy to Pages (no git push needed) ----------
+  deploy:
+    needs: web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ---------- Cordova Android build (optional) ----------
   cordova:
     needs: web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - run: |
           npm ci
@@ -59,13 +75,12 @@ jobs:
       - name: Add Android platform
         run: cordova platform add android
 
-      # Java 17 is Cordova’s current default; adjust if your config differs
       - name: Build Cordova APK/AAB
         env:
           JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
         run: cordova build android --release
 
-      - name: Upload release artefacts
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
           name: evil-invaders-android
