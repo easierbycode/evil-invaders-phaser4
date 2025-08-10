@@ -22,6 +22,12 @@
                 "key": "flares"
             },
             {
+                "atlasURL": "assets/flirty-girls-whitehouse.json",
+                "textureURL": "assets/flirty-girls-whitehouse.png",
+                "type": "aseprite",
+                "key": "flirty-girls-whitehouse"
+            },
+            {
                 "url": "assets/star.png",
                 "type": "image",
                 "key": "star"

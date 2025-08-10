@@ -9,7 +9,7 @@ export class LoadScene extends Phaser.Scene {
 
   async preload() {
 
-	const baseUrl = import.meta.env.BASE_URL || '/';
+	  const baseUrl = import.meta.env.BASE_URL || '/';
     this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
 
     const db = getDB();

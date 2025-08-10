@@ -1,5 +1,6 @@
 
 // You can write more code here
+import { GAME_WIDTH } from "../constants";
 
 /* START OF COMPILED CODE */
 
@@ -19,12 +20,18 @@ export default class TitleScene extends Phaser.Scene {
     const bg = this.add.tileSprite(0, 0, 360, 640, "stars-bg");
     bg.setOrigin(0, 0);
 
+    // titleG
+    const titleG = this.add.sprite(360, 100, "flirty-girls-whitehouse", "0");
+    titleG.setOrigin(0, 0);
+
     this.bg = bg;
+    this.titleG = titleG;
 
     this.events.emit("scene-awake");
   }
 
   private bg!: Phaser.GameObjects.TileSprite;
+  private titleG!: Phaser.GameObjects.Sprite;
 
   /* START-USER-CODE */
 
@@ -33,6 +40,25 @@ export default class TitleScene extends Phaser.Scene {
   create() {
 
     this.editorCreate();
+
+    const animations = this.anims.createFromAseprite("flirty-girls-whitehouse");
+    const animKeys = animations.map((anim) => anim.key);
+    const defaultAnim = animKeys[0];
+
+  	var e = new TimelineMax({
+      onComplete: () => this.titleG.play({ key: defaultAnim, repeat: -1 })
+    });
+	  
+    e.to(
+      this.titleG,
+      2,
+      {
+        x: GAME_WIDTH / 2 - this.titleG.width / 2 + 5,
+        y: 20,
+        ease: Quint.easeOut,
+      },
+      "+=0.0"
+    )
   }
 
   update() {

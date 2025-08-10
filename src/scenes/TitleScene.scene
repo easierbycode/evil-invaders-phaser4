@@ -27,6 +27,24 @@
             "originY": 0,
             "width": 360,
             "height": 640
+        },
+        {
+            "type": "Sprite",
+            "id": "bdb21d18-2c44-47c3-bf2e-5a01509460f4",
+            "label": "titleG",
+            "displayName": "flirty-girls-whitehouse",
+            "scope": "CLASS",
+            "texture": {
+                "key": "flirty-girls-whitehouse",
+                "frame": "0"
+            },
+            "x": 360,
+            "y": 100,
+            "originX": 0,
+            "originY": 0,
+            "animationKey": "flirty-girls-whitehouse",
+            "animationRepeat": -1,
+            "animationYoyo": true
         }
     ],
     "plainObjects": [],
