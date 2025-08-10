@@ -1,10 +1,11 @@
 
 // You can write more code here
-import { GAME_WIDTH } from "../constants";
+import { GAME_HEIGHT, GAME_WIDTH } from "../constants";
 
 /* START OF COMPILED CODE */
 
 export default class TitleScene extends Phaser.Scene {
+  #startBtn!: Phaser.GameObjects.Sprite;
 
   constructor() {
     super("TitleScene");
@@ -58,7 +59,15 @@ export default class TitleScene extends Phaser.Scene {
         ease: Quint.easeOut,
       },
       "+=0.0"
-    )
+    );
+	  
+	this.#startBtn = this.physics
+      .add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 170, 'game_ui', 'titleStartText.png')
+      .setInteractive();
+
+    this.#startBtn.on('pointerup', () => {
+      this.scene.start("GameScene");
+    });
   }
 
   update() {
