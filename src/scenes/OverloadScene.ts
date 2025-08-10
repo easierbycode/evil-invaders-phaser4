@@ -5,7 +5,7 @@ import { getDB, ref, get } from '../utils/firebase-config';
 
 export class OverloadScene extends Phaser.Scene {
     constructor() {
-        super("overload-scene");
+        super("OverloadScene");
     }
 
     // Helper method to create and load an image from base64 data
@@ -77,6 +77,6 @@ export class OverloadScene extends Phaser.Scene {
         }
 
         // After Firebase data is loaded, switch to GameScene
-        this.scene.start("game-scene");
+        this.scene.start("GameScene");
     }
 }

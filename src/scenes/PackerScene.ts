@@ -49,7 +49,7 @@ export class PackerScene extends Phaser.Scene {
     private extractedSprites: Record<string, string> = {};
 
     constructor() { 
-        super('packer-scene'); 
+        super('PackerScene'); 
     }
 
     async create(): Promise<void> {
@@ -94,7 +94,7 @@ export class PackerScene extends Phaser.Scene {
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
         closeBtn.onclick = () => {
             this.scene.stop();
-            this.scene.resume('game-scene');
+            this.scene.resume('GameScene');
         };
         this.editorDiv.appendChild(closeBtn);
 
@@ -591,7 +591,7 @@ export class PackerScene extends Phaser.Scene {
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
         closeBtn.onclick = () => {
             this.scene.stop();
-            this.scene.resume('game-scene');
+            this.scene.resume('GameScene');
         };
         this.editorDiv.appendChild(closeBtn);
 

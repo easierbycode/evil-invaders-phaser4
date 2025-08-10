@@ -7,7 +7,7 @@ export class GameScene extends Phaser.Scene {
 	stageEnemyPositionList: any;
 	
 	constructor() {
-	super({ key: 'game-scene' });
+	super({ key: 'GameScene' });
 	}
 
 	preload() {

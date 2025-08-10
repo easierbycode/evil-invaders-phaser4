@@ -4,7 +4,7 @@ import PROPERTIES from "../properties";
 export class LoadScene extends Phaser.Scene {
 
   constructor() {
-    super("load-scene");
+    super("LoadScene");
   }
 
   async preload() {
@@ -78,7 +78,7 @@ export class LoadScene extends Phaser.Scene {
 
     /* ---------------- 4️⃣  Choose next scene ---------------- */
     if (gameData) {
-      this.scene.start("overload-scene");
+      this.scene.start("OverloadScene");
     }
   }
 }

@@ -25,7 +25,7 @@ export class EditorScene extends Phaser.Scene {
     private selectedEnemyKey: string = '';
     private currentStep: 'character' | 'target' | 'atlas' | 'frames' = 'character';
 
-    constructor() { super('editor-scene'); }
+    constructor() { super('EditorScene'); }
 
     async create() {
         // Pull any previously saved overrides from Firebase to pre-populate previews
@@ -64,7 +64,7 @@ export class EditorScene extends Phaser.Scene {
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
         closeBtn.onclick = () => {
             this.scene.stop();
-            this.scene.resume('game-scene');
+            this.scene.resume('GameScene');
         };
         this.editorDiv.appendChild(closeBtn);
 
@@ -449,7 +449,7 @@ export class EditorScene extends Phaser.Scene {
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
         closeBtn.onclick = () => {
             this.scene.stop();
-            this.scene.resume('game-scene');
+            this.scene.resume('GameScene');
         };
         this.editorDiv.appendChild(closeBtn);
 

@@ -21,7 +21,7 @@ export class GameScene extends Phaser.Scene {
   prevCameraY = 0;
 
 
-  constructor() { super('game-scene'); }
+  constructor() { super('GameScene'); }
 
   preload() {
     const baseUrl = import.meta.env.BASE_URL || '/';
@@ -185,12 +185,12 @@ export class GameScene extends Phaser.Scene {
     await new Promise(resolve => this.time.delayedCall(600, resolve));
 
     this.scene.pause();              // freeze gameplay
-    // this.scene.launch('editor-scene');
-    this.scene.launch('packer-scene');
+    // this.scene.launch('EditorScene');
+    this.scene.launch('PackerScene');
 
     // Re-enable input when editor scene stops
-    // this.scene.get('editor-scene').events.once('shutdown', () => {
-    this.scene.get('packer-scene').events.once('shutdown', () => {
+    // this.scene.get('EditorScene').events.once('shutdown', () => {
+    this.scene.get('PackerScene').events.once('shutdown', () => {
       if (this.#startBtn) {
         this.#startBtn.setInteractive();
       }
