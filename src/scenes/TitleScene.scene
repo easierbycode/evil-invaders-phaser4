@@ -13,7 +13,22 @@
         "borderWidth": 360,
         "borderHeight": 640
     },
-    "displayList": [],
+    "displayList": [
+        {
+            "type": "TileSprite",
+            "id": "0ad00a58-6878-4ee6-80b6-1406649e2916",
+            "label": "bg",
+            "displayName": "title_bg",
+            "scope": "CLASS",
+            "texture": {
+                "key": "stars-bg"
+            },
+            "originX": 0,
+            "originY": 0,
+            "width": 360,
+            "height": 640
+        }
+    ],
     "plainObjects": [],
     "meta": {
         "app": "Phaser Editor 2D - Scene Editor",

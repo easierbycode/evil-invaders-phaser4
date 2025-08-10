@@ -15,8 +15,16 @@ export default class TitleScene extends Phaser.Scene {
 
   editorCreate(): void {
 
+    // bg
+    const bg = this.add.tileSprite(0, 0, 360, 640, "stars-bg");
+    bg.setOrigin(0, 0);
+
+    this.bg = bg;
+
     this.events.emit("scene-awake");
   }
+
+  private bg!: Phaser.GameObjects.TileSprite;
 
   /* START-USER-CODE */
 
@@ -25,6 +33,10 @@ export default class TitleScene extends Phaser.Scene {
   create() {
 
     this.editorCreate();
+  }
+
+  update() {
+    this.bg.tilePositionX += 0.5;
   }
 
   /* END-USER-CODE */

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import PROPERTIES from "./properties";
 import { LoadScene } from "./scenes/LoadScene";
 import { OverloadScene } from "./scenes/OverloadScene";
+import TitleScene from "./scenes/TitleScene";
 import { EditorScene } from './scenes/EditorScene';
 import { GAME_WIDTH, GAME_HEIGHT } from "./constants";
 import { Player } from "./game-objects/player";
@@ -22,11 +23,6 @@ export class GameScene extends Phaser.Scene {
 
 
   constructor() { super('GameScene'); }
-
-  preload() {
-    const baseUrl = import.meta.env.BASE_URL || '/';
-    this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);   
-  }
 
   async create() {
     // 0️⃣  Secret touch to launch editor.
@@ -226,7 +222,7 @@ function onDeviceReady() {
         gravity: { x: 0, y: 0 },
       },
     },
-    scene: [LoadScene, OverloadScene, GameScene, EditorScene, PackerScene],
+    scene: [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene],
     input: {
       gamepad: true,
       /*
