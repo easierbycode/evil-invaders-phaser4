@@ -1,10 +1,23 @@
 
 import { getDB, ref, get, set } from '../utils/firebase-config';
 import PROPERTIES from "../properties";
+import bgData   from '/assets/loading_bg.png?url&inline';  // Vite / Rollup
+import gif0Data from '/assets/loading0.gif?url&inline';
+import gif1Data from '/assets/loading1.gif?url&inline';
+import gif2Data from '/assets/loading2.gif?url&inline';
+
+const files = [
+  { type: 'image', key: 'loading_bg', url: bgData   },  // ← data:image/png;base64,…
+  { type: 'image', key: 'loading0',  url: gif0Data  },
+  { type: 'image', key: 'loading1',  url: gif1Data  },
+  { type: 'image', key: 'loading2',  url: gif2Data  }
+];
+
+
 export class LoadScene extends Phaser.Scene {
 
   constructor() {
-    super("LoadScene");
+    super({ key: 'LoadScene', pack: { files } });
   }
 
   async preload() {
