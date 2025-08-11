@@ -1,23 +1,30 @@
-name: Build & Deploy (GH Pages + Cordova Android)
+# .github/workflows/deploy.yml
+name: Build & Deploy (GitHub Pages + Cordova)
 
 on:
   push:
-    branches: [main]        # adjust if you publish from another branch
+    branches: [main]
   workflow_dispatch:
 
-jobs:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-  # ---------- Web build & GitHub Pages ----------
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
   web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - run: npm ci
 
@@ -26,49 +33,75 @@ jobs:
           BUILD_TARGET: web
         run: npm run build -- --mode production
 
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
-          force_orphan: true       # start branch clean each push
+          path: ./dist
 
-  # ---------- Cordova Android build ----------
+  deploy:
+    needs: web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
   cordova:
     needs: web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
-      - run: |
-          npm ci
-          npm install -g cordova
+      - run: npm ci
+
+      - name: Install Cordova CLI
+        run: npm i -g cordova
+
+      - name: Create Cordova project (if missing)
+        run: |
+          if [ ! -f cordova/config.xml ]; then
+            cordova create cordova com.easierbycode.evilinvaders "Evil Invaders"
+            cordova telemetry off
+          fi
 
       - name: Build web assets for Cordova
         env:
           BUILD_TARGET: cordova
         run: npm run build -- --mode production
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android packages
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+          yes | sdkmanager --licenses
+
       - name: Add Android platform
+        working-directory: cordova
         run: cordova platform add android
 
-      # Java 17 is Cordova’s current default; adjust if your config differs
-      - name: Build Cordova APK/AAB
-        env:
-          JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
-        run: cordova build android --release
+      # 👉 Build APK only (no AAB)
+      - name: Build Cordova Android (release APK)
+        working-directory: cordova
+        run: cordova build android --debug --packageType=apk
 
-      - name: Upload release artefacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: evil-invaders-android
+          name: evil-invaders-android-apk
           path: |
-            platforms/android/app/build/outputs/**/*.apk
-            platforms/android/app/build/outputs/**/*.aab
+            cordova/platforms/android/app/build/outputs/apk/**/*.apk
