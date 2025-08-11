@@ -10,10 +10,6 @@ export class GameScene extends Phaser.Scene {
 	super({ key: 'GameScene' });
 	}
 
-	preload() {
-	this.load.pack("pack", "assets/asset-pack.json");
-	}
-
 	async create() {
 	// Set pixel-perfect camera settings
 	this.cameras.main.setRoundPixels(true);
