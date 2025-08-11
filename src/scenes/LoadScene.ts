@@ -5,7 +5,6 @@ import bgData from '/assets/loading_bg.png?url&inline';  // Vite / Rollup
 import gif0Data from '/assets/loading0.gif?url&inline';
 import gif1Data from '/assets/loading1.gif?url&inline';
 import gif2Data from '/assets/loading2.gif?url&inline';
-import assetPackUrl from '/assets/asset-pack.json?url';
 
 const files = [
   { type: 'image', key: 'loading_bg', url: bgData },  // ← data:image/png;base64,…
@@ -44,8 +43,17 @@ export class LoadScene extends Phaser.Scene {
 
   async preload() {
 
-    this.load.setPath('');             // let the pack’s own "path" drive it
-    this.load.pack('pack', assetPackUrl);
+    const base = import.meta.env.BASE_URL || "/"; // '/', '/evil-invaders-phaser4/', or './'
+    const packUrl = (base.endsWith("/") ? base : base + "/") + "assets/asset-pack.json";
+
+    // Don’t prefix with setPath('assets') or similar; that can double the path.
+    this.load.setPath("");
+    this.load.pack("pack", packUrl);
+
+    // Optional: log any misses
+    this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (f: any) =>
+      console.warn("Load error:", f.type, f.key, f.src)
+    );
 
     const db = getDB();
 

@@ -1,41 +1,51 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
+// vite.config.ts
+import { defineConfig } from "vite";
+import { resolve } from "path";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 /**
- * BUILD_TARGET=web      → gh-pages build to ./dist with absolute base
- * BUILD_TARGET=cordova  → Cordova build to ./cordova/www with *relative* base
- *
- * Default is web.
+ * BUILD_TARGET
+ *   - web      → build for GitHub Pages (dist, absolute base)
+ *   - cordova  → build for Cordova (cordova/www, relative base)
+ * Default: web
  */
 export default defineConfig(({ mode }) => {
-  const target = process.env.BUILD_TARGET ?? 'web';      // web | cordova
-  const isProd = mode === 'production';
+  const target = process.env.BUILD_TARGET ?? "web"; // "web" | "cordova"
+  const isProd = mode === "production";
 
   return {
-    // Absolute path for GitHub Pages, relative for Cordova APK
-    base: target === 'web' && isProd ? '/evil-invaders-phaser4/' : './',
+    // GH Pages requires the repo-subpath; Cordova (file://) needs a relative base.
+    base: target === "web" && isProd ? "/evil-invaders-phaser4/" : "./",
 
     build: {
-      outDir: target === 'cordova' ? 'cordova/www' : 'dist',
+      outDir: target === "cordova" ? "cordova/www" : "dist",
       emptyOutDir: true,
-
-      // Anything ≤100 kB is inlined as data-URI (covers your loading GIFs/PNGs)
-      assetsInlineLimit: 102_400
+      assetsInlineLimit: 102_400, // inline small images/GIFs as data URIs
+      // assetsDir: "assets" // (default) hashed Vite assets also go here
     },
 
+    // Copy your repository-root /assets (including /assets/asset-pack.json) to the output
+    plugins: [
+      viteStaticCopy({
+        targets: [
+          { src: "assets/**/*", dest: "assets" } // → dist/assets/** or cordova/www/assets/**
+        ]
+      })
+    ],
+
     resolve: {
-      alias: { '@': resolve(__dirname, 'src') }
+      alias: { "@": resolve(__dirname, "src") }
     },
 
     server: {
       open: true,
-      hmr: { host: 'localhost' },
+      hmr: { host: "localhost" },
       allowedHosts: [
-        'd.codemonkey.games',
-        'localhost',
-        '127.0.0.1',
-        '.ngrok.io',
-        '.ngrok-free.app'
+        "d.codemonkey.games",
+        "localhost",
+        "127.0.0.1",
+        ".ngrok.io",
+        ".ngrok-free.app"
       ],
       host: true,
       strictPort: true,
