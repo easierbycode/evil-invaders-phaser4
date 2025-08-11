@@ -44,12 +44,8 @@ export class LoadScene extends Phaser.Scene {
 
   async preload() {
 
-    const base = import.meta.env.BASE_URL || '/';
-    const isCordova = location.protocol === 'file:' || (window as any).cordova;
-    const packUrl = isCordova ? 'assets/asset-pack.json' : `${base}assets/asset-pack.json`;
-
     this.load.setPath('');             // let the pack’s own "path" drive it
-    this.load.pack('pack', packUrl);
+    this.load.pack('pack', assetPackUrl);
 
     const db = getDB();
 
