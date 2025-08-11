@@ -1,16 +1,16 @@
 
 import { getDB, ref, get, set } from '../utils/firebase-config';
 import PROPERTIES from "../properties";
-import bgData   from '/assets/loading_bg.png?url&inline';  // Vite / Rollup
+import bgData from '/assets/loading_bg.png?url&inline';  // Vite / Rollup
 import gif0Data from '/assets/loading0.gif?url&inline';
 import gif1Data from '/assets/loading1.gif?url&inline';
 import gif2Data from '/assets/loading2.gif?url&inline';
 
 const files = [
-  { type: 'image', key: 'loading_bg', url: bgData   },  // ← data:image/png;base64,…
-  { type: 'image', key: 'loading0',  url: gif0Data  },
-  { type: 'image', key: 'loading1',  url: gif1Data  },
-  { type: 'image', key: 'loading2',  url: gif2Data  }
+  { type: 'image', key: 'loading_bg', url: bgData },  // ← data:image/png;base64,…
+  { type: 'image', key: 'loading0', url: gif0Data },
+  { type: 'image', key: 'loading1', url: gif1Data },
+  { type: 'image', key: 'loading2', url: gif2Data }
 ];
 
 
@@ -20,9 +20,30 @@ export class LoadScene extends Phaser.Scene {
     super({ key: 'LoadScene', pack: { files } });
   }
 
+  // init() {
+  //   var t;
+  //   t = this;
+  //   var o = ["loading0.gif", "loading1.gif", "loading2.gif"];
+  //   return (
+  //     (t.loadingG = new AnimatedSprite(this, o, undefined, true)),
+  //     (t.loadingG.x = i.GAME_CENTER - 64),
+  //     (t.loadingG.y = i.GAME_MIDDLE - 64),
+  //     (t.loadingG.animationSpeed = 0.15),
+  //     (t.loadingTexture = "loading_bg.png"),
+  //     (t.loadingBg = this.add.image(0, 0, t.loadingTexture).setOrigin(0)),
+  //     (t.loadingBg.alpha = 0.09),
+  //     (t.loadingBgFlipCnt = 0),
+  //     document.cookie.split(";").forEach(function (t) {
+  //       var e = t.split("=");
+  //       "afc2019_highScore" == e[0] && (D.highScore = +e[1]);
+  //     }),
+  //     t
+  //   );
+  // }
+
   async preload() {
 
-	  const baseUrl = import.meta.env.BASE_URL || '/';
+    const baseUrl = import.meta.env.BASE_URL || '/';
     this.load.pack("pack", `${baseUrl}assets/asset-pack.json`);
 
     const db = getDB();
