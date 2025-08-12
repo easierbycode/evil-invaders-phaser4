@@ -52,11 +52,11 @@ export class LoadScene extends Phaser.Scene {
     this.loadingE = new AnimatedSprite(this, frameKeys);
     this.loadingE.x = GAME_CENTER - 64;
     this.loadingE.y = GAME_MIDDLE - 64;
-    //   (this.loadingE.animationSpeed = 0.15),
-    //   (this.loadingTexture = "loading_bg.png"),
-    //   (this.loadingBg = this.add.image(0, 0, this.loadingTexture).setOrigin(0)),
-    //   (this.loadingBg.alpha = 0.09),
-    //   (this.loadingBgFlipCnt = 0),
+    this.loadingE.animationSpeed = 0.15;
+    // this.loadingTexture = "loading_bg.png";
+    // this.loadingBg = this.add.image(0, 0, this.loadingTexture).setOrigin(0);
+    // this.loadingBg.alpha = 0.09;
+    // this.loadingBgFlipCnt = 0;
     //   document.cookie.split(";").forEach(function (t) {
     //     var e = t.split("=");
     //     "afc2019_highScore" == e[0] && (D.highScore = +e[1]);
