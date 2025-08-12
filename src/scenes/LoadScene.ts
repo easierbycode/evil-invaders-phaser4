@@ -1,46 +1,67 @@
 
 import { getDB, ref, get, set } from '../utils/firebase-config';
 import PROPERTIES from "../properties";
+import { AnimatedSprite } from '../game-objects/AnimatedSprite';
+import { GAME_CENTER, GAME_MIDDLE } from '../constants';
 import bgData from '/assets/loading_bg.png?url&inline';  // Vite / Rollup
-import gif0Data from '/assets/loading0.gif?url&inline';
-import gif1Data from '/assets/loading1.gif?url&inline';
-import gif2Data from '/assets/loading2.gif?url&inline';
+import png0Data from '/assets/loading0.png?url&inline';
+import png1Data from '/assets/loading1.png?url&inline';
+import png2Data from '/assets/loading2.png?url&inline';
 import assetPackUrl from '/assets/asset-pack.json?url';
 
+// const files = [
+//   { type: 'image', key: 'loading_bg', url: bgData },  // ← data:image/png;base64,…
+//   { type: 'image', key: 'loading0', url: png0Data },
+//   { type: 'image', key: 'loading1', url: png1Data },
+//   { type: 'image', key: 'loading2', url: png2Data }
+// ];
 const files = [
-  { type: 'image', key: 'loading_bg', url: bgData },  // ← data:image/png;base64,…
-  { type: 'image', key: 'loading0', url: gif0Data },
-  { type: 'image', key: 'loading1', url: gif1Data },
-  { type: 'image', key: 'loading2', url: gif2Data }
+  {
+    type: "image",
+    key: "loading_bg.png",
+    url: "assets/loading_bg.png",
+  },
+  {
+    type: "image",
+    key: "loading0.png",
+    url: "assets/loading0.png",
+  },
+  {
+    type: "image",
+    key: "loading1.png",
+    url: "assets/loading1.png",
+  },
+  {
+    type: "image",
+    key: "loading2.png",
+    url: "assets/loading2.png",
+  },
 ];
 
 
 export class LoadScene extends Phaser.Scene {
 
+  loadingE: AnimatedSprite;
+
   constructor() {
     super({ key: 'LoadScene', pack: { files } });
   }
 
-  // init() {
-  //   var t;
-  //   t = this;
-  //   var o = ["loading0.gif", "loading1.gif", "loading2.gif"];
-  //   return (
-  //     (t.loadingG = new AnimatedSprite(this, o, undefined, true)),
-  //     (t.loadingG.x = i.GAME_CENTER - 64),
-  //     (t.loadingG.y = i.GAME_MIDDLE - 64),
-  //     (t.loadingG.animationSpeed = 0.15),
-  //     (t.loadingTexture = "loading_bg.png"),
-  //     (t.loadingBg = this.add.image(0, 0, t.loadingTexture).setOrigin(0)),
-  //     (t.loadingBg.alpha = 0.09),
-  //     (t.loadingBgFlipCnt = 0),
-  //     document.cookie.split(";").forEach(function (t) {
-  //       var e = t.split("=");
-  //       "afc2019_highScore" == e[0] && (D.highScore = +e[1]);
-  //     }),
-  //     t
-  //   );
-  // }
+  init() {
+    var frameKeys = ["loading0.png", "loading1.png", "loading2.png"];
+    this.loadingE = new AnimatedSprite(this, frameKeys);
+    this.loadingE.x = GAME_CENTER - 64;
+    this.loadingE.y = GAME_MIDDLE - 64;
+    //   (this.loadingE.animationSpeed = 0.15),
+    //   (this.loadingTexture = "loading_bg.png"),
+    //   (this.loadingBg = this.add.image(0, 0, this.loadingTexture).setOrigin(0)),
+    //   (this.loadingBg.alpha = 0.09),
+    //   (this.loadingBgFlipCnt = 0),
+    //   document.cookie.split(";").forEach(function (t) {
+    //     var e = t.split("=");
+    //     "afc2019_highScore" == e[0] && (D.highScore = +e[1]);
+    //   }),
+  }
 
   async preload() {
 

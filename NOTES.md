@@ -2,6 +2,18 @@
 
 
 
+vibrate does not work within cordova
+
+
+
+
+
+
+
+
+
+
+
 
 
 
