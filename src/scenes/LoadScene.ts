@@ -7,34 +7,27 @@ import bgData from '/assets/loading_bg.png?url&inline';  // Vite / Rollup
 import png0Data from '/assets/loading0.png?url&inline';
 import png1Data from '/assets/loading1.png?url&inline';
 import png2Data from '/assets/loading2.png?url&inline';
-import assetPackUrl from '/assets/asset-pack.json?url';
 
-// const files = [
-//   { type: 'image', key: 'loading_bg', url: bgData },  // ← data:image/png;base64,…
-//   { type: 'image', key: 'loading0', url: png0Data },
-//   { type: 'image', key: 'loading1', url: png1Data },
-//   { type: 'image', key: 'loading2', url: png2Data }
-// ];
 const files = [
   {
     type: "image",
     key: "loading_bg.png",
-    url: "assets/loading_bg.png",
+    url: bgData,
   },
   {
     type: "image",
     key: "loading0.png",
-    url: "assets/loading0.png",
+    url: png0Data,
   },
   {
     type: "image",
     key: "loading1.png",
-    url: "assets/loading1.png",
+    url: png1Data,
   },
   {
     type: "image",
     key: "loading2.png",
-    url: "assets/loading2.png",
+    url: png2Data,
   },
 ];
 
