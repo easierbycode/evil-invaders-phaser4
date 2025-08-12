@@ -99,6 +99,13 @@ jobs:
         working-directory: cordova
         run: cordova build android --debug --packageType=apk
 
+      - name: Verify asset-pack presence
+        run: |
+          echo "dist:"
+          ls -la dist/assets | head -n 50 || true
+          echo "cordova/www:"
+          ls -la cordova/www/assets | head -n 50 || true
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

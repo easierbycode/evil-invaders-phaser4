@@ -65,8 +65,17 @@ export class LoadScene extends Phaser.Scene {
 
   async preload() {
 
-    this.load.setPath('');             // let the pack’s own "path" drive it
-    this.load.pack('pack', assetPackUrl);
+    const base = import.meta.env.BASE_URL || "/"; // '/', '/evil-invaders-phaser4/', or './'
+    const packUrl = (base.endsWith("/") ? base : base + "/") + "assets/asset-pack.json";
+
+    // Don’t prefix with setPath('assets') or similar; that can double the path.
+    this.load.setPath("");
+    this.load.pack("pack", packUrl);
+
+    // Optional: log any misses
+    this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (f: any) =>
+      console.warn("Load error:", f.type, f.key, f.src)
+    );
 
     const db = getDB();
 
