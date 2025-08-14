@@ -18,6 +18,16 @@ export class OverloadScene extends Phaser.Scene {
         });
     }
 
+    preload() {
+        // override textures passed via URL
+        const textureKeys = Object.keys(this.textures.list).filter(t => { if (t[0] != '_') { return t } });
+
+        textureKeys.forEach((key) => {
+            const url = new URL(window.location.href).searchParams.get(key);
+            if (url)  this.fetchOverrideFromUrl(key, url);
+        });
+    }
+
     async create() {
         const db = getDB();
 
@@ -80,4 +90,36 @@ export class OverloadScene extends Phaser.Scene {
         // this.scene.start("GameScene");
         this.scene.start("TitleScene");
     }
+
+    // --- Helpers ---
+
+  private async fetchOverrideFromUrl(key: string, url: string) {
+    try {
+      // 1) Fetch to avoid tainted image / CORS issues
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) return;
+      const blob = await res.blob();
+
+      // 2) Convert to data URL so WebGL can safely upload it
+      const dataUrl = await this.blobToDataURL(blob);
+
+      // Clean up in case of HMR / re-entry
+      if (this.textures.exists(key)) {
+        this.textures.remove(key);
+      }
+
+      this.textures.addBase64(key, dataUrl);
+    } catch (err) {
+      console.warn(`[OverloadScene] ${key} override failed:`, err);
+    }
+  }
+
+  private blobToDataURL(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  }
 }
