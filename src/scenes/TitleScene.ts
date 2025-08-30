@@ -131,7 +131,7 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   update() {
-    this.bg.tilePositionX += 0.5;
+    this.bg.tilePositionX -= 0.5;
   }
 
   /* END-USER-CODE */
