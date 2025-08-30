@@ -5,7 +5,6 @@ import { GAME_HEIGHT, GAME_WIDTH } from "../constants";
 /* START OF COMPILED CODE */
 
 export default class TitleScene extends Phaser.Scene {
-  #startBtn!: Phaser.GameObjects.Sprite;
 
   constructor() {
     super("TitleScene");
@@ -18,23 +17,35 @@ export default class TitleScene extends Phaser.Scene {
   editorCreate(): void {
 
     // bg
-    const bg = this.add.tileSprite(0, 0, 360, 640, "stars-bg");
+    const bg = this.add.tileSprite(0, 0, 256, 480, "stars-bg");
     bg.setOrigin(0, 0);
 
     // titleG
-    const titleG = this.add.sprite(360, 100, "flirty-girls-whitehouse", "0");
+    const titleG = this.add.sprite(256, 100, "flirty-girls-whitehouse", "0");
     titleG.setOrigin(0, 0);
+
+    // logo
+    const logo = this.add.image(116, -41, "logo");
+
+    // subTitle
+    const subTitle = this.add.image(127, -19, "subTitleEn");
 
     this.bg = bg;
     this.titleG = titleG;
+    this.logo = logo;
+    this.subTitle = subTitle;
 
     this.events.emit("scene-awake");
   }
 
   private bg!: Phaser.GameObjects.TileSprite;
   private titleG!: Phaser.GameObjects.Sprite;
+  private logo!: Phaser.GameObjects.Image;
+  private subTitle!: Phaser.GameObjects.Image;
 
   /* START-USER-CODE */
+
+  private startBtn!: Phaser.GameObjects.Sprite;
 
   // Write your code here
 
@@ -46,28 +57,77 @@ export default class TitleScene extends Phaser.Scene {
     const animKeys = animations.map((anim) => anim.key);
     const defaultAnim = animKeys[0];
 
-  	var e = new TimelineMax({
+    var e = new TimelineMax({
       onComplete: () => this.titleG.play({ key: defaultAnim, repeat: -1 })
     });
-	  
+
     e.to(
       this.titleG,
       2,
       {
         x: GAME_WIDTH / 2 - this.titleG.width / 2 + 5,
-        y: 20,
+        y: 113,
         ease: Quint.easeOut,
       },
       "+=0.0"
-    );
-	  
-	this.#startBtn = this.physics
-      .add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 170, 'game_ui', 'titleStartText.png')
-      .setInteractive();
+    ),
 
-    this.#startBtn.on('pointerup', () => {
+      e.addCallback(function () { }, "-=0.1", null, this),
+
+      e.to(this.logo, .9, {
+        y: 75,
+        ease: Quint.easeIn
+      }, "-=0.8"),
+
+      e.to(this.logo, .9, {
+        scaleX: 1,
+        scaleY: 1,
+        ease: Quint.easeIn
+      }, "-=0.9"),
+
+      e.to(this.subTitle, .9, {
+        y: 130,
+        ease: Quint.easeIn
+      }, "-=0.82"),
+
+      e.to(this.subTitle, .9, {
+        scaleX: 1,
+        scaleY: 1,
+        ease: Quint.easeIn
+      }, "-=0.9");
+
+    this.startBtn = this.physics
+      .add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 150, 'game_ui', 'titleStartText.png')
+      .setAlpha(0);
+
+    this.startBtn.on('pointerup', () => {
       this.scene.start("GameScene");
     });
+
+
+    e.to(this.startBtn, .1, {
+      alpha: 1
+    }),
+
+      e.addCallback(() => {
+        this.startBtn.setInteractive(); //,
+        // this.startBtn.onFlash.bind(this.startBtn)()
+
+        this.tl = new TimelineMax({
+          repeat: -1,
+          yoyo: !0
+        });
+
+        this.tl
+          .to(this.startBtn, .3, {
+            delay: .1,
+            alpha: 0
+          })
+          .to(this.startBtn, .8, {
+            alpha: 1
+          });
+
+      }, "+=0.3", null, this);
   }
 
   update() {

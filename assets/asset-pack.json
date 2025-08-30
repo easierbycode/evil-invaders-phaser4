@@ -28,6 +28,11 @@
                 "key": "flirty-girls-whitehouse"
             },
             {
+                "url": "assets/logo.png",
+                "type": "image",
+                "key": "logo"
+            },
+            {
                 "url": "assets/star.png",
                 "type": "image",
                 "key": "star"
@@ -36,6 +41,11 @@
                 "url": "assets/stars-bg.png",
                 "type": "image",
                 "key": "stars-bg"
+            },
+            {
+                "url": "assets/subTitleEn.png",
+                "type": "image",
+                "key": "subTitleEn"
             }
         ]
     },
