@@ -1,6 +1,8 @@
 
 // You can write more code here
-import { GAME_HEIGHT, GAME_WIDTH } from "../constants";
+import CONSTANTS from "./../constants";
+const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
+import Sound from './../soundManager';
 
 /* START OF COMPILED CODE */
 
@@ -25,10 +27,14 @@ export default class TitleScene extends Phaser.Scene {
     titleG.setOrigin(0, 0);
 
     // logo
-    const logo = this.add.image(116, -41, "logo");
+    const logo = this.add.image(116, -82, "logo");
+    logo.scaleX = 2;
+    logo.scaleY = 2;
 
     // subTitle
-    const subTitle = this.add.image(127, -19, "subTitleEn");
+    const subTitle = this.add.image(127, -82, "subTitleEn");
+    subTitle.scaleX = 3;
+    subTitle.scaleY = 3;
 
     this.bg = bg;
     this.titleG = titleG;
@@ -53,12 +59,21 @@ export default class TitleScene extends Phaser.Scene {
 
     this.editorCreate();
 
+    this.startBtn = this.physics
+      .add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 150, 'game_ui', 'titleStartText.png')
+      .setAlpha(0);
+
+    this.startBtn.on('pointerup', () => {
+      this.scene.start("GameScene");
+    });
+
     const animations = this.anims.createFromAseprite("flirty-girls-whitehouse");
     const animKeys = animations.map((anim) => anim.key);
     const defaultAnim = animKeys[0];
 
     var e = new TimelineMax({
-      onComplete: () => this.titleG.play({ key: defaultAnim, repeat: -1 })
+      onComplete: () => this.titleG.play({ key: defaultAnim, repeat: -1 }),
+      onCompleteScope: this
     });
 
     e.to(
@@ -94,20 +109,18 @@ export default class TitleScene extends Phaser.Scene {
         scaleX: 1,
         scaleY: 1,
         ease: Quint.easeIn
-      }, "-=0.9");
+      }, "-=0.9"),
 
-    this.startBtn = this.physics
-      .add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 150, 'game_ui', 'titleStartText.png')
-      .setAlpha(0);
-
-    this.startBtn.on('pointerup', () => {
-      this.scene.start("GameScene");
-    });
+      e.addCallback(function () {
+        Sound.play("voice_titlecall")
+      }, "-=0.5", null, this),
 
 
-    e.to(this.startBtn, .1, {
-      alpha: 1
-    }),
+
+
+      e.to(this.startBtn, .1, {
+        alpha: 1
+      }),
 
       e.addCallback(() => {
         this.startBtn.setInteractive(); //,

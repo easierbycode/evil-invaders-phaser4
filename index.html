@@ -29,6 +29,10 @@
             align-items: center;
         }
 
+        #baseUrl {
+            display: none;
+        }
+
         #game {
             /* Remove width and height to let Phaser handle it */
         }
@@ -39,6 +43,11 @@
 
 <body>
     <div id="game"></div>
+
+    <!-- baseUrl for assets, uncomment and set if needed
+    <span id="baseUrl">https://cmg.files.show/</span> -->
+    <span id="baseUrl"></span>
+
     <!-- gamepad not connected alert (automatically hidden) -->
     <div id="gamepadAlert" class="alert alert-info text-center" style="position:absolute; top:0; width:100%;">
         🎮 PLEASE <strong>CONNECT GAMEPAD</strong> 🎮

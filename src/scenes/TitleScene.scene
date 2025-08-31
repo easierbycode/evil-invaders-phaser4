@@ -55,7 +55,9 @@
                 "key": "logo"
             },
             "x": 116,
-            "y": -41
+            "y": -82,
+            "scaleX": 2,
+            "scaleY": 2
         },
         {
             "type": "Image",
@@ -66,7 +68,9 @@
                 "key": "subTitleEn"
             },
             "x": 127,
-            "y": -19
+            "y": -82,
+            "scaleX": 3,
+            "scaleY": 3
         }
     ],
     "plainObjects": [],

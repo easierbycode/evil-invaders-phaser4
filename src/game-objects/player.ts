@@ -1,5 +1,6 @@
 import { Bullet } from './bullet';
-import { GAME_WIDTH, GAME_HEIGHT } from "./../constants";
+import CONSTANTS from "./../constants";
+const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import {
   Graphics
 } from "https://codepen.io/CodeMonkeyGames/pen/MWRrLqy.js";

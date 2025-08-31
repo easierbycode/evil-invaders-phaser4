@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from '../constants';
+import CONSTANTS from "./../constants";
+const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 
 export class GameScene extends Phaser.Scene {
 	player: any;
