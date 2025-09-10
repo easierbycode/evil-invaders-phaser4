@@ -83,10 +83,9 @@ export class LoadScene extends Phaser.Scene {
     }
 
     const base = PROPERTIES.baseUrl || "/"; // '/', '/evil-invaders-phaser4/', or './'
-    const packUrl = (base.endsWith("/") ? base : base + "/") + "assets/asset-pack.json";
+    const packUrl = (base.endsWith("/") ? base : base + "/") + "asset-pack.json";
 
-    // Don’t prefix with setPath('assets') or similar; that can double the path.
-    this.load.setPath("");
+    this.load.setPath(base + 'assets');
     this.load.pack("pack", packUrl);
 
     // Optional: log any misses
