@@ -219,7 +219,7 @@ function onDeviceReady() {
 
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
   const sceneName = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
-  const scene = sceneName ? [LoadScene, sceneName] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
+  const scene = sceneName ? [LoadScene, OverloadScene, sceneName] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",

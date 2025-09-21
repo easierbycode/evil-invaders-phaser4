@@ -88,7 +88,9 @@ export class OverloadScene extends Phaser.Scene {
 
         // After Firebase data is loaded, switch to GameScene
         // this.scene.start("GameScene");
-        this.scene.start("TitleScene");
+        // this.scene.start("TitleScene");
+        const sceneRequested = new URL(window.location.href).searchParams.get("scene");
+        this.scene.start(sceneRequested || "TitleScene");
     }
 
     // --- Helpers ---

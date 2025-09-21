@@ -1,6 +1,13 @@
 
 // You can write more code here
 
+import { Player } from "../game-objects/player";
+import CONSTANTS from "./../constants";
+const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
+import PROPERTIES from "../properties";
+import { requestFullscreen } from "../utils/fullscreen";
+
+// These constants define the size and positioning of the mutoid parts.
 const MUTOID_HEIGHT = 104;
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
@@ -33,6 +40,7 @@ export default class MutoidScene extends Phaser.Scene {
 
   private mutoidContainer!: Phaser.GameObjects.Container;
   private secondLoop!: boolean;
+  #startBtn!: Phaser.GameObjects.Sprite;
 
   /* START-USER-CODE */
   // Write your code here
@@ -148,6 +156,47 @@ export default class MutoidScene extends Phaser.Scene {
     head.setFrame(HEAD_FRAME);
 
     this.animateMutoid(head);
+
+    // @ts-ignore
+    window.gameScene = this;
+
+    this.#startBtn = this.physics
+      .add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.png')
+      .setInteractive();
+
+    this.#startBtn.on('pointerup', () => {
+      requestFullscreen(this.game.canvas);
+      const pads = this.input.gamepad.gamepads;
+      createPlayer(pads[0] || null);
+    });
+
+    const createPlayer = (gamepad: Phaser.Input.Gamepad.Gamepad) => {
+      if (this.player) return;
+
+      if (this.#startBtn) this.#startBtn.destroy();
+      const alert = document.getElementById('gamepadAlert');
+      if (alert) alert.style.display = 'none';
+
+      const d = PROPERTIES.resource.recipe.data.playerData;
+
+      this.player = new Player(d);
+      this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
+      this.player.unitX = GAME_WIDTH / 2;
+      this.player.unitY = GAME_HEIGHT - 48;
+      this.player.gamepad = gamepad ?? null;
+      this.player.gamepadIndex = gamepad ? gamepad.index : -1;
+      this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
+      this.player.speed = 150;
+    };
+
+    // Existing game‑pad hookup
+    const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
+    if (firstPad) createPlayer(firstPad);
+    this.input.gamepad.once('connected', pad => createPlayer(pad));
+  }
+
+  update() {
+    if (this.player && this.player.active) this.player.update();
   }
 
   private animateMutoid(head: Phaser.GameObjects.Sprite) {

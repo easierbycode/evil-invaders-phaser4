@@ -171,8 +171,7 @@ export class LoadScene extends Phaser.Scene {
 
     /* ---------------- 4️⃣  Choose next scene ---------------- */
     if (gameData) {
-      const sceneRequested = new URL(window.location.href).searchParams.get("scene");
-      this.scene.start(sceneRequested || "OverloadScene");
+      this.scene.start("OverloadScene");
     }
   }
 }
