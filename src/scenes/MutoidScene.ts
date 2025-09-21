@@ -5,6 +5,7 @@ const MUTOID_HEIGHT = 104;
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
 const TREAD_FRAME = "atlas_s0";
+const TREAD_FPS = 4;
 
 
 /* START OF COMPILED CODE */
@@ -44,10 +45,10 @@ export default class MutoidScene extends Phaser.Scene {
     const torsoRight = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0).setFlipX(true);
     const tankLeft = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
     const tankRight = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
-    const treadLeft = this.add.image(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
-    const treadRight = this.add.image(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
-    const treadFrontLeft = this.add.image(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
-    const treadFrontRight = this.add.image(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
+    const treadLeft = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
+    const treadRight = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
+    const treadFrontLeft = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
+    const treadFrontRight = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
     const head = this.add.image(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
     const armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
     const armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
@@ -74,6 +75,14 @@ export default class MutoidScene extends Phaser.Scene {
       head,
     ]);
 
+    this.ensureAnimation("mutoid-tank-tread-spin", "mutoid-tank-tread");
+    this.ensureAnimation("mutoid-tank-tread-front-spin", "mutoid-tank-tread-front");
+
+    treadLeft.play({ key: "mutoid-tank-tread-spin" });
+    treadRight.play({ key: "mutoid-tank-tread-spin" });
+    treadFrontLeft.play({ key: "mutoid-tank-tread-front-spin" });
+    treadFrontRight.play({ key: "mutoid-tank-tread-front-spin" });
+
     const tankWidth = tankLeft.displayWidth;
     const torsoWidth = torsoLeft.displayWidth;
     const armWidth = armLeft.displayWidth;
@@ -84,15 +93,12 @@ export default class MutoidScene extends Phaser.Scene {
     treadLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
     treadRight.setPosition(tankWidth, MUTOID_HEIGHT);
 
-    treadFrontLeft.setPosition(
-      treadLeft.x - treadLeft.displayWidth + 1,
-      treadLeft.y - 1
-    );
+    const treadLeftLeftEdge = treadLeft.x - treadLeft.displayWidth;
+    const treadRightRightEdge = treadRight.x + treadRight.displayWidth;
 
-    treadFrontRight.setPosition(
-      treadRight.x + treadRight.displayWidth - 1,
-      treadRight.y - 1
-    );
+    treadFrontLeft.setPosition(treadLeftLeftEdge + 1, treadLeft.y - 1);
+
+    treadFrontRight.setPosition(treadRightRightEdge - 1, treadRight.y - 1);
 
     torsoLeft.setPosition(-torsoWidth, 0);
     torsoRight.setPosition(0, 0);
@@ -130,6 +136,21 @@ export default class MutoidScene extends Phaser.Scene {
     );
 
     this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
+  }
+
+  private ensureAnimation(key: string, textureKey: string) {
+    if (this.anims.exists(key)) return;
+
+    this.anims.create({
+      key,
+      frames: this.anims.generateFrameNames(textureKey, {
+        start: 0,
+        end: 2,
+        prefix: "atlas_s",
+      }),
+      frameRate: TREAD_FPS,
+      repeat: -1,
+    });
   }
 
   /* END-USER-CODE */

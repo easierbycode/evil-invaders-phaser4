@@ -19,6 +19,46 @@
         "w": 4,
         "h": 66
       }
+    },
+    "atlas_s1": {
+      "frame": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 66
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 66
+      },
+      "sourceSize": {
+        "w": 4,
+        "h": 66
+      }
+    },
+    "atlas_s2": {
+      "frame": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 66
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 66
+      },
+      "sourceSize": {
+        "w": 4,
+        "h": 66
+      }
     }
   },
   "meta": {
@@ -27,7 +67,7 @@
     "image": "atlas.png",
     "format": "RGBA8888",
     "size": {
-      "w": 4,
+      "w": 12,
       "h": 66
     },
     "scale": "1"
