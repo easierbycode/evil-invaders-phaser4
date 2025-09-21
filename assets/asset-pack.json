@@ -33,6 +33,28 @@
                 "key": "logo"
             },
             {
+                "atlasURL": "assets/mutoid/mutoid-arm.json",
+                "textureURL": "assets/mutoid/mutoid-arm.png",
+                "type": "atlas",
+                "key": "mutoid-arm"
+            },
+            {
+                "atlasURL": "assets/mutoid/mutoid-head.json",
+                "textureURL": "assets/mutoid/mutoid-head.png",
+                "type": "atlas",
+                "key": "mutoid-head"
+            },
+            {
+                "url": "assets/mutoid/mutoid-tank.png",
+                "type": "image",
+                "key": "mutoid-tank"
+            },
+            {
+                "url": "assets/mutoid/mutoid-torso.png",
+                "type": "image",
+                "key": "mutoid-torso"
+            },
+            {
                 "url": "assets/star.png",
                 "type": "image",
                 "key": "star"

@@ -1,0 +1,32 @@
+{
+    "id": "00cbc2d2-25b8-4b1b-959e-54fc32629120",
+    "sceneType": "SCENE",
+    "settings": {
+        "compilerInsertSpaces": true,
+        "compilerTabSize": 2,
+        "exportClass": true,
+        "preloadPackFiles": [],
+        "createMethodName": "editorCreate",
+        "sceneKey": "MutoidScene",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 256,
+        "borderHeight": 480
+    },
+    "displayList": [
+        {
+            "type": "Container",
+            "id": "aa2a3524-7e18-482d-a3c2-2f13856ce01a",
+            "label": "mutoidContainer",
+            "scope": "CLASS",
+            "x": 128,
+            "y": 240
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}
