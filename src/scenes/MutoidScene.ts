@@ -17,13 +17,14 @@ export default class MutoidScene extends Phaser.Scene {
 
     /* START-USER-CTR-CODE */
     // Write your code here.
+    this.secondLoop = Number(new URL(window.location.href).searchParams.get("secondLoop")) === 1;
     /* END-USER-CTR-CODE */
   }
 
   editorCreate(): void {
 
     // mutoidContainer
-    const mutoidContainer = this.add.container(128, 240);
+    const mutoidContainer = this.add.container(128, 80);
 
     this.mutoidContainer = mutoidContainer;
 
@@ -31,6 +32,7 @@ export default class MutoidScene extends Phaser.Scene {
   }
 
   private mutoidContainer!: Phaser.GameObjects.Container;
+  private secondLoop!: boolean;
 
   /* START-USER-CODE */
   // Write your code here
@@ -137,8 +139,11 @@ export default class MutoidScene extends Phaser.Scene {
 
     this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
 
-    this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s0", "atlas_s5"], 5, -1);
-    this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", ["atlas_s1", "atlas_s2", "atlas_s3", "atlas_s3"], 2, 0);
+    this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s5", "atlas_s0"], 5, -1);
+    const headBackFrames = this.secondLoop
+      ? ["atlas_s1", "atlas_s2", "atlas_s3"]
+      : ["atlas_s1", "atlas_s2", "atlas_s3", "atlas_s3"];
+    this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", headBackFrames, 2, 0);
 
     head.setFrame(HEAD_FRAME);
 
@@ -146,14 +151,26 @@ export default class MutoidScene extends Phaser.Scene {
   }
 
   private animateMutoid(head: Phaser.GameObjects.Sprite) {
+
+    const ease = this.secondLoop ? "Elastic.easeInOut" : "Quad.easeInOut";
+
+    // Float the mutoid up and down, while animating the head
+    // to look forward when going down, and look back when going up.
+    // Pause at the top and bottom of the movement.
+    // Repeat forever.
+
     const tween = this.tweens.add({
       targets: this.mutoidContainer,
-      y: this.mutoidContainer.y + 112,
+      y: this.mutoidContainer.y + (400 - this.mutoidContainer.height),
       duration: 2000,
       yoyo: true,
       hold: 0,
       repeatDelay: 3500,
       repeat: -1,
+      delay: 3500,
+      // ease: "Quad.easeInOut",
+      // ease: "Elastic.easeInOut",
+      ease,
       onStart: () => this.playHeadForward(head),
       onYoyo: () => this.playHeadBackward(head),
       onRepeat: () => this.playHeadForward(head),
