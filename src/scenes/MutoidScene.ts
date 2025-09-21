@@ -46,6 +46,8 @@ export default class MutoidScene extends Phaser.Scene {
     const tankRight = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
     const treadLeft = this.add.image(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
     const treadRight = this.add.image(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
+    const treadFrontLeft = this.add.image(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
+    const treadFrontRight = this.add.image(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
     const head = this.add.image(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
     const armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
     const armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
@@ -55,8 +57,12 @@ export default class MutoidScene extends Phaser.Scene {
     tankRight.setScale(tankScale);
     treadLeft.setScale(tankScale);
     treadRight.setScale(tankScale);
+    treadFrontLeft.setScale(tankScale);
+    treadFrontRight.setScale(tankScale);
 
     this.mutoidContainer.add([
+      treadFrontLeft,
+      treadFrontRight,
       treadLeft,
       treadRight,
       tankLeft,
@@ -78,6 +84,16 @@ export default class MutoidScene extends Phaser.Scene {
     treadLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
     treadRight.setPosition(tankWidth, MUTOID_HEIGHT);
 
+    treadFrontLeft.setPosition(
+      treadLeft.x - treadLeft.displayWidth + 1,
+      treadLeft.y - 1
+    );
+
+    treadFrontRight.setPosition(
+      treadRight.x + treadRight.displayWidth - 1,
+      treadRight.y - 1
+    );
+
     torsoLeft.setPosition(-torsoWidth, 0);
     torsoRight.setPosition(0, 0);
 
@@ -93,6 +109,8 @@ export default class MutoidScene extends Phaser.Scene {
       tankRight,
       treadLeft,
       treadRight,
+      treadFrontLeft,
+      treadFrontRight,
       armLeft,
       armRight,
       head,
