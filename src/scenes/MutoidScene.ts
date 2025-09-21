@@ -49,7 +49,7 @@ export default class MutoidScene extends Phaser.Scene {
     const treadRight = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
     const treadFrontLeft = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
     const treadFrontRight = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
-    const head = this.add.image(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
+    const head = this.add.sprite(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
     const armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
     const armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
 
@@ -136,20 +136,78 @@ export default class MutoidScene extends Phaser.Scene {
     );
 
     this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
+
+    this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s0", "atlas_s5"], 5, -1);
+    this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", ["atlas_s0", "atlas_s1", "atlas_s2", "atlas_s3"], 5, 0);
+
+    head.setFrame(HEAD_FRAME);
+
+    this.animateMutoid(head);
   }
 
-  private ensureAnimation(key: string, textureKey: string) {
+  private animateMutoid(head: Phaser.GameObjects.Sprite) {
+    const tween = this.tweens.add({
+      targets: this.mutoidContainer,
+      y: this.mutoidContainer.y + 112,
+      duration: 2000,
+      yoyo: true,
+      hold: 0,
+      repeatDelay: 3500,
+      repeat: -1,
+      onStart: () => this.playHeadForward(head),
+      onYoyo: () => this.playHeadBackward(head),
+      onRepeat: () => this.playHeadForward(head),
+      onComplete: () => this.playHeadIdle(head),
+      onStop: () => this.playHeadIdle(head),
+    });
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => tween.stop());
+  }
+
+  private playHeadIdle(head: Phaser.GameObjects.Sprite) {
+    head.stop();
+    head.setFrame(HEAD_FRAME);
+  }
+
+  private playHeadForward(head: Phaser.GameObjects.Sprite) {
+    head.play({ key: "mutoid-head-forward", repeat: -1, frameRate: 5 });
+  }
+
+  private playHeadBackward(head: Phaser.GameObjects.Sprite) {
+    head.play({ key: "mutoid-head-back", repeat: 0, frameRate: 5 });
+  }
+
+  private ensureAnimation(
+    key: string,
+    textureKey: string,
+    frames: string[] = ["atlas_s0", "atlas_s1", "atlas_s2"],
+    fps: number = TREAD_FPS,
+    repeat: number = -1
+  ) {
     if (this.anims.exists(key)) return;
 
     this.anims.create({
       key,
-      frames: this.anims.generateFrameNames(textureKey, {
-        start: 0,
-        end: 2,
-        prefix: "atlas_s",
-      }),
-      frameRate: TREAD_FPS,
-      repeat: -1,
+      frames: frames.map((frame) => ({ key: textureKey, frame })),
+      frameRate: fps,
+      repeat,
+    });
+  }
+
+  private ensureExplicitAnimation(
+    key: string,
+    textureKey: string,
+    frames: string[],
+    fps: number,
+    repeat: number
+  ) {
+    if (this.anims.exists(key)) return;
+
+    this.anims.create({
+      key,
+      frames: frames.map((frame) => ({ key: textureKey, frame })),
+      frameRate: fps,
+      repeat,
     });
   }
 
