@@ -227,9 +227,11 @@ export class Player extends Character {
     switch (t.key) {
       case "0":
         return window.gameScene.hud.spFire();
+      case "ArrowLeft":
       case "PageUp":
         this.unitX -= 6, this.shootOn = 1;
         break;
+      case "ArrowRight":
       case "PageDown":
         this.unitX += 6, this.shootOn = 1;
         break;
