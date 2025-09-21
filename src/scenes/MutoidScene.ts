@@ -138,7 +138,7 @@ export default class MutoidScene extends Phaser.Scene {
     this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
 
     this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s0", "atlas_s5"], 5, -1);
-    this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", ["atlas_s0", "atlas_s1", "atlas_s2", "atlas_s3"], 5, 0);
+    this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", ["atlas_s1", "atlas_s2", "atlas_s3", "atlas_s3"], 2, 0);
 
     head.setFrame(HEAD_FRAME);
 
@@ -174,7 +174,11 @@ export default class MutoidScene extends Phaser.Scene {
   }
 
   private playHeadBackward(head: Phaser.GameObjects.Sprite) {
-    head.play({ key: "mutoid-head-back", repeat: 0, frameRate: 5 });
+    head.play({ key: "mutoid-head-back", repeat: 0, frameRate: 2 });
+    head.once(
+      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + "mutoid-head-back",
+      () => this.playHeadIdle(head)
+    );
   }
 
   private ensureAnimation(
