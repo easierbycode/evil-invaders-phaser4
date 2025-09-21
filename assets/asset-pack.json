@@ -2,70 +2,70 @@
     "section1": {
         "files": [
             {
-                "url": "assets/bullet.png",
+                "url": "bullet.png",
                 "type": "image",
                 "key": "bullet"
             },
             {
-                "url": "assets/clouds.png",
+                "url": "clouds.png",
                 "type": "image",
                 "key": "clouds"
             },
             {
-                "url": "assets/corridor-bg.png",
+                "url": "corridor-bg.png",
                 "type": "image",
                 "key": "corridor-bg"
             },
             {
-                "url": "assets/flares.png",
+                "url": "flares.png",
                 "type": "image",
                 "key": "flares"
             },
             {
-                "atlasURL": "assets/flirty-girls-whitehouse.json",
-                "textureURL": "assets/flirty-girls-whitehouse.png",
+                "atlasURL": "flirty-girls-whitehouse.json",
+                "textureURL": "flirty-girls-whitehouse.png",
                 "type": "aseprite",
                 "key": "flirty-girls-whitehouse"
             },
             {
-                "url": "assets/logo.png",
+                "url": "logo.png",
                 "type": "image",
                 "key": "logo"
             },
             {
-                "atlasURL": "assets/mutoid/mutoid-arm.json",
-                "textureURL": "assets/mutoid/mutoid-arm.png",
+                "atlasURL": "mutoid/mutoid-arm.json",
+                "textureURL": "mutoid/mutoid-arm.png",
                 "type": "atlas",
                 "key": "mutoid-arm"
             },
             {
-                "atlasURL": "assets/mutoid/mutoid-head.json",
-                "textureURL": "assets/mutoid/mutoid-head.png",
+                "atlasURL": "mutoid/mutoid-head.json",
+                "textureURL": "mutoid/mutoid-head.png",
                 "type": "atlas",
                 "key": "mutoid-head"
             },
             {
-                "url": "assets/mutoid/mutoid-tank.png",
+                "url": "mutoid/mutoid-tank.png",
                 "type": "image",
                 "key": "mutoid-tank"
             },
             {
-                "url": "assets/mutoid/mutoid-torso.png",
+                "url": "mutoid/mutoid-torso.png",
                 "type": "image",
                 "key": "mutoid-torso"
             },
             {
-                "url": "assets/star.png",
+                "url": "star.png",
                 "type": "image",
                 "key": "star"
             },
             {
-                "url": "assets/stars-bg.png",
+                "url": "stars-bg.png",
                 "type": "image",
                 "key": "stars-bg"
             },
             {
-                "url": "assets/subTitleEn.png",
+                "url": "subTitleEn.png",
                 "type": "image",
                 "key": "subTitleEn"
             }

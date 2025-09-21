@@ -1,12 +1,10 @@
 
 // You can write more code here
-import CONSTANTS from "./../constants";
-import PROPERTIES from "../properties";
-const { GAME_CENTER } = CONSTANTS;
 
 const MUTOID_HEIGHT = 104;
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
+
 
 /* START OF COMPILED CODE */
 
@@ -33,16 +31,6 @@ export default class MutoidScene extends Phaser.Scene {
   private mutoidContainer!: Phaser.GameObjects.Container;
 
   /* START-USER-CODE */
-
-  preload() {
-    const base = PROPERTIES.baseUrl || "/"; // '/', '/evil-invaders-phaser4/', or './'
-    const packUrl = (base.endsWith("/") ? base : base + "/") + "assets/asset-pack.json";
-
-    // Don’t prefix with setPath('assets') or similar; that can double the path.
-    this.load.setPath("");
-    this.load.pack("pack", packUrl);
-  }
-
   // Write your code here
 
   create() {
@@ -85,16 +73,6 @@ export default class MutoidScene extends Phaser.Scene {
     armRight.setPosition(armWidth + torsoWidth - 15, 2);
 
     head.setPosition(0, -HEAD_OFFSET_FROM_TORSO_TOP);
-
-    // Force Arcade Physics debug overlays to render for easier alignment work.
-    if (this.physics && this.physics.world) {
-      const debugGraphic = this.physics.world.createDebugGraphic();
-      this.physics.world.drawDebug = true;
-      this.physics.world.debugGraphic.visible = true;
-      debugGraphic.setDepth(1000);
-
-      this.events.once("shutdown", () => debugGraphic.destroy());
-    }
   }
 
   /* END-USER-CODE */

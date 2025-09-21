@@ -82,11 +82,10 @@ export class LoadScene extends Phaser.Scene {
       }
     }
 
-    const base = PROPERTIES.baseUrl || "/"; // '/', '/evil-invaders-phaser4/', or './'
-    const packUrl = (base.endsWith("/") ? base : base + "/") + "assets/asset-pack.json";
+    const base = PROPERTIES.baseUrl || "./"; // '/', '/evil-invaders-phaser4/', or './'
+    const packUrl = (base.endsWith("/") ? base : base + "/") + "asset-pack.json";
 
-    // Don’t prefix with setPath('assets') or similar; that can double the path.
-    this.load.setPath("");
+    this.load.setPath(base + 'assets');
     this.load.pack("pack", packUrl);
 
     // Optional: log any misses
@@ -172,7 +171,8 @@ export class LoadScene extends Phaser.Scene {
 
     /* ---------------- 4️⃣  Choose next scene ---------------- */
     if (gameData) {
-      this.scene.start("OverloadScene");
+      const sceneRequested = new URL(window.location.href).searchParams.get("scene");
+      this.scene.start(sceneRequested || "OverloadScene");
     }
   }
 }

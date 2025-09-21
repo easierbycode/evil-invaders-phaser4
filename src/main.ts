@@ -11,6 +11,12 @@ import { requestFullscreen } from "./utils/fullscreen";
 import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
+import MutoidScene from "./scenes/MutoidScene";
+
+const SCENE_NAMES = {
+  "MutoidScene": MutoidScene
+};
+
 
 export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
@@ -211,6 +217,10 @@ function onDeviceReady() {
     appElement.setAttribute("style", "display:none");
   }
 
+  const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
+  const sceneName = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
+  const scene = sceneName ? [LoadScene, sceneName] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
+
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",
     width: GAME_WIDTH,
@@ -223,7 +233,7 @@ function onDeviceReady() {
         gravity: { x: 0, y: 0 },
       },
     },
-    scene: [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene],
+    scene,
     input: {
       gamepad: true,
       /*
