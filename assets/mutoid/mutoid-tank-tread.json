@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "atlas_s0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 66
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 66
+      },
+      "sourceSize": {
+        "w": 4,
+        "h": 66
+      }
+    }
+  },
+  "meta": {
+    "app": "Evil Invaders Atlas Builder",
+    "version": "1.0",
+    "image": "atlas.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 4,
+      "h": 66
+    },
+    "scale": "1"
+  }
+}

@@ -4,6 +4,7 @@
 const MUTOID_HEIGHT = 104;
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
+const TREAD_FRAME = "atlas_s0";
 
 
 /* START OF COMPILED CODE */
@@ -43,6 +44,8 @@ export default class MutoidScene extends Phaser.Scene {
     const torsoRight = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0).setFlipX(true);
     const tankLeft = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
     const tankRight = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
+    const treadLeft = this.add.image(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
+    const treadRight = this.add.image(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
     const head = this.add.image(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
     const armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
     const armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
@@ -50,21 +53,30 @@ export default class MutoidScene extends Phaser.Scene {
     const tankScale = MUTOID_HEIGHT / tankLeft.displayHeight;
     tankLeft.setScale(tankScale);
     tankRight.setScale(tankScale);
+    treadLeft.setScale(tankScale);
+    treadRight.setScale(tankScale);
 
-    this.mutoidContainer.add([tankLeft, tankRight, torsoLeft, torsoRight, armLeft, armRight, head]);
+    this.mutoidContainer.add([
+      treadLeft,
+      treadRight,
+      tankLeft,
+      tankRight,
+      torsoLeft,
+      torsoRight,
+      armLeft,
+      armRight,
+      head,
+    ]);
 
     const tankWidth = tankLeft.displayWidth;
     const torsoWidth = torsoLeft.displayWidth;
     const armWidth = armLeft.displayWidth;
-    const headHeight = head.displayHeight;
-    const containerWidth = torsoWidth * 2;
-    const containerHeight = MUTOID_HEIGHT + HEAD_OFFSET_FROM_TORSO_TOP + headHeight;
-
-    // this.mutoidContainer.setPosition(GAME_CENTER, 0);
-    this.mutoidContainer.setSize(containerWidth, containerHeight);
 
     tankLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
     tankRight.setPosition(0, MUTOID_HEIGHT);
+
+    treadLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
+    treadRight.setPosition(tankWidth, MUTOID_HEIGHT);
 
     torsoLeft.setPosition(-torsoWidth, 0);
     torsoRight.setPosition(0, 0);
@@ -73,6 +85,33 @@ export default class MutoidScene extends Phaser.Scene {
     armRight.setPosition(armWidth + torsoWidth - 15, 2);
 
     head.setPosition(0, -HEAD_OFFSET_FROM_TORSO_TOP);
+
+    const sprites = [
+      torsoLeft,
+      torsoRight,
+      tankLeft,
+      tankRight,
+      treadLeft,
+      treadRight,
+      armLeft,
+      armRight,
+      head,
+    ];
+
+    const leftmost = Math.min(
+      ...sprites.map((sprite) => sprite.x - sprite.displayWidth * sprite.originX)
+    );
+    const rightmost = Math.max(
+      ...sprites.map((sprite) => sprite.x + sprite.displayWidth * (1 - sprite.originX))
+    );
+    const topmost = Math.min(
+      ...sprites.map((sprite) => sprite.y - sprite.displayHeight * sprite.originY)
+    );
+    const bottommost = Math.max(
+      ...sprites.map((sprite) => sprite.y + sprite.displayHeight * (1 - sprite.originY))
+    );
+
+    this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
   }
 
   /* END-USER-CODE */
