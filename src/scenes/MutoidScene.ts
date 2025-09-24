@@ -2,6 +2,7 @@
 // You can write more code here
 
 import { Player } from "../game-objects/player";
+import { WeaponPlugin } from 'https://esm.sh/phaser3-weapon-plugin@2.2.1';
 import CONSTANTS from "./../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import PROPERTIES from "../properties";
@@ -41,27 +42,45 @@ export default class MutoidScene extends Phaser.Scene {
   private mutoidContainer!: Phaser.GameObjects.Container;
   private secondLoop!: boolean;
   #startBtn!: Phaser.GameObjects.Sprite;
+  playerWeapon: any;
+
+  private mutoidArmsHp = 10;
+  private mutoidTorsoHp = 20;
+  private isTorsoDestroying = false;
+  private armLeft!: Phaser.GameObjects.Image;
+  private armRight!: Phaser.GameObjects.Image;
+  private torsoLeft!: Phaser.GameObjects.Image;
+  private torsoRight!: Phaser.GameObjects.Image;
+  private head!: Phaser.GameObjects.Sprite;
 
   /* START-USER-CODE */
   // Write your code here
 
   create() {
+    this.plugins.installScenePlugin(
+        'WeaponPlugin',
+        WeaponPlugin,
+        'weapons',
+        this
+    );
 
     this.editorCreate();
 
+    this.playerWeapon = this.weapons.add(30, 'bullet');
+
     this.mutoidContainer.removeAll(true);
 
-    const torsoLeft = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0);
-    const torsoRight = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0).setFlipX(true);
+    this.torsoLeft = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0);
+    this.torsoRight = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0).setFlipX(true);
     const tankLeft = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
     const tankRight = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
     const treadLeft = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
     const treadRight = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
     const treadFrontLeft = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
     const treadFrontRight = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
-    const head = this.add.sprite(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
-    const armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
-    const armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
+    this.head = this.add.sprite(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
+    this.armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
+    this.armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
 
     const tankScale = MUTOID_HEIGHT / tankLeft.displayHeight;
     tankLeft.setScale(tankScale);
@@ -179,7 +198,7 @@ export default class MutoidScene extends Phaser.Scene {
 
       const d = PROPERTIES.resource.recipe.data.playerData;
 
-      this.player = new Player(d);
+      this.player = new Player(d, this.playerWeapon);
       this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
       this.player.unitX = GAME_WIDTH / 2;
       this.player.unitY = GAME_HEIGHT - 48;
@@ -187,6 +206,9 @@ export default class MutoidScene extends Phaser.Scene {
       this.player.gamepadIndex = gamepad ? gamepad.index : -1;
       this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
       this.player.speed = 150;
+
+      const mutoidParts = this.physics.add.group([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head]);
+      this.physics.add.collider(this.playerWeapon.bullets, mutoidParts, this.handleBulletMutoidCollision, null, this);
     };
 
     // Existing game‑pad hookup
@@ -245,6 +267,51 @@ export default class MutoidScene extends Phaser.Scene {
       Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + "mutoid-head-back",
       () => this.playHeadIdle(head)
     );
+  }
+
+  private handleBulletMutoidCollision(bullet: any, mutoidPart: any) {
+    if (this.mutoidArmsHp > 0) {
+      if (mutoidPart === this.armLeft || mutoidPart === this.armRight) {
+        this.mutoidArmsHp -= bullet.hp;
+        if (this.mutoidArmsHp <= 0) {
+          this.armLeft.destroy();
+          this.armRight.destroy();
+        }
+        bullet.hp -= 1;
+        if (bullet.hp <= 0) {
+            bullet.kill();
+        }
+      }
+    } else if (this.mutoidTorsoHp > 0) {
+      if (mutoidPart === this.torsoLeft || mutoidPart === this.torsoRight) {
+        this.mutoidTorsoHp -= bullet.hp;
+        if (this.mutoidTorsoHp <= 0) {
+          this.torsoLeft.setTexture('mutoid-head', 'atlas_s1');
+          this.torsoRight.setTexture('mutoid-head', 'atlas_s1');
+        }
+        bullet.hp -= 1;
+        if (bullet.hp <= 0) {
+            bullet.kill();
+        }
+      }
+    } else {
+      if (mutoidPart === this.head) {
+        this.head.destroy();
+        this.mutoidContainer.destroy();
+
+        const emitter = this.add.particles(this.head.x, this.head.y, 'mutoid-head', {
+            frame: "atlas_s4",
+            lifespan: 4000,
+            speed: { min: 150, max: 250 },
+            scale: { start: 1, end: 0 },
+            gravityY: 300,
+            blendMode: 'ADD',
+            emitting: false
+        });
+        emitter.explode(400);
+        bullet.kill();
+      }
+    }
   }
 
   private ensureAnimation(
