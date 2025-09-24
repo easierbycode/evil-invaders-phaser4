@@ -11,7 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "editor": "phasereditor2d-launcher -project . -disable-open-browser -public -port 1959",
-    "mcp": "tsc --project tsconfig.server.json && node dist/server/server.js",
+    "mcp": "npx vite build --config vite.server.config.cjs && node dist/server/server.cjs",
     "build:android": "vite build && cordova-icon && cordova-splash && cordova build android",
     "electron": "vite --config vite.electron.config.ts",
     "build:linux": "vite build && electron-builder",

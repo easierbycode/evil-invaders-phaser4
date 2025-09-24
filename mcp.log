@@ -1,3 +1,0 @@
-
-> phaser4-starter@1.0.0 mcp
-> tsc --project tsconfig.server.json && node dist/server/server.js
