@@ -106,7 +106,7 @@ export default class MutoidScene extends Phaser.Scene {
     treadFrontRight.play({ key: "mutoid-tank-tread-front-spin" });
 
     const tankWidth = tankLeft.displayWidth;
-    const torsoWidth = torsoLeft.displayWidth;
+    const torsoWidth = this.torsoLeft.displayWidth;
     const armWidth = this.armLeft.displayWidth;
 
     tankLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
