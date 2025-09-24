@@ -89,6 +89,44 @@ export class PackerScene extends Phaser.Scene {
         h1.textContent = 'Atlas Packer - Select or Create Atlas';
         this.editorDiv.appendChild(h1);
 
+        // --- Scene Selector ---
+        const sceneSelectorContainer = document.createElement('div');
+        sceneSelectorContainer.style.cssText = 'margin: 20px 0; background: #111; padding: 15px; border-radius: 5px;';
+
+        const sceneLabel = document.createElement('label');
+        sceneLabel.textContent = 'Go to Scene: ';
+        sceneLabel.style.marginRight = '10px';
+
+        const sceneSelect = document.createElement('select');
+        sceneSelect.style.cssText = 'padding: 8px; font-size: 14px;';
+
+        const scenes = ["MutoidScene", "TitleScene", "GameScene", "EditorScene", "PackerScene"];
+        const currentScene = new URL(window.location.href).searchParams.get("scene") || "PackerScene";
+
+        scenes.forEach(sceneName => {
+            const option = document.createElement('option');
+            option.value = sceneName;
+            option.textContent = sceneName;
+            if (sceneName === currentScene) {
+                option.selected = true;
+            }
+            sceneSelect.appendChild(option);
+        });
+
+        sceneSelect.onchange = (e) => {
+            const selectedScene = (e.target as HTMLSelectElement).value;
+            if (selectedScene) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('scene', selectedScene);
+                window.location.href = url.toString();
+            }
+        };
+
+        sceneSelectorContainer.appendChild(sceneLabel);
+        sceneSelectorContainer.appendChild(sceneSelect);
+        this.editorDiv.appendChild(sceneSelectorContainer);
+        // --- End Scene Selector ---
+
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '✕ Close';
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
