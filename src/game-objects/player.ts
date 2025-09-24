@@ -113,18 +113,17 @@ export class Character extends Phaser.GameObjects.Sprite {
 }
 
 export class Player extends Character {
-  playerWeapon: any;
+  public bulletGroup: Phaser.Physics.Arcade.Group;
 
-  constructor(t, playerWeapon) {
+  constructor(t) {
     super(
-      t.texture, 
+      t.texture,
       {
         ...t,
         autoPlay: true,
         physics: true
       }
     );
-    this.playerWeapon = playerWeapon;
     var o = this;
     (t.barrierEffectTexture = "shieldEffect.png"),
       (t.hit = ["hit0.gif", "hit1.gif", "hit2.gif", "hit3.gif", "hit4.gif"]),
@@ -179,6 +178,9 @@ export class Player extends Character {
       (o.shoot3wayData.explosion = t.hit),
       (o.shoot3wayData.guard = t.guard),
       (o.shootOn = 0),
+      (o.bulletGroup = o.scene.physics.add.group({ classType: Bullet, runChildUpdate: true })),
+      (o.bulletFrameCnt = 0),
+      (o.bulletIdCnt = 0),
       (o.shootSpeed = 0),
       (o.shootInterval = 0),
       (o.shootData = {}),
@@ -248,10 +250,17 @@ export class Player extends Character {
       (this.y = Math.round(this.y + 0.09 * (this.unitY - this.y))),
       (this.barrier.x = this.x),
       (this.barrier.y = this.y),
+      this.bulletFrameCnt++,
       this.shootOn &&
       !this.theWorldFlg &&
-      this.scene.time.now > this.playerWeapon.fireRate &&
+      this.bulletFrameCnt % (this.shootInterval - this.shootSpeed) == 0 &&
       this.shoot();
+
+    this.bulletGroup.getChildren().forEach((bullet: Bullet) => {
+      if (bullet.y < -50 || bullet.x < -50 || bullet.x > GAME_WIDTH + 200) {
+        bullet.destroy();
+      }
+    });
   }
   shoot() {
     this.fireBullet();
@@ -478,7 +487,74 @@ export class Player extends Character {
   }
 
   fireBullet() {
-    this.playerWeapon.fire(this);
+    const bulletTexture = 'bullet'; // Always use the bullet.png from asset-pack.json
+
+    let actuator: any = null; // Use 'any' to avoid type conflicts between specs
+    if (navigator.getGamepads && this.gamepadIndex > -1) {
+        const pad = navigator.getGamepads()[this.gamepadIndex];
+
+        if (pad && pad.connected) {
+            // Modern spec
+            if (pad.vibrationActuator) {
+                actuator = pad.vibrationActuator;
+            }
+            // Older spec
+            else if (pad.hapticActuators && pad.hapticActuators.length > 0) {
+                actuator = pad.hapticActuators[0];
+            }
+        }
+    }
+
+    // Spawn bullet ------------------------------------------
+    // Use full sprite width for consistent bullet spawn position
+    const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
+    const bulletY = this.y;                   // Spawn from top edge (no offset)
+
+    const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
+    bullet.id = ++this.bulletIdCnt;
+    bullet.rotation = -Math.PI / 2; // Point upward
+    this.bulletGroup.add(bullet);
+    this.scene.add.existing(bullet);
+
+    const damage = this.shootData?.damage ?? 1;
+    const durationBase = 25;                     // ms
+    const duration = durationBase + (damage - 1) * 10;
+
+    // Gamepad haptic feedback
+    if (actuator) {
+      const magnitudeBase = 0.4;                  // normal shot
+      let strongMagnitude = Math.min(1, magnitudeBase + (damage - 1) * 0.45);
+      let weakMagnitude   = strongMagnitude * 0.35;
+
+      // Slight positional flavour (more rumble the further from centre)
+      const edgeFactor = Math.abs(this.x - GAME_WIDTH / 2) / (GAME_WIDTH / 2);
+      weakMagnitude = Math.min(1, weakMagnitude + edgeFactor * 0.2);
+
+      if (typeof (actuator as any).playEffect === 'function') {
+        (actuator as any)
+          .playEffect('dual-rumble', {
+            startDelay: 0,
+            duration,
+            strongMagnitude,
+            weakMagnitude
+          })
+          .catch(() => {}); // ignore unsupported devices
+      } else if (typeof (actuator as any).pulse === 'function') {
+        (actuator as any).pulse(strongMagnitude, duration);
+      }
+    }
+
+    // Mobile device vibration (in sync with gamepad haptics)
+    if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
+      cordova.plugins.vibration.vibrate(duration);
+    } else if (navigator.vibrate) {
+      navigator.vibrate(duration);
+    }
+
+    // Fire the bullet straight upward
+    if (bullet.body) {
+      bullet.body.setVelocity(0, -(this.shootData?.speed ?? 450));
+    }
   }
 
   spFire() { }
@@ -536,15 +612,20 @@ export class Player extends Character {
           navigator.vibrate(damageDuration);
         }
 
-        TweenMax.to(this, 0.1, {
-            tint: 0xff0000,
-        });
-        TweenMax.to(this, 0.1, {
-            delay: 0.1,
-            tint: 0xffffff,
+        this.damageAnimationFlg = !0;
+        this.scene.tweens.add({
+            targets: this,
+            alpha: 0,
+            duration: 100,
+            ease: 'Linear',
+            yoyo: true,
+            repeat: 5,
+            onComplete: () => {
+                this.alpha = 1;
+                this.damageAnimationFlg = !1;
+            }
         });
       }
-      this.damageAnimationFlg = !0;
     }
   }
   dead() {
@@ -554,10 +635,7 @@ export class Player extends Character {
       (this.explosion.x = this.x),
       (this.explosion.y = this.y),
       this.explosion.play();
-    for (var t = 0; t < this.bulletList.length; t++) {
-      var e = this.bulletList[t];
-      e.destroy();
-    }
+    this.bulletGroup.clear(true, true);
   }
   explosionComplete() {
     this.emit(Character.CUSTOM_EVENT_DEAD_COMPLETE);
@@ -621,12 +699,10 @@ export class Player extends Character {
     }
     
     // Clean up bullets
-    for (let i = 0; i < this.bulletList.length; i++) {
-      if (this.bulletList[i]) {
-        this.bulletList[i].destroy();
-      }
+    if (this.bulletGroup) {
+      this.bulletGroup.destroy(true);
+      this.bulletGroup = null;
     }
-    this.bulletList = [];
     
     // Clean up timeline
     if (this.tl) {

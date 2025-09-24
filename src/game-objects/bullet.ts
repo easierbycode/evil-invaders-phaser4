@@ -4,6 +4,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite
 {
     speed;
     id: number = 0;
+    hp: number = 1;
     end_direction = new Phaser.Math.Vector2(0, 0);
 
     constructor(scene, x, y, textureKey = "game_asset", frame = "bullet") {
