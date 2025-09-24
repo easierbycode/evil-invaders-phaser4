@@ -113,7 +113,9 @@ export class Character extends Phaser.GameObjects.Sprite {
 }
 
 export class Player extends Character {
-  constructor(t) {
+  playerWeapon: any;
+
+  constructor(t, playerWeapon) {
     super(
       t.texture, 
       {
@@ -122,6 +124,7 @@ export class Player extends Character {
         physics: true
       }
     );
+    this.playerWeapon = playerWeapon;
     var o = this;
     (t.barrierEffectTexture = "shieldEffect.png"),
       (t.hit = ["hit0.gif", "hit1.gif", "hit2.gif", "hit3.gif", "hit4.gif"]),
@@ -176,9 +179,6 @@ export class Player extends Character {
       (o.shoot3wayData.explosion = t.hit),
       (o.shoot3wayData.guard = t.guard),
       (o.shootOn = 0),
-      (o.bulletList = []),
-      (o.bulletFrameCnt = 0),
-      (o.bulletIdCnt = 0),
       (o.shootSpeed = 0),
       (o.shootInterval = 0),
       (o.shootData = {}),
@@ -248,33 +248,13 @@ export class Player extends Character {
       (this.y = Math.round(this.y + 0.09 * (this.unitY - this.y))),
       (this.barrier.x = this.x),
       (this.barrier.y = this.y),
-      this.bulletFrameCnt++,
       this.shootOn &&
       !this.theWorldFlg &&
-      this.bulletFrameCnt % (this.shootInterval - this.shootSpeed) == 0 &&
+      this.scene.time.now > this.playerWeapon.fireRate &&
       this.shoot();
-    for (var t = 0; t < this.bulletList.length; t++) {
-      var e = this.bulletList[t];
-      // Let physics handle bullet movement - remove manual position updates
-      // Check if bullet is out of bounds
-      (e.y <= -50 || e.x <= -50 || e.x >= GAME_WIDTH + 200) &&
-        (this.bulletRemove(e), this.bulletRemoveComplete(e));
-    }
   }
   shoot() {
     this.fireBullet();
-  }
-  bulletRemove(t) {
-    for (var e = 0; e < this.bulletList.length; e++)
-      t.id == this.bulletList[e].id && this.bulletList.splice(e, 1);
-  }
-  bulletRemoveComplete(t) {
-    t.off(Character.CUSTOM_EVENT_DEAD, this.bulletRemove.bind(this, t)),
-      t.off(
-        Character.CUSTOM_EVENT_DEAD_COMPLETE,
-        this.bulletRemoveComplete.bind(this, t)
-      );
-    t.destroy();
   }
   shootModeChange(t) {
     switch (((this.shootMode = t), this.shootMode)) {
@@ -498,74 +478,7 @@ export class Player extends Character {
   }
 
   fireBullet() {
-    const bulletTexture = 'bullet'; // Always use the bullet.png from asset-pack.json
-
-    let actuator: any = null; // Use 'any' to avoid type conflicts between specs
-    if (navigator.getGamepads && this.gamepadIndex > -1) {
-        const pad = navigator.getGamepads()[this.gamepadIndex];
-
-        if (pad && pad.connected) {
-            // Modern spec
-            if (pad.vibrationActuator) {
-                actuator = pad.vibrationActuator;
-            }
-            // Older spec
-            else if (pad.hapticActuators && pad.hapticActuators.length > 0) {
-                actuator = pad.hapticActuators[0];
-            }
-        }
-    }
-
-    // Spawn bullet ------------------------------------------
-    // Use full sprite width for consistent bullet spawn position
-    const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
-    const bulletY = this.y;                   // Spawn from top edge (no offset)
-    
-    const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
-    bullet.id = ++this.bulletIdCnt;
-    bullet.rotation = -Math.PI / 2; // Point upward
-    this.bulletList.push(bullet);
-    this.scene.add.existing(bullet);
-    
-    const damage = this.shootData?.damage ?? 1;
-    const durationBase = 25;                     // ms
-    const duration = durationBase + (damage - 1) * 10;
-    
-    // Gamepad haptic feedback
-    if (actuator) {
-      const magnitudeBase = 0.4;                  // normal shot
-      let strongMagnitude = Math.min(1, magnitudeBase + (damage - 1) * 0.45);
-      let weakMagnitude   = strongMagnitude * 0.35;
-
-      // Slight positional flavour (more rumble the further from centre)
-      const edgeFactor = Math.abs(this.x - GAME_WIDTH / 2) / (GAME_WIDTH / 2);
-      weakMagnitude = Math.min(1, weakMagnitude + edgeFactor * 0.2);
-
-      if (typeof (actuator as any).playEffect === 'function') {
-        (actuator as any)
-          .playEffect('dual-rumble', {
-            startDelay: 0,
-            duration,
-            strongMagnitude,
-            weakMagnitude
-          })
-          .catch(() => {}); // ignore unsupported devices
-      } else if (typeof (actuator as any).pulse === 'function') {
-        (actuator as any).pulse(strongMagnitude, duration);
-      }
-    }
-    
-    // Mobile device vibration (in sync with gamepad haptics)
-    if (window.cordova && cordova.plugins && cordova.plugins.vibration) {
-      cordova.plugins.vibration.vibrate(duration);
-    } else if (navigator.vibrate) {
-      navigator.vibrate(duration);
-    }
-
-    // Fire the bullet straight upward
-    if (bullet.body) {
-      bullet.body.setVelocity(0, -(this.shootData?.speed ?? 450));
-    }
+    this.playerWeapon.fire(this);
   }
 
   spFire() { }
@@ -622,59 +535,14 @@ export class Player extends Character {
         } else if (navigator.vibrate) {
           navigator.vibrate(damageDuration);
         }
-        var e = new TimelineMax({
-          onComplete: function () {
-            this.damageAnimationFlg = !1;
-          }.bind(this)
+
+        TweenMax.to(this, 0.1, {
+            tint: 0xff0000,
         });
-        e.to(this, 0.15, {
-          delay: 0,
-          y: this.y + 2,
-          tint: 16711680,
-          alpha: 0.2
-        }),
-          e.to(this, 0.15, {
-            delay: 0,
-            y: this.y - 2,
-            tint: 16777215,
-            alpha: 1
-          }),
-          e.to(this, 0.15, {
-            delay: 0.05,
-            y: this.y + 2,
-            tint: 16711680,
-            alpha: 0.2
-          }),
-          e.to(this, 0.15, {
-            delay: 0,
-            y: this.y - 2,
-            tint: 16777215,
-            alpha: 1
-          }),
-          e.to(this, 0.15, {
-            delay: 0.05,
-            y: this.y + 2,
-            tint: 16711680,
-            alpha: 0.2
-          }),
-          e.to(this, 0.15, {
-            delay: 0,
-            y: this.y + 0,
-            tint: 16777215,
-            alpha: 1
-          }),
-          e.to(this, 0.15, {
-            delay: 0.05,
-            y: this.y + 2,
-            tint: 16711680,
-            alpha: 0.2
-          }),
-          e.to(this, 0.15, {
-            delay: 0,
-            y: this.y + 0,
-            tint: 16777215,
-            alpha: 1
-          });
+        TweenMax.to(this, 0.1, {
+            delay: 0.1,
+            tint: 0xffffff,
+        });
       }
       this.damageAnimationFlg = !0;
     }
