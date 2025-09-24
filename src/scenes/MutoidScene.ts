@@ -228,10 +228,10 @@ export default class MutoidScene extends Phaser.Scene {
             const p = part as Phaser.GameObjects.Image;
             const body = p.body as Phaser.Physics.Arcade.Body;
 
-            const tm = p.getWorldTransformMatrix();
+            const bounds = p.getBounds();
 
-            body.position.x = tm.tx;
-            body.position.y = tm.ty;
+            body.center.x = bounds.centerX;
+            body.center.y = bounds.centerY;
         });
     }
   }
@@ -289,7 +289,12 @@ export default class MutoidScene extends Phaser.Scene {
     const part = mutoidPart as Phaser.GameObjects.Image;
     const damageDealt = 1; // Assuming player bullets deal 1 damage
 
-    // Prioritize arms
+    // A collision always damages the bullet
+    bulletInstance.hp -= 1;
+
+    // --- Damage applies to the mutoid part only if it's the current target ---
+
+    // Target: Arms
     if (this.mutoidArmsHp > 0) {
       if (part === this.armLeft || part === this.armRight) {
         this.mutoidArmsHp -= damageDealt;
@@ -297,16 +302,10 @@ export default class MutoidScene extends Phaser.Scene {
           this.armLeft.destroy();
           this.armRight.destroy();
         }
-        bulletInstance.hp -= 1;
-        if (bulletInstance.hp <= 0) {
-          bulletInstance.destroy();
-        }
       }
-      return;
     }
-
-    // Then torso
-    if (this.mutoidTorsoHp > 0) {
+    // Target: Torso
+    else if (this.mutoidTorsoHp > 0) {
       if ((part === this.torsoLeft || part === this.torsoRight) && !this.isTorsoDestroying) {
         this.mutoidTorsoHp -= damageDealt;
         if (this.mutoidTorsoHp <= 0) {
@@ -319,35 +318,41 @@ export default class MutoidScene extends Phaser.Scene {
             this.torsoRight.destroy();
           });
         }
-        bulletInstance.hp -= 1;
-        if (bulletInstance.hp <= 0) {
-          bulletInstance.destroy();
-        }
       }
-      return;
+    }
+    // Target: Head
+    else {
+      if (part === this.head) {
+          this.mutoidHeadHealth -= damageDealt;
+          if (this.mutoidHeadHealth <= 0) {
+              const headWorldPos = this.head.getWorldTransformMatrix();
+              const explosionX = headWorldPos.tx;
+              const explosionY = headWorldPos.ty;
+
+              this.head.destroy();
+              this.mutoidContainer.destroy(); // Or trigger a bigger explosion
+
+              const explosionGroup = this.add.group();
+              for (let i = 0; i < 50; i++) {
+                  const headPart = this.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
+                  explosionGroup.add(headPart);
+                  headPart.play('head_explosion_anim');
+                  const angle = Phaser.Math.Between(0, 360);
+                  const speed = Phaser.Math.Between(150, 250);
+                  this.physics.velocityFromAngle(angle, speed, headPart.body.velocity);
+                  headPart.body.setGravityY(300);
+              }
+
+              this.time.delayedCall(3000, () => {
+                  explosionGroup.destroy(true);
+              });
+          }
+      }
     }
 
-    // Finally, the head
-    if (part === this.head) {
-        this.mutoidHeadHealth -= damageDealt;
-        if (this.mutoidHeadHealth <= 0) {
-            const headWorldPos = this.head.getWorldTransformMatrix();
-            const explosionX = headWorldPos.tx;
-            const explosionY = headWorldPos.ty;
-
-            this.head.destroy();
-            this.mutoidContainer.destroy(); // Or trigger a bigger explosion
-
-            for (let i = 0; i < 50; i++) {
-                const headPart = this.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
-                headPart.play('head_explosion_anim');
-                const angle = Phaser.Math.Between(0, 360);
-                const speed = Phaser.Math.Between(150, 250);
-                this.physics.velocityFromAngle(angle, speed, headPart.body.velocity);
-                headPart.body.setGravityY(300);
-            }
-        }
-        bulletInstance.destroy();
+    // Destroy the bullet if its HP is depleted
+    if (bulletInstance.hp <= 0) {
+      bulletInstance.destroy();
     }
   }
 
