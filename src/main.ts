@@ -13,11 +13,6 @@ import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
 import MutoidScene from "./scenes/MutoidScene";
 
-const SCENE_NAMES = {
-  "MutoidScene": MutoidScene
-};
-
-
 export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
   player!: Player;
@@ -217,9 +212,17 @@ function onDeviceReady() {
     appElement.setAttribute("style", "display:none");
   }
 
+  const SCENE_NAMES = {
+    "MutoidScene": MutoidScene,
+    "TitleScene": TitleScene,
+    "GameScene": GameScene,
+    "EditorScene": EditorScene,
+    "PackerScene": PackerScene,
+  };
+
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
-  const sceneName = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
-  const scene = sceneName ? [LoadScene, OverloadScene, sceneName] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
+  const sceneClass = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
+  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",
