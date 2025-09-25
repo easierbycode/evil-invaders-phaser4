@@ -163,6 +163,10 @@ export default class MutoidScene extends Phaser.Scene {
     this.physics.world.enable([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head]);
     this.mutoidParts.addMultiple([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head]);
 
+    this.mutoidParts.getChildren().forEach(part => {
+        (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+    });
+
     this.anims.create({
         key: 'head_explosion_anim',
         frames: this.anims.generateFrameNames('mutoid-head', { prefix: 'atlas_s', start: 4, end: 6 }),
@@ -350,10 +354,7 @@ export default class MutoidScene extends Phaser.Scene {
       }
     }
 
-    // Destroy the bullet if its HP is depleted
-    if (bulletInstance.hp <= 0) {
-      bulletInstance.destroy();
-    }
+    bulletInstance.destroyBullet();
   }
 
   private ensureAnimation(
