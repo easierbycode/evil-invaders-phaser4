@@ -11,6 +11,7 @@ import { requestFullscreen } from "../utils/fullscreen";
 const MUTOID_HEIGHT = 104;
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
+const TORSO_FRAME = "atlas_s0";
 const TREAD_FRAME = "atlas_s0";
 const TREAD_FPS = 4;
 
@@ -44,9 +45,10 @@ export default class MutoidScene extends Phaser.Scene {
 
   private player!: Player;
   private mutoidParts!: Phaser.Physics.Arcade.Group;
-  private mutoidArmsHp = 10;
-  private mutoidTorsoHp = 20;
-  private mutoidHeadHealth = 1; // Assuming head is destroyed in one hit after shields are down.
+  private mutoidSolidParts!: Phaser.Physics.Arcade.Group;
+  private mutoidArmsHp = 15;
+  private mutoidTorsoHp = 25;
+  private mutoidHeadHealth = 5; // Assuming head is destroyed in one hit after shields are down.
   private isTorsoDestroying = false;
   private armLeft!: Phaser.GameObjects.Image;
   private armRight!: Phaser.GameObjects.Image;
@@ -58,14 +60,24 @@ export default class MutoidScene extends Phaser.Scene {
   /* START-USER-CODE */
   // Write your code here
 
+  explosionTextures: string[] = [];
+  playerData: any = null;
+
+
+  init() {
+    this.playerData = PROPERTIES.resource.recipe.data.playerData;
+    this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
+    this.playerData.explosionTextures = this.explosionTextures;
+  }
+
   create() {
 
     this.editorCreate();
 
     this.mutoidContainer.removeAll(true);
 
-    this.torsoLeft = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0);
-    this.torsoRight = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0).setFlipX(true);
+    this.torsoLeft = this.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0);
+    this.torsoRight = this.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
     const tankLeft = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
     const tankRight = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
     const treadLeft = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
@@ -161,19 +173,45 @@ export default class MutoidScene extends Phaser.Scene {
 
     this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
 
+    // Group for destructible parts (arms, torso, head) — bullets damage these
     this.mutoidParts = this.physics.add.group();
-    this.physics.world.enable([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, head]);
+
+  // Group for solid/indestructible parts (tank, tread fronts) — bullets should NOT collide with these
+  this.mutoidSolidParts = this.physics.add.group();
+
+    // Enable physics for destructible parts and solid parts
+    this.physics.world.enable([
+      this.armLeft,
+      this.armRight,
+      this.torsoLeft,
+      this.torsoRight,
+      head,
+      tankLeft,
+      tankRight,
+      treadFrontLeft,
+      treadFrontRight
+    ]);
+
+    // Add destructible parts to mutoidParts
     this.mutoidParts.addMultiple([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, head]);
 
+  // Add solid parts to a separate group so bullets won't hit them
+  this.mutoidSolidParts.addMultiple([tankLeft, tankRight, treadFrontLeft, treadFrontRight]);
+
     this.mutoidParts.getChildren().forEach(part => {
-        (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+    });
+
+    // Make solid parts immovable as well
+    this.mutoidSolidParts.getChildren().forEach(part => {
+      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
     });
 
     this.anims.create({
-        key: 'head_explosion_anim',
-        frames: this.anims.generateFrameNames('mutoid-head', { prefix: 'atlas_s', start: 4, end: 6 }),
-        frameRate: 10,
-        repeat: -1
+      key: 'head_explosion_anim',
+      frames: this.anims.generateFrameNames('mutoid-head', { prefix: 'atlas_s', start: 4, end: 6 }),
+      frameRate: 10,
+      repeat: -1
     });
 
     this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s5", "atlas_s0"], 5, -1);
@@ -209,12 +247,14 @@ export default class MutoidScene extends Phaser.Scene {
     if (this.player) return;
 
     if (this.#startBtn) this.#startBtn.destroy();
-    const alert = document.getElementById('gamepadAlert');
-    if (alert) alert.style.display = 'none';
+    // Only hide the page-level gamepad alert when running as Cordova (APK)
+    if (window.cordova) {
+      const alert = document.getElementById('gamepadAlert');
+      if (alert) alert.style.display = 'none';
+    }
 
-    const d = PROPERTIES.resource.recipe.data.playerData;
-
-    this.player = new Player(d);
+    this.player = new Player(this.playerData);
+    this.player.setUp(this.playerData.maxHp, this.playerData.defaultShootName, this.playerData.defaultShootSpeed);
     this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
     this.player.unitX = GAME_WIDTH / 2;
     this.player.unitY = GAME_HEIGHT - 48;
@@ -223,22 +263,33 @@ export default class MutoidScene extends Phaser.Scene {
     this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
     this.player.speed = 150;
 
-    this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
+  // Bullets should only collide with destructible parts
+  this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
+
+  // Player should collide with both destructible and solid parts and take damage
+  this.physics.add.collider(this.player, this.mutoidParts, this.handlePlayerMutoidCollision, undefined, this);
+  this.physics.add.collider(this.player, this.mutoidSolidParts, this.handlePlayerMutoidCollision, undefined, this);
+
+    this.player.on((Player as any).CUSTOM_EVENT_DEAD_COMPLETE, () => {
+      this.time.delayedCall(1000, () => {
+        this.scene.restart();
+      });
+    });
   }
 
   update() {
     if (this.player && this.player.active) this.player.update();
 
     if (this.mutoidParts) {
-        this.mutoidParts.getChildren().forEach(part => {
-            const p = part as Phaser.GameObjects.Image;
-            const body = p.body as Phaser.Physics.Arcade.Body;
+      this.mutoidParts.getChildren().forEach(part => {
+        const p = part as Phaser.GameObjects.Image;
+        const body = p.body as Phaser.Physics.Arcade.Body;
 
-            const bounds = p.getBounds();
+        const bounds = p.getBounds();
 
-            body.center.x = bounds.centerX;
-            body.center.y = bounds.centerY;
-        });
+        body.center.x = bounds.centerX;
+        body.center.y = bounds.centerY;
+      });
     }
   }
 
@@ -262,8 +313,6 @@ export default class MutoidScene extends Phaser.Scene {
       repeatDelay: 3500,
       repeat: -1,
       delay: 3500,
-      // ease: "Quad.easeInOut",
-      // ease: "Elastic.easeInOut",
       ease,
       onStart: () => this.playHeadForward(),
       onYoyo: () => this.playHeadBackward(),
@@ -335,11 +384,16 @@ export default class MutoidScene extends Phaser.Scene {
     else if (this.mutoidTorsoHp > 0) {
       if ((part === this.torsoLeft || part === this.torsoRight) && !this.isTorsoDestroying) {
         this.mutoidTorsoHp -= damageDealt;
-        if (this.mutoidTorsoHp <= 0) {
-          this.isTorsoDestroying = true;
-          // As per user request, set to 2nd frame. Assumes this frame exists on the 'mutoid-torso' texture atlas.
+
+        // When torso HP drops to 15 or below, change both torso sprites to the damaged frame.
+        if (this.mutoidTorsoHp <= 15 && this.torsoLeft && this.torsoRight) {
           this.torsoLeft.setFrame("atlas_s1");
           this.torsoRight.setFrame("atlas_s1");
+        }
+
+        // When torso HP reaches zero or less, destroy the torso parts.
+        if (this.mutoidTorsoHp <= 0) {
+          this.isTorsoDestroying = true;
           this.time.delayedCall(100, () => {
             this.torsoLeft.destroy();
             this.torsoRight.destroy();
@@ -350,41 +404,45 @@ export default class MutoidScene extends Phaser.Scene {
     // Target: Head
     else {
       if (this.head && part === this.head) {
-          this.mutoidHeadHealth -= damageDealt;
-          if (this.mutoidHeadHealth <= 0 && this.head) {
-              const head = this.head;
-              const headWorldPos = head.getWorldTransformMatrix();
-              const explosionX = headWorldPos.tx;
-              const explosionY = headWorldPos.ty;
+        this.mutoidHeadHealth -= damageDealt;
+        if (this.mutoidHeadHealth <= 0 && this.head) {
+          const head = this.head;
+          const headWorldPos = head.getWorldTransformMatrix();
+          const explosionX = headWorldPos.tx;
+          const explosionY = headWorldPos.ty;
 
-              this.stopMutoidFloatTween();
+          this.stopMutoidFloatTween();
 
-              head.destroy();
-              this.head = null;
+          head.destroy();
+          this.head = null;
 
-              if (this.mutoidContainer.active) {
-                  this.mutoidContainer.destroy(); // Or trigger a bigger explosion
-              }
-
-              const explosionGroup = this.add.group();
-              for (let i = 0; i < 50; i++) {
-                  const headPart = this.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
-                  explosionGroup.add(headPart);
-                  headPart.play('head_explosion_anim');
-                  const angle = Phaser.Math.Between(0, 360);
-                  const speed = Phaser.Math.Between(150, 250);
-                  this.physics.velocityFromAngle(angle, speed, headPart.body.velocity);
-                  headPart.body.setGravityY(300);
-              }
-
-              this.time.delayedCall(3000, () => {
-                  explosionGroup.destroy(true);
-              });
+          if (this.mutoidContainer.active) {
+            this.mutoidContainer.destroy(); // Or trigger a bigger explosion
           }
+
+          const explosionGroup = this.add.group();
+          for (let i = 0; i < 50; i++) {
+            const headPart = this.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
+            explosionGroup.add(headPart);
+            headPart.play('head_explosion_anim');
+            const angle = Phaser.Math.Between(0, 360);
+            const speed = Phaser.Math.Between(150, 250);
+            this.physics.velocityFromAngle(angle, speed, headPart.body.velocity);
+            headPart.body.setGravityY(300);
+          }
+
+          this.time.delayedCall(3000, () => {
+            explosionGroup.destroy(true);
+          });
+        }
       }
     }
 
     bulletInstance.destroyBullet();
+  }
+
+  private handlePlayerMutoidCollision(player: any, mutoidPart: any) {
+    (player as Player).onDamage(1);
   }
 
   private ensureAnimation(
