@@ -224,6 +224,13 @@ export default class MutoidScene extends Phaser.Scene {
     this.player.speed = 150;
 
     this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
+    this.physics.add.collider(this.player, this.mutoidParts, this.handlePlayerMutoidCollision, undefined, this);
+
+    this.player.on((Player as any).CUSTOM_EVENT_DEAD_COMPLETE, () => {
+      this.time.delayedCall(1000, () => {
+        this.scene.restart();
+      });
+    });
   }
 
   update() {
@@ -385,6 +392,10 @@ export default class MutoidScene extends Phaser.Scene {
     }
 
     bulletInstance.destroyBullet();
+  }
+
+  private handlePlayerMutoidCollision(player: any, mutoidPart: any) {
+    (player as Player).onDamage(1);
   }
 
   private ensureAnimation(
