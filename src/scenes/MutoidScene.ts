@@ -247,8 +247,11 @@ export default class MutoidScene extends Phaser.Scene {
     if (this.player) return;
 
     if (this.#startBtn) this.#startBtn.destroy();
-    const alert = document.getElementById('gamepadAlert');
-    if (alert) alert.style.display = 'none';
+    // Only hide the page-level gamepad alert when running as Cordova (APK)
+    if (window.cordova) {
+      const alert = document.getElementById('gamepadAlert');
+      if (alert) alert.style.display = 'none';
+    }
 
     this.player = new Player(this.playerData);
     this.player.setUp(this.playerData.maxHp, this.playerData.defaultShootName, this.playerData.defaultShootSpeed);

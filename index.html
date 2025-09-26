@@ -53,11 +53,22 @@
         🎮 PLEASE <strong>CONNECT GAMEPAD</strong> 🎮
     </div>
     <script>
-        // When running inside Cordova the external gamepad prompt is not needed — hide it immediately
-        if (window.cordova) {
+        // Hide the gamepad alert when running inside Cordova. We listen for deviceready
+        // because Cordova may not be injected at the time this script runs.
+        function hideGamepadAlert() {
             const ga = document.getElementById('gamepadAlert');
             if (ga) ga.style.display = 'none';
         }
+
+        if (window.cordova) {
+            // Cordova object exists now — hide immediately
+            hideGamepadAlert();
+        }
+
+        // Also hide when deviceready fires (covers the normal Cordova lifecycle)
+        document.addEventListener('deviceready', () => {
+            hideGamepadAlert();
+        }, false);
     </script>
     <script type="module" src="/src/main.ts"></script>
     <script>
