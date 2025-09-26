@@ -11,6 +11,7 @@ import { requestFullscreen } from "../utils/fullscreen";
 const MUTOID_HEIGHT = 104;
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
+const TORSO_FRAME = "atlas_s0";
 const TREAD_FRAME = "atlas_s0";
 const TREAD_FPS = 4;
 
@@ -74,8 +75,8 @@ export default class MutoidScene extends Phaser.Scene {
 
     this.mutoidContainer.removeAll(true);
 
-    this.torsoLeft = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0);
-    this.torsoRight = this.add.image(0, 0, "mutoid-torso").setOrigin(0, 0).setFlipX(true);
+    this.torsoLeft = this.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0);
+    this.torsoRight = this.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
     const tankLeft = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
     const tankRight = this.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
     const treadLeft = this.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);

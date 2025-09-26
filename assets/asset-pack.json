@@ -62,8 +62,9 @@
                 "key": "mutoid-tank-tread-front"
             },
             {
-                "url": "mutoid/mutoid-torso.png",
-                "type": "image",
+                "atlasURL": "mutoid/mutoid-torso.json",
+                "textureURL": "mutoid/mutoid-torso.png",
+                "type": "atlas",
                 "key": "mutoid-torso"
             },
             {
