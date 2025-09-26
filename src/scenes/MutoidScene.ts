@@ -58,6 +58,16 @@ export default class MutoidScene extends Phaser.Scene {
   /* START-USER-CODE */
   // Write your code here
 
+  explosionTextures: string[] = [];
+  playerData: any = null;
+
+
+  init() {
+    this.playerData = PROPERTIES.resource.recipe.data.playerData;
+    this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
+    this.playerData.explosionTextures = this.explosionTextures;
+  }
+
   create() {
 
     this.editorCreate();
@@ -166,14 +176,14 @@ export default class MutoidScene extends Phaser.Scene {
     this.mutoidParts.addMultiple([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, head]);
 
     this.mutoidParts.getChildren().forEach(part => {
-        (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
     });
 
     this.anims.create({
-        key: 'head_explosion_anim',
-        frames: this.anims.generateFrameNames('mutoid-head', { prefix: 'atlas_s', start: 4, end: 6 }),
-        frameRate: 10,
-        repeat: -1
+      key: 'head_explosion_anim',
+      frames: this.anims.generateFrameNames('mutoid-head', { prefix: 'atlas_s', start: 4, end: 6 }),
+      frameRate: 10,
+      repeat: -1
     });
 
     this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s5", "atlas_s0"], 5, -1);
@@ -212,9 +222,8 @@ export default class MutoidScene extends Phaser.Scene {
     const alert = document.getElementById('gamepadAlert');
     if (alert) alert.style.display = 'none';
 
-    const d = PROPERTIES.resource.recipe.data.playerData;
-
-    this.player = new Player(d);
+    this.player = new Player(this.playerData);
+    this.player.setUp(this.playerData.maxHp, this.playerData.defaultShootName, this.playerData.defaultShootSpeed);
     this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
     this.player.unitX = GAME_WIDTH / 2;
     this.player.unitY = GAME_HEIGHT - 48;
@@ -237,15 +246,15 @@ export default class MutoidScene extends Phaser.Scene {
     if (this.player && this.player.active) this.player.update();
 
     if (this.mutoidParts) {
-        this.mutoidParts.getChildren().forEach(part => {
-            const p = part as Phaser.GameObjects.Image;
-            const body = p.body as Phaser.Physics.Arcade.Body;
+      this.mutoidParts.getChildren().forEach(part => {
+        const p = part as Phaser.GameObjects.Image;
+        const body = p.body as Phaser.Physics.Arcade.Body;
 
-            const bounds = p.getBounds();
+        const bounds = p.getBounds();
 
-            body.center.x = bounds.centerX;
-            body.center.y = bounds.centerY;
-        });
+        body.center.x = bounds.centerX;
+        body.center.y = bounds.centerY;
+      });
     }
   }
 
@@ -357,37 +366,37 @@ export default class MutoidScene extends Phaser.Scene {
     // Target: Head
     else {
       if (this.head && part === this.head) {
-          this.mutoidHeadHealth -= damageDealt;
-          if (this.mutoidHeadHealth <= 0 && this.head) {
-              const head = this.head;
-              const headWorldPos = head.getWorldTransformMatrix();
-              const explosionX = headWorldPos.tx;
-              const explosionY = headWorldPos.ty;
+        this.mutoidHeadHealth -= damageDealt;
+        if (this.mutoidHeadHealth <= 0 && this.head) {
+          const head = this.head;
+          const headWorldPos = head.getWorldTransformMatrix();
+          const explosionX = headWorldPos.tx;
+          const explosionY = headWorldPos.ty;
 
-              this.stopMutoidFloatTween();
+          this.stopMutoidFloatTween();
 
-              head.destroy();
-              this.head = null;
+          head.destroy();
+          this.head = null;
 
-              if (this.mutoidContainer.active) {
-                  this.mutoidContainer.destroy(); // Or trigger a bigger explosion
-              }
-
-              const explosionGroup = this.add.group();
-              for (let i = 0; i < 50; i++) {
-                  const headPart = this.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
-                  explosionGroup.add(headPart);
-                  headPart.play('head_explosion_anim');
-                  const angle = Phaser.Math.Between(0, 360);
-                  const speed = Phaser.Math.Between(150, 250);
-                  this.physics.velocityFromAngle(angle, speed, headPart.body.velocity);
-                  headPart.body.setGravityY(300);
-              }
-
-              this.time.delayedCall(3000, () => {
-                  explosionGroup.destroy(true);
-              });
+          if (this.mutoidContainer.active) {
+            this.mutoidContainer.destroy(); // Or trigger a bigger explosion
           }
+
+          const explosionGroup = this.add.group();
+          for (let i = 0; i < 50; i++) {
+            const headPart = this.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
+            explosionGroup.add(headPart);
+            headPart.play('head_explosion_anim');
+            const angle = Phaser.Math.Between(0, 360);
+            const speed = Phaser.Math.Between(150, 250);
+            this.physics.velocityFromAngle(angle, speed, headPart.body.velocity);
+            headPart.body.setGravityY(300);
+          }
+
+          this.time.delayedCall(3000, () => {
+            explosionGroup.destroy(true);
+          });
+        }
       }
     }
 
