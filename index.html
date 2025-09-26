@@ -52,6 +52,13 @@
     <div id="gamepadAlert" class="alert alert-info text-center" style="position:absolute; top:0; width:100%;">
         🎮 PLEASE <strong>CONNECT GAMEPAD</strong> 🎮
     </div>
+    <script>
+        // When running inside Cordova the external gamepad prompt is not needed — hide it immediately
+        if (window.cordova) {
+            const ga = document.getElementById('gamepadAlert');
+            if (ga) ga.style.display = 'none';
+        }
+    </script>
     <script type="module" src="/src/main.ts"></script>
     <script>
         let prevButtonStates = [];

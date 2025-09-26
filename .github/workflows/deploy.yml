@@ -94,6 +94,12 @@ jobs:
         working-directory: cordova
         run: cordova platform add android
 
+      - name: Ensure cordova vibration plugin is installed
+        working-directory: cordova
+        run: |
+          # Install cordova vibration plugin so navigator.vibrate will be backed by the native plugin
+          cordova plugin add cordova-plugin-vibration || true
+
       # 👉 Build APK only (no AAB)
       - name: Build Cordova Android (release APK)
         working-directory: cordova
