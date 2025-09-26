@@ -39,10 +39,50 @@
                 "key": "mutoid-arm"
             },
             {
+                "url": "mutoid/mutoid-bullet_s0.png",
+                "type": "image",
+                "key": "mutoid-bullet_s0"
+            },
+            {
+                "url": "mutoid/mutoid-bullet_s1.png",
+                "type": "image",
+                "key": "mutoid-bullet_s1"
+            },
+            {
+                "url": "mutoid/mutoid-bullet_s2.png",
+                "type": "image",
+                "key": "mutoid-bullet_s2"
+            },
+            {
+                "url": "mutoid/mutoid-bullet_s3.png",
+                "type": "image",
+                "key": "mutoid-bullet_s3"
+            },
+            {
                 "atlasURL": "mutoid/mutoid-head.json",
                 "textureURL": "mutoid/mutoid-head.png",
                 "type": "atlas",
                 "key": "mutoid-head"
+            },
+            {
+                "url": "mutoid/mutoid-phase2-bullet_s0.png",
+                "type": "image",
+                "key": "mutoid-phase2-bullet_s0"
+            },
+            {
+                "url": "mutoid/mutoid-phase2-bullet_s1.png",
+                "type": "image",
+                "key": "mutoid-phase2-bullet_s1"
+            },
+            {
+                "url": "mutoid/mutoid-phase2-bullet_s2.png",
+                "type": "image",
+                "key": "mutoid-phase2-bullet_s2"
+            },
+            {
+                "url": "mutoid/mutoid-phase2-bullet_s3.png",
+                "type": "image",
+                "key": "mutoid-phase2-bullet_s3"
             },
             {
                 "url": "mutoid/mutoid-tank.png",
