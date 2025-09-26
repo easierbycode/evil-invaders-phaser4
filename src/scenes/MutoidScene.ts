@@ -350,11 +350,16 @@ export default class MutoidScene extends Phaser.Scene {
     else if (this.mutoidTorsoHp > 0) {
       if ((part === this.torsoLeft || part === this.torsoRight) && !this.isTorsoDestroying) {
         this.mutoidTorsoHp -= damageDealt;
-        if (this.mutoidTorsoHp <= 0) {
-          this.isTorsoDestroying = true;
-          // As per user request, set to 2nd frame. Assumes this frame exists on the 'mutoid-torso' texture atlas.
+
+        // When torso HP drops to 15 or below, change both torso sprites to the damaged frame.
+        if (this.mutoidTorsoHp <= 15 && this.torsoLeft && this.torsoRight) {
           this.torsoLeft.setFrame("atlas_s1");
           this.torsoRight.setFrame("atlas_s1");
+        }
+
+        // When torso HP reaches zero or less, destroy the torso parts.
+        if (this.mutoidTorsoHp <= 0) {
+          this.isTorsoDestroying = true;
           this.time.delayedCall(100, () => {
             this.torsoLeft.destroy();
             this.torsoRight.destroy();
