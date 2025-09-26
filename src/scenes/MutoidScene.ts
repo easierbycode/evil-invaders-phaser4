@@ -44,9 +44,9 @@ export default class MutoidScene extends Phaser.Scene {
 
   private player!: Player;
   private mutoidParts!: Phaser.Physics.Arcade.Group;
-  private mutoidArmsHp = 10;
-  private mutoidTorsoHp = 20;
-  private mutoidHeadHealth = 1; // Assuming head is destroyed in one hit after shields are down.
+  private mutoidArmsHp = 15;
+  private mutoidTorsoHp = 25;
+  private mutoidHeadHealth = 5; // Assuming head is destroyed in one hit after shields are down.
   private isTorsoDestroying = false;
   private armLeft!: Phaser.GameObjects.Image;
   private armRight!: Phaser.GameObjects.Image;
