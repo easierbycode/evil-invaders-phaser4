@@ -45,6 +45,7 @@ export default class MutoidScene extends Phaser.Scene {
 
   private player!: Player;
   private mutoidParts!: Phaser.Physics.Arcade.Group;
+  private mutoidSolidParts!: Phaser.Physics.Arcade.Group;
   private mutoidArmsHp = 15;
   private mutoidTorsoHp = 25;
   private mutoidHeadHealth = 5; // Assuming head is destroyed in one hit after shields are down.
@@ -172,11 +173,37 @@ export default class MutoidScene extends Phaser.Scene {
 
     this.mutoidContainer.setSize(rightmost - leftmost, bottommost - topmost);
 
+    // Group for destructible parts (arms, torso, head) — bullets damage these
     this.mutoidParts = this.physics.add.group();
-    this.physics.world.enable([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, head]);
+
+  // Group for solid/indestructible parts (tank, tread fronts) — bullets should NOT collide with these
+  this.mutoidSolidParts = this.physics.add.group();
+
+    // Enable physics for destructible parts and solid parts
+    this.physics.world.enable([
+      this.armLeft,
+      this.armRight,
+      this.torsoLeft,
+      this.torsoRight,
+      head,
+      tankLeft,
+      tankRight,
+      treadFrontLeft,
+      treadFrontRight
+    ]);
+
+    // Add destructible parts to mutoidParts
     this.mutoidParts.addMultiple([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, head]);
 
+  // Add solid parts to a separate group so bullets won't hit them
+  this.mutoidSolidParts.addMultiple([tankLeft, tankRight, treadFrontLeft, treadFrontRight]);
+
     this.mutoidParts.getChildren().forEach(part => {
+      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+    });
+
+    // Make solid parts immovable as well
+    this.mutoidSolidParts.getChildren().forEach(part => {
       (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
     });
 
@@ -233,8 +260,12 @@ export default class MutoidScene extends Phaser.Scene {
     this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
     this.player.speed = 150;
 
-    this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
-    this.physics.add.collider(this.player, this.mutoidParts, this.handlePlayerMutoidCollision, undefined, this);
+  // Bullets should only collide with destructible parts
+  this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
+
+  // Player should collide with both destructible and solid parts and take damage
+  this.physics.add.collider(this.player, this.mutoidParts, this.handlePlayerMutoidCollision, undefined, this);
+  this.physics.add.collider(this.player, this.mutoidSolidParts, this.handlePlayerMutoidCollision, undefined, this);
 
     this.player.on((Player as any).CUSTOM_EVENT_DEAD_COMPLETE, () => {
       this.time.delayedCall(1000, () => {
