@@ -278,8 +278,6 @@ export default class MutoidScene extends Phaser.Scene {
       repeatDelay: 3500,
       repeat: -1,
       delay: 3500,
-      // ease: "Quad.easeInOut",
-      // ease: "Elastic.easeInOut",
       ease,
       onStart: () => this.playHeadForward(),
       onYoyo: () => this.playHeadBackward(),
