@@ -12,7 +12,6 @@ export default class MutoidScene extends Phaser.Scene {
 
   constructor() {
     super("MutoidScene");
-
     /* START-USER-CTR-CODE */
     // Write your code here.
     /* END-USER-CTR-CODE */
@@ -50,9 +49,7 @@ export default class MutoidScene extends Phaser.Scene {
     // @ts-ignore
     window.gameScene = this;
 
-    this.#startBtn = this.physics
-      .add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.png')
-      .setInteractive();
+    this.#startBtn = this.physics.add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.png').setInteractive();
 
     this.#startBtn.on('pointerup', () => {
       requestFullscreen(this.game.canvas);
@@ -61,8 +58,6 @@ export default class MutoidScene extends Phaser.Scene {
     });
 
     // Existing game-pad hookup
-    const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
-    if (firstPad) this.createPlayer(firstPad);
     this.input.gamepad.once('connected', pad => this.createPlayer(pad));
   }
 
@@ -71,10 +66,11 @@ export default class MutoidScene extends Phaser.Scene {
       return;
     }
 
-    if (this.#startBtn) {
+    if (this.#startBtn.active) {
       this.#startBtn.destroy();
     }
 
+    // Only hide the page-level gamepad alert when running as Cordova (APK)
     if (window.cordova) {
       const alert = document.getElementById('gamepadAlert');
       if (alert) alert.style.display = 'none';
@@ -92,9 +88,13 @@ export default class MutoidScene extends Phaser.Scene {
 
     this.mutoid.setPlayer(this.player);
 
+    // Bullets should only collide with destructible parts
     this.physics.add.collider(this.player.bulletGroup, this.mutoid.parts, this.handleBulletMutoidCollision as any, undefined, this);
+
+    // Player should collide with both destructible and solid parts and take damage
     this.physics.add.collider(this.player, this.mutoid.parts, this.handlePlayerMutoidCollision, undefined, this);
     this.physics.add.collider(this.player, this.mutoid.solidParts, this.handlePlayerMutoidCollision, undefined, this);
+    // Player takes damage from mutoid bullets
     this.physics.add.collider(this.player, this.mutoid.bulletGroup, this.handlePlayerMutoidBulletCollision, undefined, this);
 
     this.player.on((Player as any).CUSTOM_EVENT_DEAD_COMPLETE, () => {
@@ -121,7 +121,6 @@ export default class MutoidScene extends Phaser.Scene {
     (player as Player).onDamage(1);
     bulletInstance.destroyBullet();
   }
-
   /* END-USER-CODE */
 }
 
