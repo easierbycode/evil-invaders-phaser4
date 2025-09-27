@@ -522,11 +522,13 @@ export default class MutoidScene extends Phaser.Scene {
           speed = 200;
           // Set rotation to match velocity direction (with 90° offset for sprite orientation)
           const rotationOffset = Phaser.Math.DegToRad(90);
-          bullet.rotation = fireAngle + rotationOffset;
+          // Add extra 180 degrees for phase2 bullets to fix upside down orientation
+          const phase2Flip = this.mutoidArmsHp <= 0 ? Phaser.Math.DegToRad(180) : 0;
+          bullet.rotation = fireAngle + rotationOffset + phase2Flip;
         } else {
           // _s1, _s2, _s3: use fixed angles
           speed = 400;
-
+  
           if (frameNumber === '1') {
             bullet.rotation = -0.8818719385800352; // -50.53 degrees visual rotation
             // Fire angle: flip to positive for downward direction
@@ -541,7 +543,7 @@ export default class MutoidScene extends Phaser.Scene {
             fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right (even less angle)
           }
         }
-
+  
         // Set velocity based on the fire angle
         if (bullet.body) {
           this.physics.velocityFromRotation(fireAngle, speed, bullet.body.velocity);
