@@ -199,8 +199,8 @@ export class Mutoid extends Phaser.GameObjects.Container {
           const body = part.body as Phaser.Physics.Arcade.Body;
           const p = part as Phaser.GameObjects.Sprite;
           const [worldX, worldY] = this.getWorldCoors(p.x, p.y);
-          body.x = worldX - p.displayOriginX;
-          body.y = worldY - p.displayOriginY;
+          body.position.x = worldX - p.displayOriginX;
+          body.position.y = worldY - p.displayOriginY;
         }
       });
   }
