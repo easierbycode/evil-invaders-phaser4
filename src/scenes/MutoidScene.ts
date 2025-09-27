@@ -499,7 +499,9 @@ export default class MutoidScene extends Phaser.Scene {
     const match = frameName.match(/_s([0-3])$/);
     if (match) {
       const frameNumber = match[1];
-      const bulletTexture = `mutoid-bullet_s${frameNumber}`;
+      // Use phase2 bullets if arms are destroyed
+      const bulletPrefix = this.mutoidArmsHp <= 0 ? 'mutoid-phase2-bullet' : 'mutoid-bullet';
+      const bulletTexture = `${bulletPrefix}_s${frameNumber}`;
 
       // Get head world position
       const headWorldPos = this.head.getWorldTransformMatrix();
@@ -509,17 +511,41 @@ export default class MutoidScene extends Phaser.Scene {
       // Create bullet
       const bullet = this.mutoidBulletGroup.get(headX, headY) as Bullet;
       if (bullet) {
-        // Calculate direction to player
-        const dirX = this.player.x - headX;
-        const dirY = this.player.y - headY;
-        const length = Math.sqrt(dirX * dirX + dirY * dirY);
-        const normalizedDirX = dirX / length;
-        const normalizedDirY = dirY / length;
+        bullet.fire(headX, headY, 0, 0, bulletTexture);
 
-        // Fire bullet toward player
-        bullet.fire(headX, headY, normalizedDirX, normalizedDirY, bulletTexture);
-        bullet.speed = 200; // Set slower speed for mutoid bullets
-        bullet.body.setVelocity(normalizedDirX * bullet.speed, normalizedDirY * bullet.speed);
+        let fireAngle: number;
+        let speed: number;
+
+        if (frameNumber === '0') {
+          // _s0: fire toward player
+          fireAngle = Phaser.Math.Angle.Between(headX, headY, this.player.x, this.player.y);
+          speed = 200;
+          // Set rotation to match velocity direction (with 90° offset for sprite orientation)
+          const rotationOffset = Phaser.Math.DegToRad(90);
+          bullet.rotation = fireAngle + rotationOffset;
+        } else {
+          // _s1, _s2, _s3: use fixed angles
+          speed = 400;
+
+          if (frameNumber === '1') {
+            bullet.rotation = -0.8818719385800352; // -50.53 degrees visual rotation
+            // Fire angle: flip to positive for downward direction
+            fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right
+          } else if (frameNumber === '2') {
+            bullet.rotation = -0.6949; // -39.81 degrees visual rotation
+            // Fire angle: flip to positive for downward direction
+            fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right (less angle)
+          } else { // frameNumber === '3'
+            bullet.rotation = -0.499; // -28.6 degrees visual rotation
+            // Fire angle: flip to positive for downward direction
+            fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right (even less angle)
+          }
+        }
+
+        // Set velocity based on the fire angle
+        if (bullet.body) {
+          this.physics.velocityFromRotation(fireAngle, speed, bullet.body.velocity);
+        }
       }
     }
   }
