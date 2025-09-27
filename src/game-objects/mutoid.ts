@@ -3,7 +3,7 @@ import { Bullet } from "./bullet";
 import MutoidScene from "../scenes/MutoidScene";
 
 // These constants define the size and positioning of the mutoid parts.
-const MUTOID_HEIGHT = 104;
+const MUTOID_HEIGHT = 94; // Reduced by 10px to fix tank positioning
 const HEAD_OFFSET_FROM_TORSO_TOP = 8;
 const HEAD_FRAME = "atlas_s0";
 const TORSO_FRAME = "atlas_s0";
@@ -253,11 +253,21 @@ export class Mutoid extends Phaser.GameObjects.Container {
   }
 
   private playHeadBackward() {
-    if (this.head?.scene) {
+    if (this.head?.scene && this.player) {
+      // Get mutoid's center position for horizontal comparison
+      const mutoidCenterX = this.x + this.displayWidth / 2;
+      
+      // Flip head if player is to the right of mutoid's center
+      this.head.setFlipX(this.player.x > mutoidCenterX);
+
       this.head.play({ key: "mutoid-head-back", repeat: 0, frameRate: 2 });
       this.head.once(
         Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + "mutoid-head-back",
-        () => this.playHeadIdle()
+        () => {
+          this.playHeadIdle();
+          // Reset flip when animation ends
+          this.head?.setFlipX(false);
+        }
       );
     }
   }
@@ -391,36 +401,43 @@ export class Mutoid extends Phaser.GameObjects.Container {
     if (!this.head || !this.player || !frame.textureFrame) return;
 
     const frameName = String(frame.textureFrame);
-    // Check if frame ends with _s1, _s2, or _s3
-    const match = frameName.match(/_s([1-3])$/);
-    if (match) {
-      const frameNumber = match[1];
+    // Only fire when head is moving back (frames s1, s2, s3)
+    if (!frameName.match(/_s[1-3]$/)) return;
+    // Extract the frame suffix (s0, s1, s2, s3)
+    const suffixMatch = frameName.match(/_s[0-3]$/);
+    if (!suffixMatch) return;
+    const suffix = suffixMatch[0];
+    // Use phase-2 bullets if both arms are gone
+    const bulletPrefix =
+      this.armLeftHp <= 0 && this.armRightHp <= 0
+        ? "mutoid-phase2-bullet"
+        : "mutoid-bullet";
+    const bulletTexture = `${bulletPrefix}${suffix}`;
 
-      // Use phase-2 bullets if both arms are gone
-      const bulletPrefix =
-        this.armLeftHp <= 0 && this.armRightHp <= 0
-          ? "mutoid-phase2-bullet"
-          : "mutoid-bullet";
-      const bulletTexture = `${bulletPrefix}_s${frameNumber}`;
+    // Head world position
+    const headWorldPos = this.head.getWorldTransformMatrix();
+    const headX = headWorldPos.tx;
+    const headY = headWorldPos.ty + 10; // Fire slightly below head
 
-      // Head world position
-      const headWorldPos = this.head.getWorldTransformMatrix();
-      const headX = headWorldPos.tx;
-      const headY = headWorldPos.ty + 10; // Fire slightly below head
-
-      // Pull a bullet from pool
-      const bullet = this.bulletGroup.get(headX, headY) as Bullet;
-      if (bullet) {
-        // Reset & configure
-        bullet.hp = 1;
-        bullet.setTexture(bulletTexture);
-        bullet.setActive(true);
-        bullet.setVisible(true);
-        bullet.setPosition(headX, headY);
+    // Pull a bullet from pool
+    const bullet = this.bulletGroup.get(headX, headY) as Bullet;
+    if (bullet) {
+      // Reset & configure
+      bullet.hp = 1;
+      bullet.setTexture(bulletTexture);
+      bullet.setActive(true);
+      bullet.setVisible(true);
+      bullet.setPosition(headX, headY);
 
         // Make sure physics body exists and is configured
         const body = bullet.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(false);
+
+        // Get mutoid's center position for horizontal comparison
+        const mutoidCenterX = this.x + this.displayWidth / 2;
+        
+        // Flip bullet if player is to the right of mutoid's center
+        bullet.setFlipX(this.player.x > mutoidCenterX);
 
         // Directional firing logic
         const direction = new Phaser.Math.Vector2(0, 1); // Default to down
