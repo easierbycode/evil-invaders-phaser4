@@ -31,10 +31,6 @@ export class Mutoid extends Phaser.GameObjects.Container {
   private torsoRight!: Phaser.GameObjects.Image;
   private head: Phaser.GameObjects.Sprite | null = null;
   private floatTween: Phaser.Tweens.Tween | null = null;
-  private tankLeft!: Phaser.GameObjects.Image;
-  private tankRight!: Phaser.GameObjects.Image;
-  private treadFrontLeft!: Phaser.GameObjects.Sprite;
-  private treadFrontRight!: Phaser.GameObjects.Sprite;
 
   constructor(scene: MutoidScene, x: number, y: number, secondLoop: boolean) {
     super(scene, x, y);
@@ -57,12 +53,12 @@ export class Mutoid extends Phaser.GameObjects.Container {
   private createParts() {
     this.torsoLeft = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0);
     this.torsoRight = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
-    this.tankLeft = this.scene.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
-    this.tankRight = this.scene.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
+    const tankLeft = this.scene.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
+    const tankRight = this.scene.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
     const treadLeft = this.scene.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
     const treadRight = this.scene.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
-    this.treadFrontLeft = this.scene.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
-    this.treadFrontRight = this.scene.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
+    const treadFrontLeft = this.scene.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
+    const treadFrontRight = this.scene.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
     const head = this.scene.add.sprite(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
     this.head = head;
     head.on(Phaser.Animations.Events.ANIMATION_UPDATE, (anim: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
@@ -71,21 +67,21 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.armLeft = this.scene.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
     this.armRight = this.scene.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
 
-    const tankScale = MUTOID_HEIGHT / this.tankLeft.displayHeight;
-    this.tankLeft.setScale(tankScale);
-    this.tankRight.setScale(tankScale);
+    const tankScale = MUTOID_HEIGHT / tankLeft.displayHeight;
+    tankLeft.setScale(tankScale);
+    tankRight.setScale(tankScale);
     treadLeft.setScale(tankScale);
     treadRight.setScale(tankScale);
-    this.treadFrontLeft.setScale(tankScale);
-    this.treadFrontRight.setScale(tankScale);
+    treadFrontLeft.setScale(tankScale);
+    treadFrontRight.setScale(tankScale);
 
     this.add([
-      this.treadFrontLeft,
-      this.treadFrontRight,
+      treadFrontLeft,
+      treadFrontRight,
       treadLeft,
       treadRight,
-      this.tankLeft,
-      this.tankRight,
+      tankLeft,
+      tankRight,
       this.torsoLeft,
       this.torsoRight,
       this.armLeft,
@@ -98,15 +94,15 @@ export class Mutoid extends Phaser.GameObjects.Container {
 
     treadLeft.play({ key: "mutoid-tank-tread-spin" });
     treadRight.play({ key: "mutoid-tank-tread-spin" });
-    this.treadFrontLeft.play({ key: "mutoid-tank-tread-front-spin" });
-    this.treadFrontRight.play({ key: "mutoid-tank-tread-front-spin" });
+    treadFrontLeft.play({ key: "mutoid-tank-tread-front-spin" });
+    treadFrontRight.play({ key: "mutoid-tank-tread-front-spin" });
 
-    const tankWidth = this.tankLeft.displayWidth;
+    const tankWidth = tankLeft.displayWidth;
     const torsoWidth = this.torsoLeft.displayWidth;
     const armWidth = this.armLeft.displayWidth;
 
-    this.tankLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
-    this.tankRight.setPosition(0, MUTOID_HEIGHT);
+    tankLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
+    tankRight.setPosition(0, MUTOID_HEIGHT);
 
     treadLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
     treadRight.setPosition(tankWidth, MUTOID_HEIGHT);
@@ -114,9 +110,9 @@ export class Mutoid extends Phaser.GameObjects.Container {
     const treadLeftLeftEdge = treadLeft.x - treadLeft.displayWidth;
     const treadRightRightEdge = treadRight.x + treadRight.displayWidth;
 
-    this.treadFrontLeft.setPosition(treadLeftLeftEdge + 1, treadLeft.y - 1);
+    treadFrontLeft.setPosition(treadLeftLeftEdge + 1, treadLeft.y - 1);
 
-    this.treadFrontRight.setPosition(treadRightRightEdge - 1, treadRight.y - 1);
+    treadFrontRight.setPosition(treadRightRightEdge - 1, treadRight.y - 1);
 
     this.torsoLeft.setPosition(-torsoWidth, 0);
     this.torsoRight.setPosition(0, 0);
@@ -126,11 +122,32 @@ export class Mutoid extends Phaser.GameObjects.Container {
 
     head.setPosition(0, -HEAD_OFFSET_FROM_TORSO_TOP);
 
-    const sprites = this.getAll() as Phaser.GameObjects.Sprite[];
-    const leftmost = Math.min(...sprites.map((sprite) => sprite.x - sprite.displayWidth * sprite.originX));
-    const rightmost = Math.max(...sprites.map((sprite) => sprite.x + sprite.displayWidth * (1 - sprite.originX)));
-    const topmost = Math.min(...sprites.map((sprite) => sprite.y - sprite.displayHeight * sprite.originY));
-    const bottommost = Math.max(...sprites.map((sprite) => sprite.y + sprite.displayHeight * (1 - sprite.originY)));
+    const sprites = [
+      this.torsoLeft,
+      this.torsoRight,
+      tankLeft,
+      tankRight,
+      treadLeft,
+      treadRight,
+      treadFrontLeft,
+      treadFrontRight,
+      this.armLeft,
+      this.armRight,
+      head,
+    ];
+
+    const leftmost = Math.min(
+      ...sprites.map((sprite) => sprite.x - sprite.displayWidth * sprite.originX)
+    );
+    const rightmost = Math.max(
+      ...sprites.map((sprite) => sprite.x + sprite.displayWidth * (1 - sprite.originX))
+    );
+    const topmost = Math.min(
+      ...sprites.map((sprite) => sprite.y - sprite.displayHeight * sprite.originY)
+    );
+    const bottommost = Math.max(
+      ...sprites.map((sprite) => sprite.y + sprite.displayHeight * (1 - sprite.originY))
+    );
 
     this.setSize(rightmost - leftmost, bottommost - topmost);
   }
@@ -144,32 +161,21 @@ export class Mutoid extends Phaser.GameObjects.Container {
       runChildUpdate: true
     });
 
-    this.scene.physics.world.enable([
-        this.armLeft,
-        this.armRight,
-        this.torsoLeft,
-        this.torsoRight,
-        this.head,
-        this.tankLeft,
-        this.tankRight,
-        this.treadFrontLeft,
-        this.treadFrontRight
-      ]);
+    const destructibleParts = [this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head];
+    const solidPartsList = this.getAll().filter(part => !destructibleParts.includes(part as any) && part !== this.head);
 
-      // Add destructible parts to mutoidParts
-      this.parts.addMultiple([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head]);
+    this.scene.physics.world.enable([...destructibleParts, ...solidPartsList]);
 
-      // Add solid parts to a separate group so bullets won't hit them
-      this.solidParts.addMultiple([this.tankLeft, this.tankRight, this.treadFrontLeft, this.treadFrontRight]);
+    this.parts.addMultiple(destructibleParts as any[]);
+    this.solidParts.addMultiple(solidPartsList);
 
-      this.parts.getChildren().forEach(part => {
-        (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
-      });
+    this.parts.getChildren().forEach(part => {
+      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+    });
 
-      // Make solid parts immovable as well
-      this.solidParts.getChildren().forEach(part => {
-        (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
-      });
+    this.solidParts.getChildren().forEach(part => {
+      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+    });
   }
 
   private setupAnimations() {
@@ -191,17 +197,17 @@ export class Mutoid extends Phaser.GameObjects.Container {
     if (this.head) this.head.setFrame(HEAD_FRAME);
   }
 
-  public update() {
+  update() {
     if (!this.active) return;
     this.parts.getChildren().forEach(part => {
-        const p = part as Phaser.GameObjects.Image;
-        const body = p.body as Phaser.Physics.Arcade.Body;
-        if (!body) return;
-        const bounds = p.getBounds();
+      const p = part as Phaser.GameObjects.Image;
+      const body = p.body as Phaser.Physics.Arcade.Body;
+      if (!body) return;
+      const bounds = p.getBounds();
 
-        body.center.x = this.x + p.x;
-        body.center.y = this.y + p.y;
-      });
+      body.center.x = this.x + p.x;
+      body.center.y = this.y + p.y;
+    });
   }
 
   private animate() {
