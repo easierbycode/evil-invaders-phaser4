@@ -11,44 +11,42 @@ const TREAD_FRAME = "atlas_s0";
 const TREAD_FPS = 4;
 
 export class Mutoid extends Phaser.GameObjects.Container {
-  public scene: MutoidScene;
+  declare public scene: MutoidScene;
   private player: Player | null = null;
-  private secondLoop: boolean;
+  private secondLoop: boolean = false;
 
+  // Sprite parts
+  public head?: Phaser.GameObjects.Sprite;
+  public armLeft?: Phaser.GameObjects.Image;
+  public armRight?: Phaser.GameObjects.Image;
+  public torsoLeft?: Phaser.GameObjects.Sprite;
+  public torsoRight?: Phaser.GameObjects.Sprite;
+  public tankLeft?: Phaser.GameObjects.Image;
+  public tankRight?: Phaser.GameObjects.Image;
+  public treadFrontLeft?: Phaser.GameObjects.Sprite;
+  public treadFrontRight?: Phaser.GameObjects.Sprite;
+
+  // State & HP tracking
+  public armLeftHp: number = 15;
+  public armRightHp: number = 15;
+  public torsoHp: number = 25;
+  public headHealth: number = 5;
+  public isTorsoDestroying: boolean = false;
+
+  // Animations & tweens
+  private floatTween: Phaser.Tweens.Tween | null = null;
+
+  // Physics groups and bullet pool (initialized in constructor)
   public parts!: Phaser.Physics.Arcade.Group;
   public solidParts!: Phaser.Physics.Arcade.Group;
   public bulletGroup!: Phaser.Physics.Arcade.Group;
 
-  private armLeftHp = 15;
-  private armRightHp = 15;
-  private torsoHp = 25;
-  private headHealth = 5;
-  private isTorsoDestroying = false;
-
-  private armLeft!: Phaser.GameObjects.Image;
-  private armRight!: Phaser.GameObjects.Image;
-  private torsoLeft!: Phaser.GameObjects.Image;
-  private torsoRight!: Phaser.GameObjects.Image;
-  private head: Phaser.GameObjects.Sprite | null = null;
-  private floatTween: Phaser.Tweens.Tween | null = null;
-  private tankLeft!: Phaser.GameObjects.Image;
-  private tankRight!: Phaser.GameObjects.Image;
-  private treadLeft!: Phaser.GameObjects.Sprite;
-  private treadRight!: Phaser.GameObjects.Sprite;
-  private treadFrontLeft!: Phaser.GameObjects.Sprite;
-  private treadFrontRight!: Phaser.GameObjects.Sprite;
-
-
-  constructor(scene: MutoidScene, x: number, y: number, secondLoop: boolean) {
+  constructor(scene: MutoidScene, x: number, y: number, secondLoop: boolean = false) {
     super(scene, x, y);
     this.scene = scene;
     this.secondLoop = secondLoop;
 
-    this.createParts();
-    this.setupPhysics();
-    this.setupAnimations();
-    this.animate();
-
+    // Create a container for all parts
     scene.add.existing(this);
   }
 
@@ -73,75 +71,48 @@ export class Mutoid extends Phaser.GameObjects.Container {
         body.position.y = worldY - p.displayOriginY;
       }
     });
-  }
 
-  setPlayer(player: Player) {
-    this.player = player;
-  }
-
-  private createParts() {
-    this.torsoLeft = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0);
-    this.torsoRight = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
-    this.tankLeft = this.scene.add.image(0, 0, "mutoid-tank").setOrigin(0, 1);
-    this.tankRight = this.scene.add.image(0, 0, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
-    this.treadLeft = this.scene.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
-    this.treadRight = this.scene.add.sprite(0, 0, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
-    this.treadFrontLeft = this.scene.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
-    this.treadFrontRight = this.scene.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
-    const head = this.scene.add.sprite(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
-    this.head = head;
-    head.on(Phaser.Animations.Events.ANIMATION_UPDATE, (anim: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
+    // First create head at top
+    this.head = this.scene.add.sprite(0, -HEAD_OFFSET_FROM_TORSO_TOP, "mutoid-head", HEAD_FRAME)
+      .setOrigin(0.5, 0);
+    this.head.on(Phaser.Animations.Events.ANIMATION_UPDATE, (_: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
       this.handleFrameChange(frame);
     });
-    this.armLeft = this.scene.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
-    this.armRight = this.scene.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
 
-    const tankScale = MUTOID_HEIGHT / this.tankLeft.displayHeight;
-    this.tankLeft.setScale(tankScale);
-    this.tankRight.setScale(tankScale);
-    this.treadLeft.setScale(tankScale);
-    this.treadRight.setScale(tankScale);
-    this.treadFrontLeft.setScale(tankScale);
-    this.treadFrontRight.setScale(tankScale);
+    // Create body parts from top to bottom
+    this.torsoLeft = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0);
+    this.torsoRight = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
 
-    this.add([
-      this.treadFrontLeft,
-      this.treadFrontRight,
-      this.treadLeft,
-      this.treadRight,
-      this.tankLeft,
-      this.tankRight,
-      this.torsoLeft,
-      this.torsoRight,
-      this.armLeft,
-      this.armRight,
-      head,
-    ]);
+    this.armLeft = this.scene.add.image(0, 2, "mutoid-arm").setOrigin(1, 0);
+    this.armRight = this.scene.add.image(0, 2, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
 
-    this.ensureAnimation("mutoid-tank-tread-spin", "mutoid-tank-tread");
-    this.ensureAnimation("mutoid-tank-tread-front-spin", "mutoid-tank-tread-front");
+    // Tank parts at bottom
+    this.tankLeft = this.scene.add.image(0, MUTOID_HEIGHT, "mutoid-tank").setOrigin(0, 1);
+    this.tankRight = this.scene.add.image(0, MUTOID_HEIGHT, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
 
-    this.treadLeft.play({ key: "mutoid-tank-tread-spin" });
-    this.treadRight.play({ key: "mutoid-tank-tread-spin" });
-    this.treadFrontLeft.play({ key: "mutoid-tank-tread-front-spin" });
-    this.treadFrontRight.play({ key: "mutoid-tank-tread-front-spin" });
+    const treadLeft = this.scene.add.sprite(0, MUTOID_HEIGHT, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
+    const treadRight = this.scene.add.sprite(0, MUTOID_HEIGHT, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
 
+    this.treadFrontLeft = this.scene.add.sprite(0, MUTOID_HEIGHT - 1, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
+    this.treadFrontRight = this.scene.add.sprite(0, MUTOID_HEIGHT - 1, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
+
+    // Calculate width-based positions
     const tankWidth = this.tankLeft.displayWidth;
     const torsoWidth = this.torsoLeft.displayWidth;
     const armWidth = this.armLeft.displayWidth;
 
+    // Position everything horizontally
     this.tankLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
     this.tankRight.setPosition(0, MUTOID_HEIGHT);
 
-    this.treadLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
-    this.treadRight.setPosition(tankWidth, MUTOID_HEIGHT);
+    treadLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
+    treadRight.setPosition(tankWidth, MUTOID_HEIGHT);
 
-    const treadLeftLeftEdge = this.treadLeft.x - this.treadLeft.displayWidth;
-    const treadRightRightEdge = this.treadRight.x + this.treadRight.displayWidth;
+    const treadLeftX = treadLeft.x - treadLeft.displayWidth;
+    const treadRightX = treadRight.x + treadRight.displayWidth;
 
-    this.treadFrontLeft.setPosition(treadLeftLeftEdge + 1, this.treadLeft.y - 1);
-
-    this.treadFrontRight.setPosition(treadRightRightEdge - 1, this.treadRight.y - 1);
+    this.treadFrontLeft.setPosition(treadLeftX + 1, treadLeft.y - 1);
+    this.treadFrontRight.setPosition(treadRightX - 1, treadRight.y - 1);
 
     this.torsoLeft.setPosition(-torsoWidth, 0);
     this.torsoRight.setPosition(0, 0);
@@ -149,50 +120,65 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.armLeft.setPosition(-torsoWidth + 15, 2);
     this.armRight.setPosition(armWidth + torsoWidth - 15, 2);
 
-    head.setPosition(0, -HEAD_OFFSET_FROM_TORSO_TOP);
+    // Calculate bounds for container sizing
+    const parts = [this.torsoLeft, this.torsoRight, this.tankLeft, this.tankRight, 
+                  treadLeft, treadRight, this.treadFrontLeft, this.treadFrontRight, 
+                  this.armLeft, this.armRight, this.head];
 
-    const sprites = this.getAll() as Phaser.GameObjects.Sprite[];
-    const leftmost = Math.min(
-      ...sprites.map((sprite) => sprite.x - sprite.displayWidth * sprite.originX)
-    );
-    const rightmost = Math.max(
-      ...sprites.map((sprite) => sprite.x + sprite.displayWidth * (1 - sprite.originX))
-    );
-    const topmost = Math.min(
-      ...sprites.map((sprite) => sprite.y - sprite.displayHeight * sprite.originY)
-    );
-    const bottommost = Math.max(
-      ...sprites.map((sprite) => sprite.y + sprite.displayHeight * (1 - sprite.originY))
-    );
+    const minX = Math.min(...parts.filter(Boolean).map(p => p.x - p.displayWidth * p.originX));
+    const maxX = Math.max(...parts.filter(Boolean).map(p => p.x + p.displayWidth * (1 - p.originX)));
+    const minY = Math.min(...parts.filter(Boolean).map(p => p.y - p.displayHeight * p.originY));
+    const maxY = Math.max(...parts.filter(Boolean).map(p => p.y + p.displayHeight * (1 - p.originY)));
 
-    this.setSize(rightmost - leftmost, bottommost - topmost);
-  }
+    this.setSize(maxX - minX, maxY - minY);
 
-  private setupPhysics() {
+    // Add all parts to container in draw order (bottom to top)
+    this.add([
+      this.treadFrontLeft, this.treadFrontRight,
+      treadLeft, treadRight,
+      this.tankLeft, this.tankRight,
+      this.torsoLeft, this.torsoRight,
+      this.armLeft, this.armRight,
+      this.head
+    ].filter(Boolean));
+
+    // Create physics groups
     this.parts = this.scene.physics.add.group();
     this.solidParts = this.scene.physics.add.group();
-    this.bulletGroup = this.scene.physics.add.group({
-      classType: Bullet,
-      maxSize: 30,
-      runChildUpdate: true
-    });
+    this.bulletGroup = this.scene.physics.add.group({ classType: Bullet, maxSize: 30, runChildUpdate: true });
 
-    const destructibleParts = [this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head];
-    const solidPartsList = [this.tankLeft, this.tankRight, this.treadFrontLeft, this.treadFrontRight];
+    // Split parts into destructible vs solid groups
+    const destructibleParts = [this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head].filter(Boolean);
+    const solidPartsList = [this.tankLeft, this.tankRight, this.treadFrontLeft, this.treadFrontRight].filter(Boolean);
 
-    // @ts-ignore
-    this.scene.physics.world.enable(this.getAll());
+    // Enable physics
+    this.scene.physics.world.enable([...destructibleParts, ...solidPartsList]);
 
-    this.parts.addMultiple(destructibleParts as any[]);
-    this.solidParts.addMultiple(solidPartsList as any[]);
+    // Add to groups
+    this.parts.addMultiple(destructibleParts);
+    this.solidParts.addMultiple(solidPartsList);
 
-    this.parts.getChildren().forEach(part => {
-      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
-    });
+    // Configure physics bodies
+    const configureBody = (part: Phaser.GameObjects.GameObject) => {
+      const body = part.body as Phaser.Physics.Arcade.Body;
+      if (!body) return;
+      body.setImmovable(true);
+      body.setAllowGravity(false);
+      body.setVelocity(0, 0);
+    };
 
-    this.solidParts.getChildren().forEach(part => {
-      (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
-    });
+    this.parts.getChildren().forEach(configureBody);
+    this.solidParts.getChildren().forEach(configureBody);
+
+    // Start treads spinning
+    this.setupAnimations();
+    treadLeft.play({ key: "mutoid-tank-tread-spin" });
+    treadRight.play({ key: "mutoid-tank-tread-spin" });
+    this.treadFrontLeft.play({ key: "mutoid-tank-tread-front-spin" });
+    this.treadFrontRight.play({ key: "mutoid-tank-tread-front-spin" });
+
+    // Start floating animation
+    this.animate();
   }
 
   private setupAnimations() {
@@ -397,64 +383,57 @@ export class Mutoid extends Phaser.GameObjects.Container {
     });
   }
 
+  public setPlayer(player: Player) {
+    this.player = player;
+  }
+
   private handleFrameChange(frame: Phaser.Animations.AnimationFrame) {
     if (!this.head || !this.player || !frame.textureFrame) return;
 
-    const frameName = frame.textureFrame;
-    // Check if frame ends with _s0, _s1, _s2, or _s3
-    const match = frameName.match(/_s([0-3])$/);
+    const frameName = String(frame.textureFrame);
+    // Check if frame ends with _s1, _s2, or _s3
+    const match = frameName.match(/_s([1-3])$/);
     if (match) {
       const frameNumber = match[1];
-      // Use phase2 bullets if arms are destroyed
-      const bulletPrefix = (this.armLeftHp <= 0 && this.armRightHp <= 0) ? 'mutoid-phase2-bullet' : 'mutoid-bullet';
+
+      // Use phase-2 bullets if both arms are gone
+      const bulletPrefix =
+        this.armLeftHp <= 0 && this.armRightHp <= 0
+          ? "mutoid-phase2-bullet"
+          : "mutoid-bullet";
       const bulletTexture = `${bulletPrefix}_s${frameNumber}`;
 
-      // Get head world position
+      // Head world position
       const headWorldPos = this.head.getWorldTransformMatrix();
       const headX = headWorldPos.tx;
-      const headY = headWorldPos.ty + 10; // Offset slightly below head
+      const headY = headWorldPos.ty + 10; // Fire slightly below head
 
-      // Create bullet
+      // Pull a bullet from pool
       const bullet = this.bulletGroup.get(headX, headY) as Bullet;
       if (bullet) {
-        bullet.fire(headX, headY, 0, 0, bulletTexture);
+        // Reset & configure
+        bullet.hp = 1;
+        bullet.setTexture(bulletTexture);
+        bullet.setActive(true);
+        bullet.setVisible(true);
+        bullet.setPosition(headX, headY);
 
-        let fireAngle: number;
-        let speed: number;
+        // Make sure physics body exists and is configured
+        const body = bullet.body as Phaser.Physics.Arcade.Body;
+        body.setAllowGravity(false);
 
-        if (frameNumber === '0') {
-          // _s0: fire toward player
-          fireAngle = Phaser.Math.Angle.Between(headX, headY, this.player.x, this.player.y);
-          speed = 200;
-          // Set rotation to match velocity direction (with 90° offset for sprite orientation)
-          const rotationOffset = Phaser.Math.DegToRad(90);
-          // Add extra 180 degrees for phase2 bullets to fix upside down orientation
-          const phase2Flip = (this.armLeftHp <= 0 && this.armRightHp <= 0) ? Phaser.Math.DegToRad(180) : 0;
-          bullet.rotation = fireAngle + rotationOffset + phase2Flip;
-        } else {
-          // _s1, _s2, _s3: use fixed angles
-          speed = 400;
-
-          if (frameNumber === '1') {
-            bullet.rotation = -0.8818719385800352; // -50.53 degrees visual rotation
-            // Fire angle: flip to positive for downward direction
-            fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right
-          } else if (frameNumber === '2') {
-            bullet.rotation = -0.6949; // -39.81 degrees visual rotation
-            // Fire angle: flip to positive for downward direction
-            fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right (less angle)
-          } else { // frameNumber === '3'
-            bullet.rotation = -0.499; // -28.6 degrees visual rotation
-            // Fire angle: flip to positive for downward direction
-            fireAngle = Math.abs(bullet.rotation) + Phaser.Math.DegToRad(90); // Fire down-right (even less angle)
-          }
+        // Directional firing logic
+        const direction = new Phaser.Math.Vector2(0, 1); // Default to down
+        const frameNum = parseInt(frameNumber, 10);
+        if (frameNum === 1) {
+          direction.x = -0.5; // Diagonal down-left
+        } else if (frameNum === 3) {
+          direction.x = 0.5; // Diagonal down-right
         }
-
-        // Set velocity based on the fire angle
-        if (bullet.body) {
-          this.scene.physics.velocityFromRotation(fireAngle, speed, bullet.body.velocity);
-        }
+        direction.normalize();
+        body.setVelocity(direction.x * bullet.speed, direction.y * bullet.speed);
       }
     }
-  }
-}
+  } // <- end of handleFrameChange
+
+} // <- end of Mutoid class
