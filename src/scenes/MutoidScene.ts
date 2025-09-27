@@ -39,6 +39,14 @@ export default class MutoidScene extends Phaser.Scene {
     this.playerData = PROPERTIES.resource.recipe.data.playerData;
     this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
     this.playerData.explosionTextures = this.explosionTextures;
+
+    // Create bullet explosion animation
+    this.anims.create({
+      key: 'mutoid-bullet-explosion',
+      frames: this.anims.generateFrameNames('mutoid-bullet', { prefix: 'atlas_s', start: 1, end: 3 }),
+      frameRate: 20,
+      repeat: 0
+    });
   }
 
   create() {
@@ -81,7 +89,7 @@ export default class MutoidScene extends Phaser.Scene {
     }
 
     this.player = new Player(this.playerData);
-    this.player.setUp(this.playerData.maxHp, this.playerData.defaultShootName, this.playerData.defaultShootSpeed);
+    this.player.setUp(this.playerData.maxHp, this.playerData.defaultShootName, Player.SHOOT_SPEED_HIGH);
     this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
     this.player.unitX = GAME_WIDTH / 2;
     this.player.unitY = GAME_HEIGHT - 48;
@@ -117,12 +125,29 @@ export default class MutoidScene extends Phaser.Scene {
   }
 
   private handlePlayerMutoidCollision(player: any, mutoidPart: any) {
-    (player as Player).onDamage(1);
+    const p = player as Player;
+    const startY = p.y;
+    p.onDamage(1);
+    // Knockback player in opposite direction of collision
+    const knockbackSpeed = 300;
+    const knockbackX = p.x < mutoidPart.x ? -knockbackSpeed : knockbackSpeed;
+    if (p.body instanceof Phaser.Physics.Arcade.Body) {
+      p.body.velocity.x = knockbackX;
+    }
+    // Constrain Y position
+    p.y = startY;
   }
 
   private handlePlayerMutoidBulletCollision(player: any, bullet: any) {
+    const p = player as Player;
     const bulletInstance = bullet as Bullet;
-    (player as Player).onDamage(1);
+    p.onDamage(1);
+    
+    // Create explosion effect at bullet's position
+    const explosion = this.add.sprite(bulletInstance.x, bulletInstance.y, 'mutoid-bullet-explosion');
+    explosion.on('animationcomplete', () => explosion.destroy());
+    explosion.play('mutoid-bullet-explosion');
+    
     bulletInstance.destroyBullet();
   }
 

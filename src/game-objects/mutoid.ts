@@ -261,6 +261,14 @@ export class Mutoid extends Phaser.GameObjects.Container {
       this.head.setFlipX(this.player.x > mutoidCenterX);
 
       this.head.play({ key: "mutoid-head-back", repeat: 0, frameRate: 2 });
+
+      // Listen for both animation complete and frame changes
+      this.head.off(Phaser.Animations.Events.ANIMATION_UPDATE);
+      this.head.on(Phaser.Animations.Events.ANIMATION_UPDATE, 
+        (_: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
+          this.handleFrameChange(frame);
+      });
+
       this.head.once(
         Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + "mutoid-head-back",
         () => {
@@ -401,18 +409,26 @@ export class Mutoid extends Phaser.GameObjects.Container {
     if (!this.head || !this.player || !frame.textureFrame) return;
 
     const frameName = String(frame.textureFrame);
-    // Only fire when head is moving back (frames s1, s2, s3)
-    if (!frameName.match(/_s[1-3]$/)) return;
-    // Extract the frame suffix (s0, s1, s2, s3)
-    const suffixMatch = frameName.match(/_s[0-3]$/);
+    const suffixMatch = frameName.match(/_s([0-3])$/);
     if (!suffixMatch) return;
-    const suffix = suffixMatch[0];
+    const frameNum = parseInt(suffixMatch[1]);
+
     // Use phase-2 bullets if both arms are gone
     const bulletPrefix =
       this.armLeftHp <= 0 && this.armRightHp <= 0
         ? "mutoid-phase2-bullet"
         : "mutoid-bullet";
-    const bulletTexture = `${bulletPrefix}${suffix}`;
+
+    // Get mutoid's center position for horizontal comparison
+    const mutoidCenterX = this.x + this.displayWidth / 2;
+    const playerIsRight = this.player.x > mutoidCenterX;
+
+    // Only fire during back animation
+    const isBackAnim = this.head.anims.currentAnim?.key === "mutoid-head-back";
+    if (!isBackAnim) return;
+    
+    // Detect the final s0 frame
+    const isLastFrame = frameName === "atlas_s0";
 
     // Head world position
     const headWorldPos = this.head.getWorldTransformMatrix();
@@ -424,33 +440,39 @@ export class Mutoid extends Phaser.GameObjects.Container {
     if (bullet) {
       // Reset & configure
       bullet.hp = 1;
+      const bulletTexture = `${bulletPrefix}_s${frameNum}`;
       bullet.setTexture(bulletTexture);
       bullet.setActive(true);
       bullet.setVisible(true);
       bullet.setPosition(headX, headY);
+      bullet.setFlipX(playerIsRight);
 
-        // Make sure physics body exists and is configured
-        const body = bullet.body as Phaser.Physics.Arcade.Body;
-        body.setAllowGravity(false);
+      // Make sure physics body exists and is configured
+      const body = bullet.body as Phaser.Physics.Arcade.Body;
+      body.setAllowGravity(false);
 
-        // Get mutoid's center position for horizontal comparison
-        const mutoidCenterX = this.x + this.displayWidth / 2;
-        
-        // Flip bullet if player is to the right of mutoid's center
-        bullet.setFlipX(this.player.x > mutoidCenterX);
-
-        // Directional firing logic
-        const direction = new Phaser.Math.Vector2(0, 1); // Default to down
-        const frameNum = parseInt(frameNumber, 10);
-        if (frameNum === 1) {
-          direction.x = -0.5; // Diagonal down-left
-        } else if (frameNum === 3) {
-          direction.x = 0.5; // Diagonal down-right
+      // Configure bullet direction
+      if (isLastFrame) {
+        // _s0 shot at end of back animation - aim at player
+        const toPlayer = new Phaser.Math.Vector2(
+          this.player.x - headX,
+          this.player.y - headY
+        ).normalize();
+        body.setVelocity(toPlayer.x * bullet.speed, toPlayer.y * bullet.speed);
+      } else {
+        // Fixed angles based on head direction
+        const baseAngles = {
+          1: -60,  // s1: upward diagonal
+          2: -30,  // s2: less upward
+          3: 0     // s3: straight
+        };
+        let angle = baseAngles[frameNum as 1 | 2 | 3];
+        // When head faces left, mirror the angles
+        if (!playerIsRight) {
+          angle = 180 - angle;
         }
-        direction.normalize();
-        body.setVelocity(direction.x * bullet.speed, direction.y * bullet.speed);
+        this.scene.physics.velocityFromAngle(angle, bullet.speed, body.velocity);
       }
     }
-  } // <- end of handleFrameChange
-
-} // <- end of Mutoid class
+  }
+} // end of Mutoid class
