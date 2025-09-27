@@ -1,3 +1,6 @@
+import { Player } from "../game-objects/player";
+import { Bullet } from "../game-objects/bullet";
+import CONSTANTS from "./../constants";
 import Phaser from 'phaser';
 
 export class Bullet extends Phaser.Physics.Arcade.Sprite

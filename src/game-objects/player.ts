@@ -9,6 +9,9 @@ import {
 export class Character extends Phaser.GameObjects.Sprite {
   #frameRate = null;
   #repeat = null;
+  // Optional explosion Character used for death effects
+  explosion?: Character | null;
+  private _explosionCompleteHandler?: () => void;
 
   constructor(
     characterTextures,
@@ -48,10 +51,19 @@ export class Character extends Phaser.GameObjects.Sprite {
       });
 
       var n = this.height / this.explosion.height;
-      n >= 1 && (n = 1),
-        this.explosion.setScale(n + 0.2),
-        (this.explosion.animationSpeed = 0.4),
-        (this.explosion.loop = !1);
+      if (n >= 1) n = 1;
+      this.explosion.setScale(n + 0.2);
+      this.explosion.animationSpeed = 0.4;
+      this.explosion.loop = false;
+
+      // Keep the explosion hidden and inactive until used
+      try {
+        this.explosion.setVisible(false);
+        this.explosion.setActive(false);
+        this.explosion.setPosition(-9999, -9999);
+      } catch (e) {
+        // ignore if the explosion GameObject isn't fully available yet
+      }
     }
 
     this.anims.create({
@@ -629,15 +641,42 @@ export class Player extends Character {
     }
   }
   dead() {
-    this.emit(Character.CUSTOM_EVENT_DEAD),
-      this.shootStop(),
-      this.explosion.on("animationcomplete", this.explosionComplete.bind(this)),
-      (this.explosion.x = this.x),
-      (this.explosion.y = this.y),
+    // Emit death, stop shooting, and play the explosion animation (if available)
+    this.emit(Character.CUSTOM_EVENT_DEAD);
+    this.shootStop();
+
+    if (this.explosion) {
+      // Bind a stable handler so we can remove it later
+      this._explosionCompleteHandler = this.explosionComplete.bind(this);
+      this.explosion.on("animationcomplete", this._explosionCompleteHandler);
+
+      // Position and show the explosion, then play
+      this.explosion.setPosition(this.x, this.y);
+      this.explosion.setVisible(true);
+      this.explosion.setActive(true);
       this.explosion.play();
+    }
+
     this.bulletGroup.clear(true, true);
   }
   explosionComplete() {
+    // Hide explosion after animation and move offscreen so its first frame isn't visible
+    if (this.explosion) {
+      try {
+        // Remove the specific handler we attached earlier
+        if (this._explosionCompleteHandler) {
+          this.explosion.off("animationcomplete", this._explosionCompleteHandler);
+          this._explosionCompleteHandler = undefined;
+        }
+
+        this.explosion.setVisible(false);
+        this.explosion.setActive(false);
+        this.explosion.setPosition(-9999, -9999);
+      } catch (e) {
+        // ignore
+      }
+    }
+
     this.emit(Character.CUSTOM_EVENT_DEAD_COMPLETE);
   }
   castAdded(gameObject) {

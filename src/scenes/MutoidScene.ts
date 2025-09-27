@@ -1,7 +1,7 @@
-
 // You can write more code here
 
 import { Player } from "../game-objects/player";
+import { Bullet } from "../game-objects/bullet";
 import CONSTANTS from "./../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import PROPERTIES from "../properties";
@@ -56,6 +56,7 @@ export default class MutoidScene extends Phaser.Scene {
   private torsoRight!: Phaser.GameObjects.Image;
   private head: Phaser.GameObjects.Sprite | null = null;
   private mutoidFloatTween: Phaser.Tweens.Tween | null = null;
+  private mutoidBulletGroup!: Phaser.Physics.Arcade.Group;
 
   /* START-USER-CODE */
   // Write your code here
@@ -86,6 +87,9 @@ export default class MutoidScene extends Phaser.Scene {
     const treadFrontRight = this.add.sprite(0, 0, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
     const head = this.add.sprite(0, 0, "mutoid-head", HEAD_FRAME).setOrigin(0.5, 0);
     this.head = head;
+    head.on(Phaser.Animations.Events.ANIMATION_UPDATE, (anim: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
+      this.handleMutoidFrameChange(frame);
+    });
     this.armLeft = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0);
     this.armRight = this.add.image(0, 0, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
 
@@ -175,9 +179,15 @@ export default class MutoidScene extends Phaser.Scene {
 
     // Group for destructible parts (arms, torso, head) — bullets damage these
     this.mutoidParts = this.physics.add.group();
+    // Group for mutoid bullets
+    this.mutoidBulletGroup = this.physics.add.group({
+      classType: Bullet,
+      maxSize: 30,
+      runChildUpdate: true
+    });
 
-  // Group for solid/indestructible parts (tank, tread fronts) — bullets should NOT collide with these
-  this.mutoidSolidParts = this.physics.add.group();
+    // Group for solid/indestructible parts (tank, tread fronts) — bullets should NOT collide with these
+    this.mutoidSolidParts = this.physics.add.group();
 
     // Enable physics for destructible parts and solid parts
     this.physics.world.enable([
@@ -195,8 +205,8 @@ export default class MutoidScene extends Phaser.Scene {
     // Add destructible parts to mutoidParts
     this.mutoidParts.addMultiple([this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, head]);
 
-  // Add solid parts to a separate group so bullets won't hit them
-  this.mutoidSolidParts.addMultiple([tankLeft, tankRight, treadFrontLeft, treadFrontRight]);
+    // Add solid parts to a separate group so bullets won't hit them
+    this.mutoidSolidParts.addMultiple([tankLeft, tankRight, treadFrontLeft, treadFrontRight]);
 
     this.mutoidParts.getChildren().forEach(part => {
       (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
@@ -237,7 +247,7 @@ export default class MutoidScene extends Phaser.Scene {
       this.createPlayer(pads[0] || null);
     });
 
-    // Existing game‑pad hookup
+    // Existing game-pad hookup
     const firstPad = this.input.gamepad.gamepads.find(p => p?.connected);
     if (firstPad) this.createPlayer(firstPad);
     this.input.gamepad.once('connected', pad => this.createPlayer(pad));
@@ -263,12 +273,14 @@ export default class MutoidScene extends Phaser.Scene {
     this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
     this.player.speed = 150;
 
-  // Bullets should only collide with destructible parts
-  this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
+    // Bullets should only collide with destructible parts
+    this.physics.add.collider(this.player.bulletGroup, this.mutoidParts, this.handleBulletMutoidCollision, undefined, this);
 
-  // Player should collide with both destructible and solid parts and take damage
-  this.physics.add.collider(this.player, this.mutoidParts, this.handlePlayerMutoidCollision, undefined, this);
-  this.physics.add.collider(this.player, this.mutoidSolidParts, this.handlePlayerMutoidCollision, undefined, this);
+    // Player should collide with both destructible and solid parts and take damage
+    this.physics.add.collider(this.player, this.mutoidParts, this.handlePlayerMutoidCollision, undefined, this);
+    this.physics.add.collider(this.player, this.mutoidSolidParts, this.handlePlayerMutoidCollision, undefined, this);
+    // Player takes damage from mutoid bullets
+    this.physics.add.collider(this.player, this.mutoidBulletGroup, this.handlePlayerMutoidBulletCollision, undefined, this);
 
     this.player.on((Player as any).CUSTOM_EVENT_DEAD_COMPLETE, () => {
       this.time.delayedCall(1000, () => {
@@ -479,9 +491,49 @@ export default class MutoidScene extends Phaser.Scene {
     });
   }
 
+  private handleMutoidFrameChange(frame: Phaser.Animations.AnimationFrame) {
+    if (!this.head || !this.player || !frame.textureFrame) return;
+
+    const frameName = frame.textureFrame;
+    // Check if frame ends with _s0, _s1, _s2, or _s3
+    const match = frameName.match(/_s([0-3])$/);
+    if (match) {
+      const frameNumber = match[1];
+      const bulletTexture = `mutoid-bullet_s${frameNumber}`;
+
+      // Get head world position
+      const headWorldPos = this.head.getWorldTransformMatrix();
+      const headX = headWorldPos.tx;
+      const headY = headWorldPos.ty + 10; // Offset slightly below head
+
+      // Create bullet
+      const bullet = this.mutoidBulletGroup.get(headX, headY) as Bullet;
+      if (bullet) {
+        // Calculate direction to player
+        const dirX = this.player.x - headX;
+        const dirY = this.player.y - headY;
+        const length = Math.sqrt(dirX * dirX + dirY * dirY);
+        const normalizedDirX = dirX / length;
+        const normalizedDirY = dirY / length;
+
+        // Fire bullet toward player
+        bullet.fire(headX, headY, normalizedDirX, normalizedDirY, bulletTexture);
+        bullet.speed = 200; // Set slower speed for mutoid bullets
+        bullet.body.setVelocity(normalizedDirX * bullet.speed, normalizedDirY * bullet.speed);
+      }
+    }
+  }
+
+  private handlePlayerMutoidBulletCollision(player: any, bullet: any) {
+    const bulletInstance = bullet as Bullet;
+    (player as Player).onDamage(1);
+    bulletInstance.destroyBullet();
+  }
+
   /* END-USER-CODE */
 }
 
 /* END OF COMPILED CODE */
 
 // You can write more code here
+    
