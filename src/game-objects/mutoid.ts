@@ -325,44 +325,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
           this.stopFloatTween();
 
           if (this.active) {
-            const partsToKeep = [this.head, this.torsoLeft, this.torsoRight, this.treadFrontLeft];
-            const partsToFlyOff = this.getAll().filter(p =>
-              p.active &&
-              !partsToKeep.includes(p as any)
-            );
-            const containerCenter = new Phaser.Math.Vector2(this.x, this.y);
-
-            partsToFlyOff.forEach(part => {
-              const sprite = part as Phaser.GameObjects.Sprite;
-              if (sprite.body) {
-                const body = sprite.body as Phaser.Physics.Arcade.Body;
-                body.setImmovable(false);
-                body.setGravityY(300);
-                body.setAngularVelocity(Phaser.Math.Between(-200, 200));
-
-                const [partWorldX, partWorldY] = this.getWorldCoors(sprite.x, sprite.y);
-
-                const angle = Phaser.Math.Angle.Between(
-                  containerCenter.x,
-                  containerCenter.y,
-                  partWorldX,
-                  partWorldY
-                );
-                const speed = Phaser.Math.Between(150, 250);
-                this.scene.physics.velocityFromRotation(angle, speed, body.velocity);
-
-                this.scene.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 500,
-                  delay: 1500,
-                  onComplete: () => {
-                    sprite.destroy();
-                  }
-                });
-              }
-            });
-            this.active = false;
+            this.destroy();
           }
 
           const explosionGroup = scene.add.group();
