@@ -45,7 +45,8 @@ export default class MutoidScene extends Phaser.Scene {
   private player!: Player;
   private mutoidParts!: Phaser.Physics.Arcade.Group;
   private mutoidSolidParts!: Phaser.Physics.Arcade.Group;
-  private mutoidArmsHp = 15;
+  private mutoidArmLeftHp = 15;
+  private mutoidArmRightHp = 15;
   private mutoidTorsoHp = 25;
   private mutoidHeadHealth = 5; // Assuming head is destroyed in one hit after shields are down.
   private isTorsoDestroying = false;
@@ -383,11 +384,15 @@ export default class MutoidScene extends Phaser.Scene {
     // --- Damage applies to the mutoid part only if it's the current target ---
 
     // Target: Arms
-    if (this.mutoidArmsHp > 0) {
-      if (part === this.armLeft || part === this.armRight) {
-        this.mutoidArmsHp -= damageDealt;
-        if (this.mutoidArmsHp <= 0) {
+    if (this.mutoidArmLeftHp > 0 || this.mutoidArmRightHp > 0) {
+      if (part === this.armLeft && this.mutoidArmLeftHp > 0) {
+        this.mutoidArmLeftHp -= damageDealt;
+        if (this.mutoidArmLeftHp <= 0) {
           this.armLeft.destroy();
+        }
+      } else if (part === this.armRight && this.mutoidArmRightHp > 0) {
+        this.mutoidArmRightHp -= damageDealt;
+        if (this.mutoidArmRightHp <= 0) {
           this.armRight.destroy();
         }
       }
@@ -501,7 +506,7 @@ export default class MutoidScene extends Phaser.Scene {
     if (match) {
       const frameNumber = match[1];
       // Use phase2 bullets if arms are destroyed
-      const bulletPrefix = this.mutoidArmsHp <= 0 ? 'mutoid-phase2-bullet' : 'mutoid-bullet';
+      const bulletPrefix = (this.mutoidArmLeftHp <= 0 && this.mutoidArmRightHp <= 0) ? 'mutoid-phase2-bullet' : 'mutoid-bullet';
       const bulletTexture = `${bulletPrefix}_s${frameNumber}`;
 
       // Get head world position
@@ -524,7 +529,7 @@ export default class MutoidScene extends Phaser.Scene {
           // Set rotation to match velocity direction (with 90° offset for sprite orientation)
           const rotationOffset = Phaser.Math.DegToRad(90);
           // Add extra 180 degrees for phase2 bullets to fix upside down orientation
-          const phase2Flip = this.mutoidArmsHp <= 0 ? Phaser.Math.DegToRad(180) : 0;
+          const phase2Flip = (this.mutoidArmLeftHp <= 0 && this.mutoidArmRightHp <= 0) ? Phaser.Math.DegToRad(180) : 0;
           bullet.rotation = fireAngle + rotationOffset + phase2Flip;
         } else {
           // _s1, _s2, _s3: use fixed angles
