@@ -12,6 +12,7 @@ export default class MutoidScene extends Phaser.Scene {
 
   constructor() {
     super("MutoidScene");
+
     /* START-USER-CTR-CODE */
     // Write your code here.
     /* END-USER-CTR-CODE */
@@ -35,7 +36,7 @@ export default class MutoidScene extends Phaser.Scene {
 
 
   init(data: { secondLoop?: boolean }) {
-    this.secondLoop = data.secondLoop || Number(new URL(window.location.href).searchParams.get("secondLoop")) === 1;
+    this.secondLoop = data.secondLoop || false;
     this.playerData = PROPERTIES.resource.recipe.data.playerData;
     this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
     this.playerData.explosionTextures = this.explosionTextures;
@@ -43,6 +44,8 @@ export default class MutoidScene extends Phaser.Scene {
 
   create() {
     this.editorCreate();
+
+    this.mutoid = new Mutoid(this, 128, 80, this.secondLoop);
 
     // @ts-ignore
     window.gameScene = this;
@@ -64,10 +67,14 @@ export default class MutoidScene extends Phaser.Scene {
   }
 
   private createPlayer(gamepad: Phaser.Input.Gamepad.Gamepad | null) {
-    if (this.player) return;
+    if (this.player && this.player.active) {
+      return;
+    }
 
-    if (this.#startBtn) this.#startBtn.destroy();
-    // Only hide the page-level gamepad alert when running as Cordova (APK)
+    if (this.#startBtn) {
+      this.#startBtn.destroy();
+    }
+
     if (window.cordova) {
       const alert = document.getElementById('gamepadAlert');
       if (alert) alert.style.display = 'none';
@@ -83,20 +90,16 @@ export default class MutoidScene extends Phaser.Scene {
     this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
     this.player.speed = 150;
 
-    this.mutoid = new Mutoid(this, 128, 80, this.player, this.secondLoop);
+    this.mutoid.setPlayer(this.player);
 
-    // Bullets should only collide with destructible parts
     this.physics.add.collider(this.player.bulletGroup, this.mutoid.parts, this.handleBulletMutoidCollision as any, undefined, this);
-
-    // Player should collide with both destructible and solid parts and take damage
     this.physics.add.collider(this.player, this.mutoid.parts, this.handlePlayerMutoidCollision, undefined, this);
     this.physics.add.collider(this.player, this.mutoid.solidParts, this.handlePlayerMutoidCollision, undefined, this);
-    // Player takes damage from mutoid bullets
     this.physics.add.collider(this.player, this.mutoid.bulletGroup, this.handlePlayerMutoidBulletCollision, undefined, this);
 
     this.player.on((Player as any).CUSTOM_EVENT_DEAD_COMPLETE, () => {
       this.time.delayedCall(1000, () => {
-        this.scene.restart();
+        this.scene.restart({ secondLoop: this.secondLoop });
       });
     });
   }
