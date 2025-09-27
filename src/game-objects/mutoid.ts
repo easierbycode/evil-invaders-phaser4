@@ -158,10 +158,11 @@ export class Mutoid extends Phaser.GameObjects.Container {
     const destructibleParts = [this.armLeft, this.armRight, this.torsoLeft, this.torsoRight, this.head];
     const solidPartsList = [this.tankLeft, this.tankRight, this.treadFrontLeft, this.treadFrontRight];
 
-    this.scene.physics.world.enable([...destructibleParts, ...solidPartsList]);
+    // @ts-ignore
+    this.scene.physics.world.enable(this.getAll());
 
     this.parts.addMultiple(destructibleParts as any[]);
-    this.solidParts.addMultiple(solidPartsList);
+    this.solidParts.addMultiple(solidPartsList as any[]);
 
     this.parts.getChildren().forEach(part => {
       (part.body as Phaser.Physics.Arcade.Body).setImmovable(true);
@@ -191,18 +192,27 @@ export class Mutoid extends Phaser.GameObjects.Container {
     if (this.head) this.head.setFrame(HEAD_FRAME);
   }
 
-  update() {
-    if (!this.active) return;
-    this.list.forEach((part: any) => {
-      if (part.body) {
-        const body = part.body as Phaser.Physics.Arcade.Body;
-        const p = part as Phaser.GameObjects.Image;
-        const bounds = p.getBounds();
-        body.x = this.x + p.x - p.displayOriginX;
-        body.y = this.y + p.y - p.displayOriginY;
-      }
-    });
+  update(...args: any[]) {
+      if (!this.active) return;
+      this.list.forEach((part: any) => {
+        if (part.body) {
+          const body = part.body as Phaser.Physics.Arcade.Body;
+          const p = part as Phaser.GameObjects.Sprite;
+          const [worldX, worldY] = this.getWorldCoors(p.x, p.y);
+          body.x = worldX - p.displayOriginX;
+          body.y = worldY - p.displayOriginY;
+        }
+      });
   }
+
+  getWorldCoors(x: number, y: number): [number, number] {
+    const mat = this.getWorldTransformMatrix();
+    return [
+      x * mat.a + y * mat.c + mat.tx,
+      x * mat.b + y * mat.d + mat.ty
+    ];
+  }
+
 
   private animate() {
     const ease = this.secondLoop ? "Elastic.easeInOut" : "Quad.easeInOut";
@@ -413,7 +423,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
           // Set rotation to match velocity direction (with 90° offset for sprite orientation)
           const rotationOffset = Phaser.Math.DegToRad(90);
           // Add extra 180 degrees for phase2 bullets to fix upside down orientation
-          const phase2Flip = (this.armLeftHp <= 0 && this.armRightHp <= 0) ? Phaser.Math.DegToRadian(180) : 0;
+          const phase2Flip = (this.armLeftHp <= 0 && this.armRightHp <= 0) ? Phaser.Math.DegToRad(180) : 0;
           bullet.rotation = fireAngle + rotationOffset + phase2Flip;
         } else {
           // _s1, _s2, _s3: use fixed angles
@@ -442,4 +452,3 @@ export class Mutoid extends Phaser.GameObjects.Container {
     }
   }
 }
->>>>>>> REPLACE

@@ -52,13 +52,17 @@ export default class MutoidScene extends Phaser.Scene {
     this.#startBtn = this.physics.add.sprite(GAME_WIDTH / 2, 330, 'game_ui', 'titleStartText.png').setInteractive();
 
     this.#startBtn.on('pointerup', () => {
-      requestFullscreen(this.game.canvas);
-      const pads = this.input.gamepad.gamepads;
-      this.createPlayer(pads[0] || null);
+      this.startGame();
     });
 
     // Existing game-pad hookup
-    this.input.gamepad.once('connected', pad => this.createPlayer(pad));
+    this.input.gamepad.once('connected', () => this.startGame());
+  }
+
+  private startGame() {
+    requestFullscreen(this.game.canvas);
+    const pads = this.input.gamepad.gamepads;
+    this.createPlayer(pads[0] || null);
   }
 
   private createPlayer(gamepad: Phaser.Input.Gamepad.Gamepad | null) {
@@ -66,7 +70,7 @@ export default class MutoidScene extends Phaser.Scene {
       return;
     }
 
-    if (this.#startBtn.active) {
+    if (this.#startBtn && this.#startBtn.active) {
       this.#startBtn.destroy();
     }
 
@@ -121,6 +125,7 @@ export default class MutoidScene extends Phaser.Scene {
     (player as Player).onDamage(1);
     bulletInstance.destroyBullet();
   }
+
   /* END-USER-CODE */
 }
 
