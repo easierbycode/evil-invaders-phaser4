@@ -25,7 +25,6 @@ export default class MutoidScene extends Phaser.Scene {
 
     /* START-USER-CTR-CODE */
     // Write your code here.
-    this.secondLoop = Number(new URL(window.location.href).searchParams.get("secondLoop")) === 1;
     /* END-USER-CTR-CODE */
   }
 
@@ -65,7 +64,8 @@ export default class MutoidScene extends Phaser.Scene {
   playerData: any = null;
 
 
-  init() {
+  init(data: { secondLoop?: boolean }) {
+    this.secondLoop = data.secondLoop || Number(new URL(window.location.href).searchParams.get("secondLoop")) === 1;
     this.playerData = PROPERTIES.resource.recipe.data.playerData;
     this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
     this.playerData.explosionTextures = this.explosionTextures;
@@ -445,6 +445,7 @@ export default class MutoidScene extends Phaser.Scene {
 
           this.time.delayedCall(3000, () => {
             explosionGroup.destroy(true);
+            this.scene.restart({ secondLoop: true });
           });
         }
       }
