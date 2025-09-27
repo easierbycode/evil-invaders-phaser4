@@ -48,6 +48,29 @@ export class Mutoid extends Phaser.GameObjects.Container {
 
     // Create a container for all parts
     scene.add.existing(this);
+  }
+
+  preUpdate(time: number, delta: number) {
+    super.preUpdate(time, delta);
+
+    if (!this.active) {
+
+      return;
+    }
+
+    this.list.forEach((part: any) => {
+
+      if (part.body) {
+
+        const body = part.body as Phaser.Physics.Arcade.Body;
+        const p = part as Phaser.GameObjects.Sprite;
+
+        const [worldX, worldY] = this.getWorldCoors(p.x, p.y);
+
+        body.position.x = worldX - p.displayOriginX;
+        body.position.y = worldY - p.displayOriginY;
+      }
+    });
 
     // First create head at top
     this.head = this.scene.add.sprite(0, -HEAD_OFFSET_FROM_TORSO_TOP, "mutoid-head", HEAD_FRAME)
@@ -175,19 +198,6 @@ export class Mutoid extends Phaser.GameObjects.Container {
       : ["atlas_s1", "atlas_s2", "atlas_s3", "atlas_s3"];
     this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", headBackFrames, 2, 0);
     if (this.head) this.head.setFrame(HEAD_FRAME);
-  }
-
-  update(...args: any[]) {
-      if (!this.active) return;
-      this.list.forEach((part: any) => {
-        if (part.body) {
-          const body = part.body as Phaser.Physics.Arcade.Body;
-          const p = part as Phaser.GameObjects.Sprite;
-          const [worldX, worldY] = this.getWorldCoors(p.x, p.y);
-          body.position.x = worldX - p.displayOriginX;
-          body.position.y = worldY - p.displayOriginY;
-        }
-      });
   }
 
   getWorldCoors(x: number, y: number): [number, number] {
