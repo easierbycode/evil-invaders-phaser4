@@ -381,8 +381,8 @@ export class Mutoid extends Phaser.GameObjects.Container {
     if (!this.head || !this.player || !frame.textureFrame) return;
 
     const frameName = String(frame.textureFrame);
-    // Check if frame ends with _s0, _s1, _s2, or _s3
-    const match = frameName.match(/_s([0-3])$/);
+    // Check if frame ends with _s1, _s2, or _s3
+    const match = frameName.match(/_s([1-3])$/);
     if (match) {
       const frameNumber = match[1];
 
@@ -412,13 +412,16 @@ export class Mutoid extends Phaser.GameObjects.Container {
         const body = bullet.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(false);
 
-        // Aim at the player
-        const toPlayer = new Phaser.Math.Vector2(
-          this.player.x - headX,
-          this.player.y - headY
-        ).normalize();
-
-        body.setVelocity(toPlayer.x * bullet.speed, toPlayer.y * bullet.speed);
+        // Directional firing logic
+        const direction = new Phaser.Math.Vector2(0, 1); // Default to down
+        const frameNum = parseInt(frameNumber, 10);
+        if (frameNum === 1) {
+          direction.x = -0.5; // Diagonal down-left
+        } else if (frameNum === 3) {
+          direction.x = 0.5; // Diagonal down-right
+        }
+        direction.normalize();
+        body.setVelocity(direction.x * bullet.speed, direction.y * bullet.speed);
       }
     }
   } // <- end of handleFrameChange
