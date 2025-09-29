@@ -40,10 +40,15 @@ export default class MutoidScene extends Phaser.Scene {
     this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
     this.playerData.explosionTextures = this.explosionTextures;
 
-    // Create bullet explosion animation
+    // Create bullet explosion animation using individual image frames
     this.anims.create({
       key: 'mutoid-bullet-explosion',
-      frames: this.anims.generateFrameNames('mutoid-bullet', { prefix: 'atlas_s', start: 1, end: 3 }),
+      frames: [
+        { key: 'mutoid-bullet_s0' },
+        { key: 'mutoid-bullet_s1' },
+        { key: 'mutoid-bullet_s2' },
+        { key: 'mutoid-bullet_s3' }
+      ],
       frameRate: 20,
       repeat: 0
     });
