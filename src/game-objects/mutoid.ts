@@ -14,6 +14,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
   declare public scene: MutoidScene;
   private player: Player | null = null;
   private secondLoop: boolean = false;
+  private isMutoidReplacement: boolean = false;
 
   // Sprite parts
   public head?: Phaser.GameObjects.Sprite;
@@ -47,6 +48,9 @@ export class Mutoid extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.scene = scene;
     this.secondLoop = secondLoop;
+
+    const params = new URLSearchParams(window.location.search);
+    this.isMutoidReplacement = params.get("isMutoidReplacement") === "1";
 
     scene.add.existing(this);
     
@@ -86,8 +90,11 @@ export class Mutoid extends Phaser.GameObjects.Container {
   }
 
   private createAllSprites() {
+    const headTexture = this.isMutoidReplacement ? "mutoid-phase3-head" : "mutoid-head";
+    const torsoTexture = this.isMutoidReplacement ? "mutoid-phase3-torso" : "mutoid-torso";
+    const armTexture = this.isMutoidReplacement ? "mutoid-phase3-arm" : "mutoid-arm";
     // First create head at top
-    this.head = this.scene.add.sprite(0, -HEAD_OFFSET_FROM_TORSO_TOP, "mutoid-head", HEAD_FRAME)
+    this.head = this.scene.add.sprite(0, -HEAD_OFFSET_FROM_TORSO_TOP, headTexture, HEAD_FRAME)
       .setOrigin(0.5, 0);
     if (this.head) {
       this.head.on(Phaser.Animations.Events.ANIMATION_UPDATE, 
@@ -97,12 +104,12 @@ export class Mutoid extends Phaser.GameObjects.Container {
     }
 
     // Create body parts from top to bottom
-    this.torsoLeft = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0);
-    this.torsoRight = this.scene.add.sprite(0, 0, "mutoid-torso", TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
+    this.torsoLeft = this.scene.add.sprite(0, 0, torsoTexture, TORSO_FRAME).setOrigin(0, 0);
+    this.torsoRight = this.scene.add.sprite(0, 0, torsoTexture, TORSO_FRAME).setOrigin(0, 0).setFlipX(true);
 
     // Create arms
-    this.armLeft = this.scene.add.image(0, 2, "mutoid-arm").setOrigin(1, 0);
-    this.armRight = this.scene.add.image(0, 2, "mutoid-arm").setOrigin(1, 0).setFlipX(true);
+    this.armLeft = this.scene.add.image(0, 2, armTexture).setOrigin(1, 0);
+    this.armRight = this.scene.add.image(0, 2, armTexture).setOrigin(1, 0).setFlipX(true);
 
     // Create tank parts
     this.tankLeft = this.scene.add.image(0, MUTOID_HEIGHT, "mutoid-tank").setOrigin(0, 1);
@@ -421,8 +428,9 @@ export class Mutoid extends Phaser.GameObjects.Container {
           this.treadFrontRight = undefined;
 
           const explosionGroup = scene.add.group();
+          const headTextureKey = head.texture.key;
           for (let i = 0; i < 50; i++) {
-            const headPart = scene.physics.add.sprite(explosionX, explosionY, 'mutoid-head');
+            const headPart = scene.physics.add.sprite(explosionX, explosionY, headTextureKey);
             explosionGroup.add(headPart);
             headPart.play('head_explosion_anim');
             const angle = Phaser.Math.Between(0, 360);
@@ -433,7 +441,13 @@ export class Mutoid extends Phaser.GameObjects.Container {
 
           scene.time.delayedCall(3000, () => {
             explosionGroup.destroy(true);
-            scene.scene.restart({ secondLoop: true });
+            if (this.secondLoop) {
+              const url = new URL(window.location.href);
+              url.searchParams.set("isMutoidReplacement", "1");
+              window.location.href = url.href;
+            } else {
+              scene.scene.restart({ secondLoop: true });
+            }
           });
 
           if (this.active) {
