@@ -63,11 +63,12 @@ export class Mutoid extends Phaser.GameObjects.Container {
   }
 
   private setupAnimations() {
+    const headTexture = this.isMutoidReplacement ? "mutoid-phase3-head" : "mutoid-head";
     // Only create animations if they don't exist
     if (!this.scene.anims.exists('head_explosion_anim')) {
       this.scene.anims.create({
         key: 'head_explosion_anim',
-        frames: this.scene.anims.generateFrameNames('mutoid-head', { prefix: 'atlas_s', start: 4, end: 6 }),
+        frames: this.scene.anims.generateFrameNames(headTexture, { prefix: 'atlas_s', start: 4, end: 6 }),
         frameRate: 10,
         repeat: -1
       });
@@ -76,11 +77,11 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.ensureAnimation("mutoid-tank-tread-spin", "mutoid-tank-tread");
     this.ensureAnimation("mutoid-tank-tread-front-spin", "mutoid-tank-tread-front");
 
-    this.ensureExplicitAnimation("mutoid-head-forward", "mutoid-head", ["atlas_s5", "atlas_s0"], 5, -1);
+    this.ensureExplicitAnimation("mutoid-head-forward", headTexture, ["atlas_s5", "atlas_s0"], 5, -1);
     const headBackFrames = this.secondLoop
       ? ["atlas_s1", "atlas_s2", "atlas_s3"]
       : ["atlas_s2", "atlas_s3", "atlas_s3"];
-    this.ensureExplicitAnimation("mutoid-head-back", "mutoid-head", headBackFrames, 2, 0);
+    this.ensureExplicitAnimation("mutoid-head-back", headTexture, headBackFrames, 2, 0);
   }
 
   private createParts() {
