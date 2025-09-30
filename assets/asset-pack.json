@@ -85,6 +85,24 @@
                 "key": "mutoid-phase2-bullet_s3"
             },
             {
+                "atlasURL": "mutoid/mutoid-phase3-arm.json",
+                "textureURL": "mutoid/mutoid-phase3-arm.png",
+                "type": "atlas",
+                "key": "mutoid-phase3-arm"
+            },
+            {
+                "atlasURL": "mutoid/mutoid-phase3-head.json",
+                "textureURL": "mutoid/mutoid-phase3-head.png",
+                "type": "atlas",
+                "key": "mutoid-phase3-head"
+            },
+            {
+                "atlasURL": "mutoid/mutoid-phase3-torso.json",
+                "textureURL": "mutoid/mutoid-phase3-torso.png",
+                "type": "atlas",
+                "key": "mutoid-phase3-torso"
+            },
+            {
                 "url": "mutoid/mutoid-tank.png",
                 "type": "image",
                 "key": "mutoid-tank"
