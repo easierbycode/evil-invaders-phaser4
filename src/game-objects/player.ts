@@ -528,6 +528,29 @@ export class Player extends Character {
     this.bulletGroup.add(bullet);
     this.scene.add.existing(bullet);
 
+    // Create bullet animation from shootNormal texture array
+    if (this.shootData?.texture && Array.isArray(this.shootData.texture) && this.shootData.texture.length > 0) {
+      const animKey = `bullet_anim_${this.bulletIdCnt}`;
+      const frameRate = this.shootData.frameRate ?? 12;
+      const textureKey = this.shootData.textureKey || 'game_asset';
+
+      // Create animation frames from shootNormal textures
+      const frames = this.shootData.texture.map((frameName: string) => {
+        return { key: textureKey, frame: frameName };
+      });
+
+      // Create the animation
+      bullet.anims.create({
+        key: animKey,
+        frames: frames,
+        frameRate: frameRate,
+        repeat: -1
+      });
+
+      // Play the animation
+      bullet.play(animKey);
+    }
+
     const damage = this.shootData?.damage ?? 1;
     const durationBase = 25;                     // ms
     const duration = durationBase + (damage - 1) * 10;
