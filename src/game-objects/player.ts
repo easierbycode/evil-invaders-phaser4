@@ -499,8 +499,6 @@ export class Player extends Character {
   }
 
   fireBullet() {
-    const bulletTexture = 'bullet'; // Always use the bullet.png from asset-pack.json
-
     let actuator: any = null; // Use 'any' to avoid type conflicts between specs
     if (navigator.getGamepads && this.gamepadIndex > -1) {
         const pad = navigator.getGamepads()[this.gamepadIndex];
@@ -522,7 +520,10 @@ export class Player extends Character {
     const bulletX = this.x + this.width - 5;  // Spawn from visual right edge
     const bulletY = this.y;                   // Spawn from top edge (no offset)
 
-    const bullet = new Bullet(this.scene, bulletX, bulletY, bulletTexture);
+    const bullet = new Bullet(this.scene, bulletX, bulletY, "game_asset", {
+      texture: this.shootNormalData.texture,
+      frameRate: this.shootNormalData.frameRate
+    });
     bullet.id = ++this.bulletIdCnt;
     bullet.rotation = -Math.PI / 2; // Point upward
     this.bulletGroup.add(bullet);
