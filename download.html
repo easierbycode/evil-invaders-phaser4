@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evil Invaders Atlas Downloads</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0e16;
+      color: #e6e9f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+    }
+    .card {
+      background: #151b28;
+      border: 1px solid #202a3d;
+      border-radius: 12px;
+      padding: 24px 28px;
+      width: min(560px, 100%);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    }
+    h1 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+    }
+    p {
+      margin: 0 0 20px 0;
+      color: #9fb0d3;
+      line-height: 1.5;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1c2434;
+      border: 1px solid #243148;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .filename {
+      font-weight: 600;
+      color: #f2f5ff;
+    }
+    .status {
+      font-size: 12px;
+      color: #9fb0d3;
+    }
+    a.download {
+      color: #9fe4ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a.download:hover {
+      text-decoration: underline;
+    }
+    .error {
+      color: #ff8f8f;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Atlas Downloads</h1>
+    <p>Grab the latest atlas assets from Firebase. PNG files are exported with their base64 data URI applied.</p>
+    <ul id="list">
+      <li><span class="filename">game_asset.png</span><span class="status">Fetching…</span></li>
+      <li><span class="filename">game_asset.json</span><span class="status">Fetching…</span></li>
+      <li><span class="filename">game_ui.png</span><span class="status">Fetching…</span></li>
+      <li><span class="filename">game_ui.json</span><span class="status">Fetching…</span></li>
+    </ul>
+  </div>
+
+  <script type="module">
+    const endpoints = {
+      game_asset_png: "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
+      game_asset_json: "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json",
+      game_ui_png: "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
+      game_ui_json: "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json",
+    };
+
+    const list = document.getElementById("list");
+    const items = Array.from(list.children);
+
+    const setLink = (index, href, filename) => {
+      const li = items[index];
+      li.innerHTML = "";
+
+      const name = document.createElement("span");
+      name.className = "filename";
+      name.textContent = filename;
+
+      const link = document.createElement("a");
+      link.className = "download";
+      link.href = href;
+      link.download = filename;
+      link.textContent = "Download";
+
+      li.appendChild(name);
+      li.appendChild(link);
+    };
+
+    const setError = (index, message) => {
+      const li = items[index];
+      li.innerHTML = "";
+      const name = document.createElement("span");
+      name.className = "filename";
+      name.textContent = items[index].dataset?.filename || "file";
+      const error = document.createElement("span");
+      error.className = "error";
+      error.textContent = message;
+      li.appendChild(name);
+      li.appendChild(error);
+    };
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    (async () => {
+      try {
+        const [assetPng, assetJson, uiPng, uiJson] = await Promise.all([
+          fetchJson(endpoints.game_asset_png),
+          fetchJson(endpoints.game_asset_json),
+          fetchJson(endpoints.game_ui_png),
+          fetchJson(endpoints.game_ui_json),
+        ]);
+
+        const toDataUri = (base64) =>
+          base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`;
+
+        // Create blob links so the browser downloads the data URI content cleanly
+        const mkBlobUrl = (data, type) => URL.createObjectURL(new Blob([data], { type }));
+
+        setLink(0, mkBlobUrl(await (await fetch(toDataUri(assetPng))).blob(), "image/png"), "game_asset.png");
+        setLink(1, mkBlobUrl(JSON.stringify(assetJson, null, 2), "application/json"), "game_asset.json");
+        setLink(2, mkBlobUrl(await (await fetch(toDataUri(uiPng))).blob(), "image/png"), "game_ui.png");
+        setLink(3, mkBlobUrl(JSON.stringify(uiJson, null, 2), "application/json"), "game_ui.json");
+      } catch (err) {
+        console.error("Download page error:", err);
+        ["PNG", "JSON", "PNG", "JSON"].forEach((_, idx) =>
+          setError(idx, "Fetch failed — check connection")
+        );
+      }
+    })();
+  </script>
+</body>
+</html>
