@@ -13,7 +13,7 @@ import {
     AtlasData,
     SpriteData
 } from '../utils/firebase-character-utils';
-import PROPERTIES from "https://codepen.io/CodeMonkeyGames/pen/rNERbzw.js";
+import PROPERTIES from "../properties";
 
 export class EditorScene extends Phaser.Scene {
     private editorDiv!: HTMLDivElement;
