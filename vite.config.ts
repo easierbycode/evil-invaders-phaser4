@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => {
     // GH Pages requires the repo-subpath; Cordova (file://) needs a relative base.
     base: target === "web" && isProd ? "/evil-invaders-phaser4/" : "./",
 
+    // Serve static files from project root during dev (for assets/ folder access)
+    // In production, viteStaticCopy handles copying assets to dist
+    publicDir: isProd ? false : ".",
+
     build: {
       outDir: target === "cordova" ? "cordova/www" : "dist",
       emptyOutDir: true,
