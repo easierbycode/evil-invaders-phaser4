@@ -86,6 +86,9 @@ export class LoadScene extends Phaser.Scene {
     const packUrl = (base.endsWith("/") ? base : base + "/") + "asset-pack.json";
 
     this.load.setPath(base + 'assets');
+    // Always queue local game.json so we have a fallback when offline.
+    // This loads assets/game.json into the cache as 'game.json'.
+    this.load.json('game.json', 'game.json');
     this.load.pack("pack", packUrl);
 
     // Optional: log any misses
@@ -99,9 +102,12 @@ export class LoadScene extends Phaser.Scene {
     const assetsPath = (base.endsWith("/") ? base : base + "/") + "assets/";
 
     // Helper to load atlas from local assets folder
+    // We set this.load.setPath(base + 'assets') above; therefore use relative
+    // filenames here to avoid doubling the assets/ prefix when Phaser resolves
+    // the final URL (which caused 404s and index.html being returned).
     const queueAtlasFromLocal = (key: string): void => {
-      const pngPath = `${assetsPath}${key}.png`;
-      const jsonPath = `${assetsPath}${key}.json`;
+      const pngPath = `${key}.png`;
+      const jsonPath = `${key}.json`;
       this.load.atlas(key, pngPath, jsonPath);
       console.log(`Queued ${key} atlas from local assets`);
     };
@@ -157,6 +163,7 @@ export class LoadScene extends Phaser.Scene {
 
     // Also pull game.json from Firebase while atlases are fetching
     const gameDataPromise = (async () => {
+      if (!firebaseReady) return null;
       try {
         const snap = await get(ref(db, "game"));
         return snap.val();
@@ -173,19 +180,31 @@ export class LoadScene extends Phaser.Scene {
     ]);
 
     /* ---------------- 2️⃣  Cache game.json (Firebase) or queue fallback ---------------- */
+    // We don't set PROPERTIES.resource here: if Firebase provided a gameData, we
+    // will add it into the cache so it can override the local asset. The final
+    // PROPERTIES.resource is set after the loader completes below.
     if (gameData) {
       this.cache.json.add("game.json", gameData);
-      if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
-      PROPERTIES.resource.recipe = { data: gameData };
     }
 
     /* ---------------- 3️⃣  Start the loader once, wait for everything ---------------- */
     await new Promise<void>((resolve) => {
-      this.load.once(Phaser.Loader.Events.COMPLETE, (loader, totalComplete, totalFailed) => {
+      this.load.once(Phaser.Loader.Events.COMPLETE, (loader: Phaser.Loader.LoaderPlugin, totalComplete: number, totalFailed: number) => {
         console.log('Load complete:', totalComplete, 'files,', totalFailed, 'failed');
         audioFiles.forEach((n) => {
-          Sound.resource[n] = this.sound.add(n);
+          (Sound.resource as any)[n] = this.sound.add(n);
         });
+
+        // Ensure PROPERTIES.resource.recipe.data is set from any source:
+        // 1) Firebase (already added to cache above), or
+        // 2) Local assets/game.json (loaded via this.load.json)
+        const finalGameJson = gameData || this.cache.json.get("game.json") || null;
+        if (finalGameJson && gameData) console.log("Using Firebase game.json");
+        if (finalGameJson && !gameData) console.log("Using local assets/game.json as fallback");
+        if (finalGameJson) {
+          if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
+          (PROPERTIES as any).resource.recipe = { data: finalGameJson };
+        }
 
         resolve();
       });
@@ -194,11 +213,13 @@ export class LoadScene extends Phaser.Scene {
     });
 
     /* ---------------- 4️⃣  Choose next scene ---------------- */
-    if (gameData) {
+    // Prefer game data from Firebase but fall back to the cached local game.json.
+    const finalGameJson = gameData || this.cache.json.get("game.json") || null;
+    if (finalGameJson) {
       this.scene.start("OverloadScene");
-    } else if (!firebaseReady) {
-      // Offline mode without game data - go directly to TitleScene
-      console.log("Offline mode: skipping OverloadScene, going to TitleScene");
+    } else {
+      // No game data available — show TitleScene
+      if (!firebaseReady) console.log("Offline mode: skipping OverloadScene, going to TitleScene");
       const sceneRequested = new URL(window.location.href).searchParams.get("scene");
       this.scene.start(sceneRequested || "TitleScene");
     }
