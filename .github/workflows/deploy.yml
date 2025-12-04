@@ -33,6 +33,16 @@ jobs:
           BUILD_TARGET: web
         run: npm run build -- --mode production
 
+      # ⬇️ NEW: create a zip of the built site and put it inside dist
+      - name: Create downloadable zip of built site
+        run: |
+          cd dist
+          # zip the current contents of dist into ../site.zip
+          zip -r ../site.zip .
+          cd ..
+          # copy the zip back into dist so it will be served by GitHub Pages
+          cp site.zip dist/site.zip
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
