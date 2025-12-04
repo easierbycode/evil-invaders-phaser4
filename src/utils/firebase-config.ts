@@ -78,10 +78,13 @@ export function ref(db: any, path: string): any {
 }
 
 /**
- * Get data from database (returns null if offline)
+ * Get data from database (returns stub if offline)
  */
 export async function get(reference: any): Promise<any> {
-  if (!firebaseDatabase || !reference) return { val: () => null };
+  if (!firebaseDatabase || !reference) {
+    // Return a stub that mimics Firebase snapshot
+    return { val: () => null, exists: () => false };
+  }
   return firebaseDatabase.get(reference);
 }
 
