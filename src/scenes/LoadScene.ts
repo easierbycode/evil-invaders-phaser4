@@ -1,5 +1,5 @@
 
-import { getDB, ref, get } from '../utils/firebase-config';
+import { initFirebase, getDB, ref, get } from '../utils/firebase-config';
 import PROPERTIES from "../properties";
 import { AnimatedSprite } from '../game-objects/AnimatedSprite';
 import CONSTANTS from "./../constants";
@@ -93,8 +93,9 @@ export class LoadScene extends Phaser.Scene {
       console.warn("Load error:", f.type, f.key, f.src)
     );
 
+    // Initialize Firebase (will skip if offline)
+    const firebaseReady = await initFirebase();
     const db = getDB();
-    const isOnline = navigator.onLine;
     const assetsPath = (base.endsWith("/") ? base : base + "/") + "assets/";
 
     // Helper to load atlas from local assets folder
@@ -132,7 +133,7 @@ export class LoadScene extends Phaser.Scene {
     let assetAtlasPromise: Promise<boolean>;
     let uiAtlasPromise: Promise<boolean>;
 
-    if (!isOnline) {
+    if (!firebaseReady) {
       // Offline mode: load from local assets folder
       console.log("Offline mode detected, loading atlases from local assets");
       queueAtlasFromLocal("game_asset");
@@ -195,6 +196,11 @@ export class LoadScene extends Phaser.Scene {
     /* ---------------- 4️⃣  Choose next scene ---------------- */
     if (gameData) {
       this.scene.start("OverloadScene");
+    } else if (!firebaseReady) {
+      // Offline mode without game data - go directly to TitleScene
+      console.log("Offline mode: skipping OverloadScene, going to TitleScene");
+      const sceneRequested = new URL(window.location.href).searchParams.get("scene");
+      this.scene.start(sceneRequested || "TitleScene");
     }
   }
 }
