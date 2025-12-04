@@ -1,5 +1,5 @@
 
-import { getDB, ref, get } from '../utils/firebase-config';
+import { initFirebase, getDB, ref, get } from '../utils/firebase-config';
 import PROPERTIES from "../properties";
 import { AnimatedSprite } from '../game-objects/AnimatedSprite';
 import CONSTANTS from "./../constants";
@@ -93,7 +93,18 @@ export class LoadScene extends Phaser.Scene {
       console.warn("Load error:", f.type, f.key, f.src)
     );
 
+    // Initialize Firebase (will skip if offline)
+    const firebaseReady = await initFirebase();
     const db = getDB();
+    const assetsPath = (base.endsWith("/") ? base : base + "/") + "assets/";
+
+    // Helper to load atlas from local assets folder
+    const queueAtlasFromLocal = (key: string): void => {
+      const pngPath = `${assetsPath}${key}.png`;
+      const jsonPath = `${assetsPath}${key}.json`;
+      this.load.atlas(key, pngPath, jsonPath);
+      console.log(`Queued ${key} atlas from local assets`);
+    };
 
     // Helper to fetch a base64 png + json atlas from Firebase and queue it
     const queueAtlasFromFirebase = async (
@@ -118,18 +129,31 @@ export class LoadScene extends Phaser.Scene {
       }
     };
 
-    /* ---------------- 1️⃣  Try loading atlases from Firebase (in parallel) ---------------- */
-    const assetAtlasPromise = queueAtlasFromFirebase(
-      "game_asset",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json"
-    );
+    /* ---------------- 1️⃣  Try loading atlases from Firebase or local (in parallel) ---------------- */
+    let assetAtlasPromise: Promise<boolean>;
+    let uiAtlasPromise: Promise<boolean>;
 
-    const uiAtlasPromise = queueAtlasFromFirebase(
-      "game_ui",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json"
-    );
+    if (!firebaseReady) {
+      // Offline mode: load from local assets folder
+      console.log("Offline mode detected, loading atlases from local assets");
+      queueAtlasFromLocal("game_asset");
+      queueAtlasFromLocal("game_ui");
+      assetAtlasPromise = Promise.resolve(true);
+      uiAtlasPromise = Promise.resolve(true);
+    } else {
+      // Online mode: try Firebase first
+      assetAtlasPromise = queueAtlasFromFirebase(
+        "game_asset",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json"
+      );
+
+      uiAtlasPromise = queueAtlasFromFirebase(
+        "game_ui",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json"
+      );
+    }
 
     // Also pull game.json from Firebase while atlases are fetching
     const gameDataPromise = (async () => {
@@ -172,6 +196,11 @@ export class LoadScene extends Phaser.Scene {
     /* ---------------- 4️⃣  Choose next scene ---------------- */
     if (gameData) {
       this.scene.start("OverloadScene");
+    } else if (!firebaseReady) {
+      // Offline mode without game data - go directly to TitleScene
+      console.log("Offline mode: skipping OverloadScene, going to TitleScene");
+      const sceneRequested = new URL(window.location.href).searchParams.get("scene");
+      this.scene.start(sceneRequested || "TitleScene");
     }
   }
 }
