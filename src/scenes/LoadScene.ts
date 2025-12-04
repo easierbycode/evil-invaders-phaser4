@@ -94,6 +94,16 @@ export class LoadScene extends Phaser.Scene {
     );
 
     const db = getDB();
+    const isOnline = navigator.onLine;
+    const assetsPath = (base.endsWith("/") ? base : base + "/") + "assets/";
+
+    // Helper to load atlas from local assets folder
+    const queueAtlasFromLocal = (key: string): void => {
+      const pngPath = `${assetsPath}${key}.png`;
+      const jsonPath = `${assetsPath}${key}.json`;
+      this.load.atlas(key, pngPath, jsonPath);
+      console.log(`Queued ${key} atlas from local assets`);
+    };
 
     // Helper to fetch a base64 png + json atlas from Firebase and queue it
     const queueAtlasFromFirebase = async (
@@ -118,18 +128,31 @@ export class LoadScene extends Phaser.Scene {
       }
     };
 
-    /* ---------------- 1️⃣  Try loading atlases from Firebase (in parallel) ---------------- */
-    const assetAtlasPromise = queueAtlasFromFirebase(
-      "game_asset",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json"
-    );
+    /* ---------------- 1️⃣  Try loading atlases from Firebase or local (in parallel) ---------------- */
+    let assetAtlasPromise: Promise<boolean>;
+    let uiAtlasPromise: Promise<boolean>;
 
-    const uiAtlasPromise = queueAtlasFromFirebase(
-      "game_ui",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
-      "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json"
-    );
+    if (!isOnline) {
+      // Offline mode: load from local assets folder
+      console.log("Offline mode detected, loading atlases from local assets");
+      queueAtlasFromLocal("game_asset");
+      queueAtlasFromLocal("game_ui");
+      assetAtlasPromise = Promise.resolve(true);
+      uiAtlasPromise = Promise.resolve(true);
+    } else {
+      // Online mode: try Firebase first
+      assetAtlasPromise = queueAtlasFromFirebase(
+        "game_asset",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json"
+      );
+
+      uiAtlasPromise = queueAtlasFromFirebase(
+        "game_ui",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
+        "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json"
+      );
+    }
 
     // Also pull game.json from Firebase while atlases are fetching
     const gameDataPromise = (async () => {
