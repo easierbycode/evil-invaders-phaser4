@@ -133,7 +133,8 @@ export default {
         g_continue_yes_voice2: "assets/sounds/scene_continue/g_continue_yes_voice2.mp3",
         g_continue_no_voice0: "assets/sounds/scene_continue/g_continue_no_voice0.mp3",
         g_continue_no_voice1: "assets/sounds/scene_continue/g_continue_no_voice1.mp3",
-        voice_congra: "assets/sounds/scene_clear/voice_congra.mp3"
+        voice_congra: "assets/sounds/scene_clear/voice_congra.mp3",
+        main_bgm: "https://assets.codepen.io/11817390/Sol%20Invicto%20-%20Vault%20Of%20Shadows%20Album%20%28New%20Track%20Every%20Friday%29%20-%2001%20You%20Can%E2%80%99t%20Come%20Back%20%28V.O.S%20-1%29.mp3"
     },
     SCENE_NAME_LOAD: "LoadScene",
     SCENE_NAME_TITLE: "TitleScene",

@@ -76,9 +76,12 @@ export class LoadScene extends Phaser.Scene {
       };
 
       for (var n in CONSTANTS.RESOURCE) {
-        let fileType = CONSTANTS.RESOURCE[n].match(/\w+$/)[0];
+        let resourceUrl = CONSTANTS.RESOURCE[n];
+        let fileType = resourceUrl.match(/\w+$/)[0];
         if (fileTypes[fileType] === "audio") audioFiles.push(n);
-        this.load[fileTypes[fileType]](n, PROPERTIES.baseUrl + CONSTANTS.RESOURCE[n]);
+        // Handle external URLs (don't prepend baseUrl for http/https)
+        const finalUrl = resourceUrl.startsWith("http") ? resourceUrl : PROPERTIES.baseUrl + resourceUrl;
+        this.load[fileTypes[fileType]](n, finalUrl);
       }
     }
 
