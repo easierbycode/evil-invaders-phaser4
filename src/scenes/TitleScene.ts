@@ -59,8 +59,8 @@ export default class TitleScene extends Phaser.Scene {
 
     this.editorCreate();
 
-    // Play background music
-    Sound.bgmPlayLoop("main_bgm", 0.4);
+    // Play title background music
+    Sound.bgmPlayLoop("title_bgm", 0.4);
 
     this.startBtn = this.physics
       .add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 150, 'game_ui', 'titleStartText.png')

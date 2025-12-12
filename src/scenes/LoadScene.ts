@@ -72,6 +72,7 @@ export class LoadScene extends Phaser.Scene {
         jpg: "image",
         json: "json",
         mp3: "audio",
+        m4a: "audio",
         png: "image"
       };
 
