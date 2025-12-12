@@ -37,4 +37,16 @@ export default {
             sound.play("default");
         }
     },
+
+    bgmPlayLoop: function (key, volume = 0.5) {
+        if (this.resource.bgm === key) return; // Already playing
+        if (this.resource.bgm) this.stop(this.resource.bgm);
+
+        const sound = this.resource[key];
+
+        if (sound && !sound.isPlaying) {
+            this.resource.bgm = key;
+            sound.play({ loop: true, volume: volume });
+        }
+    },
 };  

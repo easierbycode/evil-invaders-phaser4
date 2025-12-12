@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import CONSTANTS from "./../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
+import Sound from './../soundManager';
 
 export class GameScene extends Phaser.Scene {
 	player: any;
@@ -12,6 +13,9 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	async create() {
+	// Play background music (continues from TitleScene if already playing)
+	Sound.bgmPlayLoop("main_bgm", 0.4);
+
 	// Set pixel-perfect camera settings
 	this.cameras.main.setRoundPixels(true);
 	
