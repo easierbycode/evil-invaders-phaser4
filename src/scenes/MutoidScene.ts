@@ -5,6 +5,7 @@ const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import PROPERTIES from "../properties";
 import { requestFullscreen } from "../utils/fullscreen";
 import { Mutoid } from "../game-objects/mutoid";
+import Sound from './../soundManager';
 
 /* START OF COMPILED CODE */
 
@@ -56,6 +57,9 @@ export default class MutoidScene extends Phaser.Scene {
 
   create() {
     this.editorCreate();
+
+    // Play background music
+    Sound.bgmPlayLoop("mutoid_bgm", 0.4);
 
     this.mutoid = new Mutoid(this, 128, 80, this.secondLoop);
 
