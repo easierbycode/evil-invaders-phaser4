@@ -13,7 +13,7 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	async create() {
-	// Play background music (continues from TitleScene if already playing)
+	// Play background music (stops any previous scene's music)
 	Sound.bgmPlayLoop("main_bgm", 0.4);
 
 	// Set pixel-perfect camera settings
