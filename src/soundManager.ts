@@ -12,7 +12,12 @@ export default {
 
     stop: function (key) {
         const sound = this.resource[key];
-        if (sound && sound.isPlaying) sound.stop();
+        if (sound && sound.isPlaying) {
+            sound.stop();
+        }
+        if (this.resource.bgm === key) {
+            this.resource.bgm = null;
+        }
     },
 
     bgmPlay: function (key, e, o) {
