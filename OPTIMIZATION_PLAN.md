@@ -1,4 +1,4 @@
-# Optimization Plan for Evil Invaders (Phaser 4.0.0-rc.4)
+# Optimization Plan for Evil Invaders (Phaser 4.0.0-rc.6)
 
 ## Sprite Animations
 - Use texture atlases to pack sprites and reduce texture binds.
