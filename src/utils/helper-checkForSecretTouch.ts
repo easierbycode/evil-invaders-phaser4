@@ -3,6 +3,12 @@ export function setupSecretTouchHandler(scene: Phaser.Scene, width: number, heig
     let topRightTouched = false;
 
     scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        // Right-click anywhere triggers the callback
+        if (pointer.rightButtonDown()) {
+            callback();
+            return;
+        }
+
         const touchX = pointer.x;
         const touchY = pointer.y;
 
