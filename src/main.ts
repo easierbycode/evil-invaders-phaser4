@@ -12,6 +12,7 @@ import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
 import MutoidScene from "./scenes/MutoidScene";
+import HighScoreScene from "./scenes/HighScoreScene";
 
 export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
@@ -218,11 +219,12 @@ function onDeviceReady() {
     "GameScene": GameScene,
     "EditorScene": EditorScene,
     "PackerScene": PackerScene,
+    "HighScoreScene": HighScoreScene,
   };
 
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
   const sceneClass = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
-  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
+  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene, HighScoreScene];
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",
@@ -268,7 +270,13 @@ function onDeviceReady() {
       width: GAME_WIDTH,
       height: GAME_HEIGHT
     },
-  })
+  });
+
+  globalThis.__PHASER_GAME__.input.gamepad.on('down', (pad: Phaser.Input.Gamepad.Gamepad) => {
+    if (pad.buttons[8].pressed && pad.buttons[12].pressed) {
+      globalThis.__PHASER_GAME__.scene.start('HighScoreScene');
+    }
+  });
 };
 
 document.addEventListener('deviceready', onDeviceReady, false);

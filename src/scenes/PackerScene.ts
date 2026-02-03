@@ -100,7 +100,7 @@ export class PackerScene extends Phaser.Scene {
         const sceneSelect = document.createElement('select');
         sceneSelect.style.cssText = 'padding: 8px; font-size: 14px;';
 
-        const scenes = ["MutoidScene", "TitleScene", "GameScene", "EditorScene", "PackerScene"];
+        const scenes = ["MutoidScene", "TitleScene", "GameScene", "EditorScene", "PackerScene", "HighScoreScene"];
         const currentScene = new URL(window.location.href).searchParams.get("scene") || "PackerScene";
 
         scenes.forEach(sceneName => {
