@@ -67,7 +67,7 @@ export default class TitleScene extends Phaser.Scene {
       .setAlpha(0);
 
     this.startBtn.on('pointerup', () => {
-      this.scene.start("GameScene");
+      this.scene.start("LevelSelectScene");
     });
 
     const animations = this.anims.createFromAseprite("flirty-girls-whitehouse");
