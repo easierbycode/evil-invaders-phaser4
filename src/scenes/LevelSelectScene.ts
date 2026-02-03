@@ -17,7 +17,6 @@ export class LevelSelectScene extends Phaser.Scene {
   private optionTexts: Phaser.GameObjects.Text[] = [];
   private selectedIndex = 0;
   private comboLocked = false;
-  private editorActive = false;
 
   constructor() {
     super("LevelSelectScene");
@@ -73,7 +72,7 @@ export class LevelSelectScene extends Phaser.Scene {
     if (selectPressed && upPressed) {
       if (!this.comboLocked) {
         this.comboLocked = true;
-        this.launchAtlasEditor();
+        this.scene.start("HighScoreScene");
       }
     } else {
       this.comboLocked = false;
@@ -109,21 +108,5 @@ export class LevelSelectScene extends Phaser.Scene {
 
     PROPERTIES.stageId = this.selectedIndex;
     this.scene.start("GameScene");
-  }
-
-  private launchAtlasEditor() {
-    if (this.editorActive) {
-      return;
-    }
-
-    this.editorActive = true;
-    this.scene.pause();
-    this.scene.launch("PackerScene");
-
-    const packerScene = this.scene.get("PackerScene");
-    packerScene.events.once("shutdown", () => {
-      this.editorActive = false;
-      this.scene.resume();
-    });
   }
 }
