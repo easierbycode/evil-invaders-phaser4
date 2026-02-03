@@ -12,6 +12,7 @@ import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
 import MutoidScene from "./scenes/MutoidScene";
+import HighScoreScene from "./scenes/HighScoreScene";
 
 export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
@@ -22,6 +23,9 @@ export class GameScene extends Phaser.Scene {
   backgroundDeepest!: Phaser.GameObjects.TileSprite;
   backgroundMiddle!: Phaser.GameObjects.TileSprite;
   prevCameraY = 0;
+  // High score combo state
+  private prevSelectState: boolean = false;
+  private prevDpadUpState: boolean = false;
 
 
   constructor() { super('GameScene'); }
@@ -120,6 +124,33 @@ export class GameScene extends Phaser.Scene {
 
     // launch enemyWave() every 80 frames
     if (this.frameCnt % this.waveInterval === 0) this.enemyWave();
+
+    // Check for SELECT + D-PAD UP gamepad combo to access high scores
+    this.checkHighScoreCombo();
+  }
+
+  checkHighScoreCombo() {
+    const pads = this.input.gamepad.gamepads;
+    const gamepad = pads?.find(p => p?.connected);
+    if (!gamepad) return;
+
+    const BUTTON_SELECT = 8;
+    const AXIS_LEFT_Y = 1;
+
+    const selectPressed = gamepad.buttons[BUTTON_SELECT]?.pressed || false;
+    const leftY = gamepad.axes.length > AXIS_LEFT_Y ? gamepad.axes[AXIS_LEFT_Y].getValue() : 0;
+    const dpadUp = gamepad.buttons[12]?.pressed || leftY < -0.5;
+
+    // Edge detection - trigger only on press, not hold
+    const comboPressed = selectPressed && dpadUp;
+    const wasComboPressed = this.prevSelectState && this.prevDpadUpState;
+
+    if (comboPressed && !wasComboPressed) {
+      this.scene.start("HighScoreScene");
+    }
+
+    this.prevSelectState = selectPressed;
+    this.prevDpadUpState = dpadUp;
   }
 
   enemyWave() {
@@ -218,11 +249,12 @@ function onDeviceReady() {
     "GameScene": GameScene,
     "EditorScene": EditorScene,
     "PackerScene": PackerScene,
+    "HighScoreScene": HighScoreScene,
   };
 
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
   const sceneClass = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
-  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
+  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene, HighScoreScene];
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",

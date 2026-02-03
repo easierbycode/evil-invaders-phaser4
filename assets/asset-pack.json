@@ -139,6 +139,11 @@
                 "url": "subTitleEn.png",
                 "type": "image",
                 "key": "subTitleEn"
+            },
+            {
+                "url": "retro-font.png",
+                "type": "image",
+                "key": "retro-font"
             }
         ]
     },

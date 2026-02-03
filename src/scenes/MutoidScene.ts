@@ -27,6 +27,9 @@ export default class MutoidScene extends Phaser.Scene {
 
   private player!: Player;
   private mutoid!: Mutoid;
+  // High score combo state
+  private prevSelectState: boolean = false;
+  private prevDpadUpState: boolean = false;
 
   /* START-USER-CODE */
   // Write your code here
@@ -127,6 +130,33 @@ export default class MutoidScene extends Phaser.Scene {
 
   update() {
     if (this.player && this.player.active) this.player.update();
+
+    // Check for SELECT + D-PAD UP gamepad combo to access high scores
+    this.checkHighScoreCombo();
+  }
+
+  checkHighScoreCombo() {
+    const pads = this.input.gamepad.gamepads;
+    const gamepad = pads?.find(p => p?.connected);
+    if (!gamepad) return;
+
+    const BUTTON_SELECT = 8;
+    const AXIS_LEFT_Y = 1;
+
+    const selectPressed = gamepad.buttons[BUTTON_SELECT]?.pressed || false;
+    const leftY = gamepad.axes.length > AXIS_LEFT_Y ? gamepad.axes[AXIS_LEFT_Y].getValue() : 0;
+    const dpadUp = gamepad.buttons[12]?.pressed || leftY < -0.5;
+
+    // Edge detection - trigger only on press, not hold
+    const comboPressed = selectPressed && dpadUp;
+    const wasComboPressed = this.prevSelectState && this.prevDpadUpState;
+
+    if (comboPressed && !wasComboPressed) {
+      this.scene.start("HighScoreScene");
+    }
+
+    this.prevSelectState = selectPressed;
+    this.prevDpadUpState = dpadUp;
   }
 
   private handleBulletMutoidCollision(bullet: any, mutoidPart: any) {

@@ -52,6 +52,10 @@ export default class TitleScene extends Phaser.Scene {
   /* START-USER-CODE */
 
   private startBtn!: Phaser.GameObjects.Sprite;
+  private highScoreBtn!: Phaser.GameObjects.Text;
+  private gamepad: Phaser.Input.Gamepad.Gamepad | null = null;
+  private prevSelectState: boolean = false;
+  private prevDpadUpState: boolean = false;
 
   // Write your code here
 
@@ -69,6 +73,28 @@ export default class TitleScene extends Phaser.Scene {
     this.startBtn.on('pointerup', () => {
       this.scene.start("GameScene");
     });
+
+    // High Score button
+    this.highScoreBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 100, "HIGH SCORES", {
+      fontFamily: "monospace",
+      fontSize: "12px",
+      color: "#ffff00"
+    }).setOrigin(0.5).setAlpha(0).setInteractive();
+
+    this.highScoreBtn.on('pointerup', () => {
+      this.scene.start("HighScoreScene");
+    });
+
+    this.highScoreBtn.on('pointerover', () => {
+      this.highScoreBtn.setColor("#ffffff");
+    });
+
+    this.highScoreBtn.on('pointerout', () => {
+      this.highScoreBtn.setColor("#ffff00");
+    });
+
+    // Setup gamepad for SELECT + D-PAD UP combo
+    this.setupGamepad();
 
     const animations = this.anims.createFromAseprite("flirty-girls-whitehouse");
     const animKeys = animations.map((anim) => anim.key);
@@ -125,6 +151,10 @@ export default class TitleScene extends Phaser.Scene {
         alpha: 1
       }),
 
+      e.to(this.highScoreBtn, .1, {
+        alpha: 1
+      }, "-=0.1"),
+
       e.addCallback(() => {
         this.startBtn.setInteractive(); //,
         // this.startBtn.onFlash.bind(this.startBtn)()
@@ -146,8 +176,46 @@ export default class TitleScene extends Phaser.Scene {
       }, "+=0.3", null, this);
   }
 
+  setupGamepad() {
+    // Get connected gamepad
+    const pads = this.input.gamepad.gamepads;
+    if (pads && pads.length > 0) {
+      this.gamepad = pads.find(p => p?.connected) || null;
+    }
+
+    // Listen for gamepad connection
+    this.input.gamepad.on("connected", (pad: Phaser.Input.Gamepad.Gamepad) => {
+      this.gamepad = pad;
+    });
+  }
+
   update() {
     this.bg.tilePositionX -= 0.5;
+
+    // Check for SELECT + D-PAD UP gamepad combo
+    this.checkHighScoreCombo();
+  }
+
+  checkHighScoreCombo() {
+    if (!this.gamepad) return;
+
+    const BUTTON_SELECT = 8;
+    const AXIS_LEFT_Y = 1;
+
+    const selectPressed = this.gamepad.buttons[BUTTON_SELECT]?.pressed || false;
+    const leftY = this.gamepad.axes.length > AXIS_LEFT_Y ? this.gamepad.axes[AXIS_LEFT_Y].getValue() : 0;
+    const dpadUp = this.gamepad.buttons[12]?.pressed || leftY < -0.5;
+
+    // Edge detection - trigger only on press, not hold
+    const comboPressed = selectPressed && dpadUp;
+    const wasComboPressed = this.prevSelectState && this.prevDpadUpState;
+
+    if (comboPressed && !wasComboPressed) {
+      this.scene.start("HighScoreScene");
+    }
+
+    this.prevSelectState = selectPressed;
+    this.prevDpadUpState = dpadUp;
   }
 
   /* END-USER-CODE */
