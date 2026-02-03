@@ -100,7 +100,7 @@ export class PackerScene extends Phaser.Scene {
         const sceneSelect = document.createElement('select');
         sceneSelect.style.cssText = 'padding: 8px; font-size: 14px;';
 
-        const scenes = ["MutoidScene", "TitleScene", "GameScene", "EditorScene", "PackerScene"];
+        const scenes = ["MutoidScene", "TitleScene", "LevelSelectScene", "HighScoreScene", "GameScene", "EditorScene", "PackerScene"];
         const currentScene = new URL(window.location.href).searchParams.get("scene") || "PackerScene";
 
         scenes.forEach(sceneName => {
@@ -121,6 +121,30 @@ export class PackerScene extends Phaser.Scene {
                 window.location.href = url.toString();
             }
         };
+
+        const moveSceneSelection = (delta: number) => {
+            const total = sceneSelect.options.length;
+            if (total === 0) return;
+            const nextIndex = (sceneSelect.selectedIndex + delta + total) % total;
+            sceneSelect.selectedIndex = nextIndex;
+            sceneSelect.focus();
+        };
+
+        const confirmSceneSelection = () => {
+            sceneSelect.dispatchEvent(new Event('change'));
+        };
+
+        const gamepadHandler = (_pad: Phaser.Input.Gamepad.Gamepad, _button: Phaser.Input.Gamepad.Button, index: number) => {
+            if (this.currentStep !== 'select') return;
+            if (index === 12) moveSceneSelection(-1);
+            if (index === 13) moveSceneSelection(1);
+            if (index === 0 || index === 9) confirmSceneSelection();
+        };
+
+        this.input.gamepad.on("down", gamepadHandler);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.input.gamepad.off("down", gamepadHandler);
+        });
 
         sceneSelectorContainer.appendChild(sceneLabel);
         sceneSelectorContainer.appendChild(sceneSelect);
