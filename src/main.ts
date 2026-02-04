@@ -263,6 +263,7 @@ function onDeviceReady() {
     "EditorScene": EditorScene,
     "PackerScene": PackerScene,
     "LevelSelectScene": LevelSelectScene,
+    "HighScoreScene": HighScoreScene,
   };
 
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
