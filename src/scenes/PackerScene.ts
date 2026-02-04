@@ -101,7 +101,7 @@ export class PackerScene extends Phaser.Scene {
 
         const sceneButton = document.createElement('button');
         sceneButton.textContent = 'Level Select';
-        sceneButton.style.cssText = 'padding: 8px 14px; font-size: 14px; cursor: pointer;';
+        sceneButton.style.cssText = 'padding: 8px 14px; font-size: 14px; cursor: pointer; border-radius: 4px; border: 1px solid rgb(51, 51, 51); background: rgb(45, 108, 223); color: rgb(255, 255, 255);';
         sceneButton.tabIndex = 0;
         sceneButton.setAttribute('autofocus', 'true');
 
