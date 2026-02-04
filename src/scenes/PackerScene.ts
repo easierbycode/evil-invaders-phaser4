@@ -47,12 +47,14 @@ export class PackerScene extends Phaser.Scene {
     private atlasFrames: Record<string, AtlasFrame> = {};
     private currentStep: CurrentStep = 'select';
     private extractedSprites: Record<string, string> = {};
+    private resumeScene: string = 'GameScene';
 
     constructor() { 
         super('PackerScene'); 
     }
 
-    async create(): Promise<void> {
+    async create(data?: { resumeScene?: string }): Promise<void> {
+        this.resumeScene = data?.resumeScene ?? 'GameScene';
         this.buildAtlasSelectionUI();
 
         // Clean up DOM when scene shuts down
@@ -156,7 +158,7 @@ export class PackerScene extends Phaser.Scene {
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
         closeBtn.onclick = () => {
             this.scene.stop();
-            this.scene.resume('GameScene');
+            this.scene.resume(this.resumeScene);
         };
         this.editorDiv.appendChild(closeBtn);
 
