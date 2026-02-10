@@ -90,7 +90,16 @@
                     const prev = prevButtonStates[gp.index][idx] || false;
                     if (btn.pressed && !prev) {
                         // Restart - Select button (typically index 8)
-                        if (idx === 8) window.gameScene.scene.restart();
+                        if (idx === 8) {
+                            if (gp.buttons[12] && gp.buttons[12].pressed) {
+                                globalThis.__PHASER_GAME__.scene.scenes.forEach(s => {
+                                    globalThis.__PHASER_GAME__.scene.stop(s.scene.key);
+                                });
+                                globalThis.__PHASER_GAME__.scene.start('HighScoreScene');
+                            } else if (window.gameScene && window.gameScene.scene) {
+                                window.gameScene.scene.restart();
+                            }
+                        }
 
                         // Pause - Start button (typically index 9)
                         if (idx === 9) {
