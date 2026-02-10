@@ -47,12 +47,14 @@ export class PackerScene extends Phaser.Scene {
     private atlasFrames: Record<string, AtlasFrame> = {};
     private currentStep: CurrentStep = 'select';
     private extractedSprites: Record<string, string> = {};
+    private resumeScene: string = 'GameScene';
 
     constructor() { 
         super('PackerScene'); 
     }
 
-    async create(): Promise<void> {
+    async create(data?: { resumeScene?: string }): Promise<void> {
+        this.resumeScene = data?.resumeScene ?? 'GameScene';
         this.buildAtlasSelectionUI();
 
         // Clean up DOM when scene shuts down
@@ -97,34 +99,184 @@ export class PackerScene extends Phaser.Scene {
         sceneLabel.textContent = 'Go to Scene: ';
         sceneLabel.style.marginRight = '10px';
 
-        const sceneSelect = document.createElement('select');
-        sceneSelect.style.cssText = 'padding: 8px; font-size: 14px;';
+        const sceneButton = document.createElement('button');
+        sceneButton.textContent = 'Level Select';
+        sceneButton.style.cssText = 'padding: 8px 14px; font-size: 14px; cursor: pointer; border-radius: 4px; border: 1px solid rgb(51, 51, 51); background: rgb(45, 108, 223); color: rgb(255, 255, 255);';
+        sceneButton.tabIndex = 0;
+        sceneButton.setAttribute('autofocus', 'true');
 
-        const scenes = ["MutoidScene", "TitleScene", "GameScene", "EditorScene", "PackerScene", "HighScoreScene"];
+        const scenes = ["MutoidScene", "TitleScene", "LevelSelectScene", "HighScoreScene", "GameScene", "EditorScene", "PackerScene"];
         const currentScene = new URL(window.location.href).searchParams.get("scene") || "PackerScene";
+        let modalOpen = false;
+        let modalSelectedIndex = Math.max(0, scenes.indexOf(currentScene));
+        let modalOverlay: HTMLDivElement | null = null;
+        let modalButtons: HTMLButtonElement[] = [];
+        let modalKeyHandler: ((event: KeyboardEvent) => void) | null = null;
 
-        scenes.forEach(sceneName => {
-            const option = document.createElement('option');
-            option.value = sceneName;
-            option.textContent = sceneName;
-            if (sceneName === currentScene) {
-                option.selected = true;
-            }
-            sceneSelect.appendChild(option);
-        });
-
-        sceneSelect.onchange = (e) => {
-            const selectedScene = (e.target as HTMLSelectElement).value;
-            if (selectedScene) {
-                const url = new URL(window.location.href);
-                url.searchParams.set('scene', selectedScene);
-                window.location.href = url.toString();
-            }
+        const goToScene = (sceneName: string) => {
+            if (!sceneName) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set('scene', sceneName);
+            window.location.href = url.toString();
         };
 
+        const updateModalSelection = () => {
+            modalButtons.forEach((button, index) => {
+                const isSelected = index === modalSelectedIndex;
+                button.style.background = isSelected ? '#2d6cdf' : '#222';
+                button.style.color = isSelected ? '#fff' : '#ddd';
+                button.tabIndex = isSelected ? 0 : -1;
+                if (isSelected) {
+                    button.focus();
+                }
+            });
+        };
+
+        const closeSceneModal = () => {
+            if (!modalOpen) return;
+            modalOpen = false;
+            if (modalKeyHandler) {
+                window.removeEventListener('keydown', modalKeyHandler);
+            }
+            modalKeyHandler = null;
+            modalButtons = [];
+            if (modalOverlay) {
+                this.editorDiv.removeChild(modalOverlay);
+                modalOverlay = null;
+            }
+            sceneButton.focus();
+        };
+
+        const openSceneModal = () => {
+            if (modalOpen) return;
+            modalOpen = true;
+
+            modalOverlay = document.createElement('div');
+            Object.assign(modalOverlay.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '100%',
+                background: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: '10000',
+            });
+
+            const modalContent = document.createElement('div');
+            Object.assign(modalContent.style, {
+                background: '#111',
+                borderRadius: '8px',
+                padding: '20px',
+                minWidth: '240px',
+                maxWidth: '320px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                boxShadow: '0 0 10px rgba(0,0,0,0.6)',
+            });
+
+            const modalTitle = document.createElement('div');
+            modalTitle.textContent = 'Select Scene';
+            modalTitle.style.cssText = 'font-size: 16px; font-weight: bold; color: #fff; text-align: center;';
+            modalContent.appendChild(modalTitle);
+
+            const buttonList = document.createElement('div');
+            buttonList.style.cssText = 'display: flex; flex-direction: column; gap: 6px;';
+
+            modalButtons = scenes.map((sceneName, index) => {
+                const button = document.createElement('button');
+                button.textContent = sceneName;
+                button.style.cssText = 'padding: 8px 12px; border-radius: 4px; border: 1px solid #333; background: #222; color: #ddd; font-size: 14px; text-align: left; cursor: pointer;';
+                button.tabIndex = -1;
+                button.addEventListener('click', () => goToScene(sceneName));
+                button.addEventListener('mouseenter', () => {
+                    modalSelectedIndex = index;
+                    updateModalSelection();
+                });
+                buttonList.appendChild(button);
+                return button;
+            });
+
+            modalContent.appendChild(buttonList);
+            modalOverlay.appendChild(modalContent);
+            this.editorDiv.appendChild(modalOverlay);
+
+            modalSelectedIndex = Math.max(0, scenes.indexOf(currentScene));
+            updateModalSelection();
+
+            modalKeyHandler = (event: KeyboardEvent) => {
+                if (!modalOpen) return;
+                switch (event.key) {
+                    case 'ArrowUp':
+                        modalSelectedIndex = (modalSelectedIndex + scenes.length - 1) % scenes.length;
+                        updateModalSelection();
+                        event.preventDefault();
+                        break;
+                    case 'ArrowDown':
+                        modalSelectedIndex = (modalSelectedIndex + 1) % scenes.length;
+                        updateModalSelection();
+                        event.preventDefault();
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        goToScene(scenes[modalSelectedIndex]);
+                        event.preventDefault();
+                        break;
+                    case 'Escape':
+                        closeSceneModal();
+                        event.preventDefault();
+                        break;
+                    default:
+                        break;
+                }
+            };
+
+            window.addEventListener('keydown', modalKeyHandler);
+        };
+
+        sceneButton.addEventListener('click', () => {
+            openSceneModal();
+        });
+
+        const moveSceneSelection = (delta: number) => {
+            if (!modalOpen || scenes.length === 0) return;
+            modalSelectedIndex = (modalSelectedIndex + delta + scenes.length) % scenes.length;
+            updateModalSelection();
+        };
+
+        const confirmSceneSelection = () => {
+            if (!modalOpen) {
+                openSceneModal();
+                return;
+            }
+            goToScene(scenes[modalSelectedIndex]);
+        };
+
+        const cancelSceneSelection = () => {
+            if (modalOpen) closeSceneModal();
+        };
+
+        const gamepadHandler = (_pad: Phaser.Input.Gamepad.Gamepad, _button: Phaser.Input.Gamepad.Button, index: number) => {
+            if (this.currentStep !== 'select') return;
+            if (index === 12) moveSceneSelection(-1);
+            if (index === 13) moveSceneSelection(1);
+            if (index === 0) confirmSceneSelection();
+            if (index === 1) cancelSceneSelection();
+        };
+
+        this.input.gamepad.on("down", gamepadHandler);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.input.gamepad.off("down", gamepadHandler);
+            closeSceneModal();
+        });
+
         sceneSelectorContainer.appendChild(sceneLabel);
-        sceneSelectorContainer.appendChild(sceneSelect);
+        sceneSelectorContainer.appendChild(sceneButton);
         this.editorDiv.appendChild(sceneSelectorContainer);
+        setTimeout(() => sceneButton.focus(), 0);
         // --- End Scene Selector ---
 
         const closeBtn = document.createElement('button');
@@ -132,7 +284,7 @@ export class PackerScene extends Phaser.Scene {
         closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; padding: 5px 10px;';
         closeBtn.onclick = () => {
             this.scene.stop();
-            this.scene.resume('GameScene');
+            this.scene.resume(this.resumeScene);
         };
         this.editorDiv.appendChild(closeBtn);
 

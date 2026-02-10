@@ -12,7 +12,8 @@ import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
 import MutoidScene from "./scenes/MutoidScene";
-import HighScoreScene from "./scenes/HighScoreScene";
+import { LevelSelectScene } from "./scenes/LevelSelectScene";
+import { HighScoreScene } from "./scenes/HighScoreScene";
 
 export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
@@ -23,13 +24,14 @@ export class GameScene extends Phaser.Scene {
   backgroundDeepest!: Phaser.GameObjects.TileSprite;
   backgroundMiddle!: Phaser.GameObjects.TileSprite;
   prevCameraY = 0;
+  secretComboLocked = false;
 
 
   constructor() { super('GameScene'); }
 
   async create() {
     // 0️⃣  Secret touch to launch editor.
-    setupSecretTouchHandler(this, GAME_WIDTH, GAME_HEIGHT, this.launchEditor.bind(this));
+    setupSecretTouchHandler(this, GAME_WIDTH, GAME_HEIGHT, () => this.handleSecretEntry());
 
     // Create background layers only if textures are loaded
     if (this.textures.exists('stars-bg')) {
@@ -108,6 +110,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.player && this.player.active) this.player.update();
 
+    this.handleGamepadSecretCombo();
+
     // Parallax scrolling effect - only if backgrounds exist
     if (this.backgroundDeepest || this.backgroundMiddle) {
       // Continuously scroll backgrounds downward at different speeds
@@ -176,24 +180,63 @@ export class GameScene extends Phaser.Scene {
   }
 
   async launchEditor() {
+    if (!this.canTriggerSecret()) return;
+
+    await this.runSecretTransition();
+
+    this.scene.pause();
+    this.scene.launch('PackerScene', { resumeScene: 'GameScene' });
+
+    // Re-enable input when editor scene stops
+    this.scene.get('PackerScene').events.once('shutdown', () => {
+      if (this.#startBtn) {
+        this.#startBtn.setInteractive();
+      }
+    });
+  }
+
+  async handleSecretEntry() {
+    if (!this.canTriggerSecret()) return;
+
+    await this.runSecretTransition();
+
+    this.scene.start('LevelSelectScene');
+    this.scene.launch('PackerScene', { resumeScene: 'LevelSelectScene' });
+  }
+
+  private canTriggerSecret() {
+    return !this.player && this.#startBtn?.active;
+  }
+
+  private async runSecretTransition() {
     // Flash screen red and shake to indicate secret found
     this.cameras.main.flash(500, 255, 0, 0);
     this.cameras.main.shake(500, 0.02);
 
     // Wait for effects to complete before showing editor
     await new Promise(resolve => this.time.delayedCall(600, resolve));
+  }
 
-    this.scene.pause();              // freeze gameplay
-    // this.scene.launch('EditorScene');
-    this.scene.launch('PackerScene');
+  private handleGamepadSecretCombo() {
+    if (!this.canTriggerSecret()) return;
 
-    // Re-enable input when editor scene stops
-    // this.scene.get('EditorScene').events.once('shutdown', () => {
-    this.scene.get('PackerScene').events.once('shutdown', () => {
-      if (this.#startBtn) {
-        this.#startBtn.setInteractive();
+    const pad = this.input.gamepad.gamepads.find(candidate => candidate?.connected);
+    if (!pad) {
+      this.secretComboLocked = false;
+      return;
+    }
+
+    const selectPressed = pad.buttons[8]?.pressed;
+    const upPressed = pad.buttons[12]?.pressed;
+
+    if (selectPressed && upPressed) {
+      if (!this.secretComboLocked) {
+        this.secretComboLocked = true;
+        this.handleSecretEntry();
       }
-    });
+    } else {
+      this.secretComboLocked = false;
+    }
   }
 
   shutdown() {
@@ -219,12 +262,13 @@ function onDeviceReady() {
     "GameScene": GameScene,
     "EditorScene": EditorScene,
     "PackerScene": PackerScene,
+    "LevelSelectScene": LevelSelectScene,
     "HighScoreScene": HighScoreScene,
   };
 
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
   const sceneClass = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
-  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene, HighScoreScene];
+  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, LevelSelectScene, GameScene, HighScoreScene, EditorScene, PackerScene];
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",
