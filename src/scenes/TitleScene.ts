@@ -1,8 +1,8 @@
 
 // You can write more code here
-import CONSTANTS from "./../constants";
+import CONSTANTS from "../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
-import Sound from './../soundManager';
+import Sound from '../soundManager';
 
 /* START OF COMPILED CODE */
 

@@ -1,11 +1,11 @@
 import { Player } from "../game-objects/player";
 import { Bullet } from "../game-objects/bullet";
-import CONSTANTS from "./../constants";
+import CONSTANTS from "../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import PROPERTIES from "../properties";
 import { requestFullscreen } from "../utils/fullscreen";
 import { Mutoid } from "../game-objects/mutoid";
-import Sound from './../soundManager';
+import Sound from '../soundManager';
 
 /* START OF COMPILED CODE */
 
