@@ -67,6 +67,7 @@ export default class TitleScene extends Phaser.Scene {
       .setAlpha(0);
 
     this.startBtn.on('pointerup', () => {
+      Sound.bgmPlayLoop("main_bgm", 0.4);
       this.scene.start("GameScene");
     });
 
