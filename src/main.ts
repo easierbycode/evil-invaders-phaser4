@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import PROPERTIES from "./properties";
+import Sound from './soundManager';
 import { LoadScene } from "./scenes/LoadScene";
 import { OverloadScene } from "./scenes/OverloadScene";
 import TitleScene from "./scenes/TitleScene";
@@ -66,6 +67,7 @@ export class GameScene extends Phaser.Scene {
       .setInteractive();
 
     this.#startBtn.on('pointerup', () => {
+      Sound.bgmPlayLoop("main_bgm", 0.4);
       requestFullscreen(this.game.canvas);
       const pads = this.input.gamepad.gamepads;
       createPlayer(pads[0] || null);

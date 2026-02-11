@@ -77,6 +77,7 @@ export default class MutoidScene extends Phaser.Scene {
   }
 
   private startGame() {
+    Sound.bgmPlayLoop("main_bgm", 0.4);
     requestFullscreen(this.game.canvas);
     const pads = this.input.gamepad.gamepads;
     this.createPlayer(pads[0] || null);
