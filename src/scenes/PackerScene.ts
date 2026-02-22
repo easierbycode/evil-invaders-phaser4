@@ -49,8 +49,8 @@ export class PackerScene extends Phaser.Scene {
     private extractedSprites: Record<string, string> = {};
     private resumeScene: string = 'GameScene';
 
-    constructor() { 
-        super('PackerScene'); 
+    constructor() {
+        super('PackerScene');
     }
 
     async create(data?: { resumeScene?: string }): Promise<void> {
@@ -59,7 +59,7 @@ export class PackerScene extends Phaser.Scene {
 
         // Clean up DOM when scene shuts down
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-            if (this.editorDiv) document.body.removeChild(this.editorDiv);
+            this.clearUI();
         });
     }
 
@@ -74,16 +74,16 @@ export class PackerScene extends Phaser.Scene {
 
         this.editorDiv = document.createElement('div');
         Object.assign(this.editorDiv.style, {
-            position: 'absolute', 
-            top: '0', 
+            position: 'absolute',
+            top: '0',
             left: '0',
-            width: '100%', 
-            height: '100%', 
+            width: '100%',
+            height: '100%',
             overflow: 'auto',
-            background: 'rgba(0,0,0,0.9)', 
-            color: '#fff', 
+            background: 'rgba(0,0,0,0.9)',
+            color: '#fff',
             zIndex: '9999',
-            fontFamily: 'sans-serif', 
+            fontFamily: 'sans-serif',
             padding: '20px'
         });
 
@@ -291,7 +291,7 @@ export class PackerScene extends Phaser.Scene {
         // Create new atlas section
         const createSection = document.createElement('div');
         createSection.style.cssText = 'background: #222; padding: 20px; margin: 20px 0; border-radius: 5px;';
-        
+
         const createTitle = document.createElement('h3');
         createTitle.textContent = 'Create New Atlas';
         createSection.appendChild(createTitle);
@@ -431,7 +431,7 @@ export class PackerScene extends Phaser.Scene {
         // Current sprites in atlas
         const currentSection = document.createElement('div');
         currentSection.style.cssText = 'background: #222; padding: 20px; margin: 20px 0; border-radius: 5px;';
-        
+
         const currentTitle = document.createElement('h3');
         currentTitle.textContent = 'Current Sprites in Atlas';
         currentSection.appendChild(currentTitle);
@@ -480,7 +480,7 @@ export class PackerScene extends Phaser.Scene {
             canvas.height = frameData.frame.h;
             const ctx = canvas.getContext('2d');
             if (!ctx) throw new Error('Could not get canvas context');
-            
+
             const atlasImg = new Image();
             atlasImg.onload = () => {
                 ctx.drawImage(
@@ -490,10 +490,10 @@ export class PackerScene extends Phaser.Scene {
                     0, 0,
                     frameData.frame.w, frameData.frame.h
                 );
-                
+
                 const spriteDataUrl = canvas.toDataURL();
                 this.extractedSprites[frameName] = spriteDataUrl;
-                
+
                 const spriteImg = document.createElement('img') as HTMLImageElement;
                 spriteImg.style.cssText = 'max-width: 100%; max-height: 80px;';
                 spriteImg.src = spriteDataUrl;
@@ -538,7 +538,7 @@ export class PackerScene extends Phaser.Scene {
         // Available sprites to add
         const availableSection = document.createElement('div');
         availableSection.style.cssText = 'background: #222; padding: 20px; margin: 20px 0; border-radius: 5px;';
-        
+
         const availableTitle = document.createElement('h3');
         availableTitle.textContent = 'Available Sprites to Add';
         availableSection.appendChild(availableTitle);
@@ -608,11 +608,11 @@ export class PackerScene extends Phaser.Scene {
         btnContainer.style.cssText = 'display: flex; gap: 10px; margin-top: 20px;';
 
         const backBtn = this.createButton('← Back', () => this.buildAtlasSelectionUI());
-        
+
         const saveBtn = this.createButton('Save Atlas', async () => {
             // Get sprites we're keeping from the extracted data
             const existingSprites: Record<string, string> = {};
-            
+
             for (const frameName of spritesToKeep) {
                 if (this.extractedSprites[frameName]) {
                     existingSprites[frameName] = this.extractedSprites[frameName];
@@ -751,7 +751,8 @@ export class PackerScene extends Phaser.Scene {
     /** Helper: Clear UI */
     private clearUI(): void {
         if (this.editorDiv) {
-            document.body.removeChild(this.editorDiv);
+            this.editorDiv.remove();
+            this.editorDiv = null!;
         }
     }
 
@@ -759,16 +760,16 @@ export class PackerScene extends Phaser.Scene {
     private createContainer(title: string): HTMLDivElement {
         this.editorDiv = document.createElement('div');
         Object.assign(this.editorDiv.style, {
-            position: 'absolute', 
-            top: '0', 
+            position: 'absolute',
+            top: '0',
             left: '0',
-            width: '100%', 
-            height: '100%', 
+            width: '100%',
+            height: '100%',
             overflow: 'auto',
-            background: 'rgba(0,0,0,0.9)', 
-            color: '#fff', 
+            background: 'rgba(0,0,0,0.9)',
+            color: '#fff',
             zIndex: '9999',
-            fontFamily: 'sans-serif', 
+            fontFamily: 'sans-serif',
             padding: '20px'
         });
 
