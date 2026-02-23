@@ -15,6 +15,9 @@
   "cordova": {
     "platforms": [
       "android"
-    ]
+    ],
+    "plugins": {
+      "cordova-plugin-vibration": {}
+    }
   }
 }
