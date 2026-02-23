@@ -1,0 +1,43 @@
+[
+  {
+    "name": "offline-atlas",
+    "description": "Fetch a game atlas (JSON + PNG) from Firebase Realtime Database and write it as local asset files under the requested atlas name.\n\nReads from `atlases/{atlasName}` by default. When a `game` namespace is supplied the RTDB path becomes `{game}/atlases/{atlasName}`.\n\nStrips the `data:image/png;base64,` prefix from the stored PNG string before writing the binary file. Output files are placed in the directory derived from `platform` (or `outputDir` if explicitly supplied).\n\nAfter writing the PNG + JSON the tool patches `assets/asset-pack.json` so Phaser's pack loader registers the atlas automatically. For the `cordova` platform it also patches `cordova/www/assets/asset-pack.json` when that file already exists (i.e. a Cordova build has already run).\n\nUse this tool to cache Firebase-hosted sprite atlases as local files so the game/editor can load them without a network connection across all three deployment targets.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "atlasName": {
+          "type": "string",
+          "description": "The atlas key in Firebase RTDB. Must match the key stored under the `atlases` node (e.g. `game_asset`, `game_ui`, `mutoid`)."
+        },
+        "game": {
+          "type": "string",
+          "description": "Optional game namespace used as a RTDB path prefix (e.g. `evil-invaders`). When omitted the tool reads directly from `atlases/{atlasName}`."
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["web", "cordova", "pc"],
+          "description": "Target platform — controls the default output directory when `outputDir` is not supplied:\n  web     → assets/             Vite source directory; copied to dist/assets/ on `npm run build`.\n  cordova → cordova/www/assets/  Cordova Android/iOS www output; also patches cordova/www/assets/asset-pack.json.\n  pc      → assets/             Vite source directory; used by the Deno-compiled Mac/Windows binary.\nDefaults to 'web'."
+        },
+        "outputDir": {
+          "type": "string",
+          "description": "Override the output directory relative to the project root. When omitted it is derived from `platform`. Examples: `assets`, `cordova/www/assets`, `dist/assets`."
+        }
+      },
+      "required": ["atlasName"]
+    }
+  },
+  {
+    "name": "set-overload-flag",
+    "description": "Enable or disable OverloadScene's 'overwriteLocal' feature flag by writing assets/overload-flags.json.\n\nWhen the flag is true, OverloadScene will trigger browser downloads of every RTDB atlas it loads (enemy + player character atlases), saving them as local PNG + JSON files alongside the normal in-memory load.\n\nThe flag persists across page reloads until explicitly cleared (set to false). It is read after the URL param (?overwriteLocal=1) and scene-data sources, so those two higher-priority sources always win.\n\nToggle sources in priority order:\n  1. Scene data   this.scene.start('OverloadScene', { overwriteLocal: true })\n  2. URL param    ?overwriteLocal=1\n  3. This tool    set-overload-flag → assets/overload-flags.json",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "overwriteLocal": {
+          "type": "boolean",
+          "description": "true  — OverloadScene downloads each RTDB atlas as local PNG + JSON files (in addition to the normal in-memory load).\nfalse — OverloadScene loads into memory only (default behaviour). Call with false to clear a previously set flag."
+        }
+      },
+      "required": ["overwriteLocal"]
+    }
+  }
+]

@@ -53,8 +53,49 @@ export class PackerScene extends Phaser.Scene {
         super('PackerScene');
     }
 
-    async create(data?: { resumeScene?: string }): Promise<void> {
+    /**
+     * Download an atlas's JSON and PNG as local files from the browser.
+     * Called by the "↓ Export" button in the UI and by the `offline-atlas` MCP tool
+     * when it routes through the Phaser Editor bridge.
+     */
+    static offlineAtlas(atlasName: string, atlasData: AtlasData): void {
+        // --- JSON ---
+        const jsonStr = JSON.stringify(atlasData.json, null, 2);
+        const jsonBlob = new Blob([jsonStr], { type: 'application/json' });
+        const jsonUrl = URL.createObjectURL(jsonBlob);
+        const jsonLink = document.createElement('a');
+        jsonLink.href = jsonUrl;
+        jsonLink.download = `${atlasName}.json`;
+        jsonLink.click();
+        URL.revokeObjectURL(jsonUrl);
+
+        // --- PNG ---
+        let pngBase64 = atlasData.png ?? '';
+        if (!pngBase64.startsWith('data:')) {
+            pngBase64 = `data:image/png;base64,${pngBase64}`;
+        }
+        const pngLink = document.createElement('a');
+        pngLink.href = pngBase64;
+        pngLink.download = `${atlasName}.png`;
+        pngLink.click();
+    }
+
+    async create(data?: { resumeScene?: string; offlineAtlas?: string }): Promise<void> {
         this.resumeScene = data?.resumeScene ?? 'GameScene';
+
+        // Programmatic "offline" mode: fetch atlas from Firebase and download files, then stop.
+        if (data?.offlineAtlas) {
+            const db = getDB();
+            const snap = await get(ref(db, `atlases/${data.offlineAtlas}`));
+            const atlasData: AtlasData | null = snap.val();
+            if (atlasData) {
+                PackerScene.offlineAtlas(data.offlineAtlas, atlasData);
+            }
+            this.scene.stop();
+            this.scene.resume(this.resumeScene);
+            return;
+        }
+
         this.buildAtlasSelectionUI();
 
         // Clean up DOM when scene shuts down
@@ -394,9 +435,19 @@ export class PackerScene extends Phaser.Scene {
             preview.style.cssText = 'max-width: 100%; max-height: 100px; margin-top: 10px;';
             preview.src = atlasData.png.startsWith('data:') ? atlasData.png : `data:image/png;base64,${atlasData.png}`;
 
+            const exportBtn = document.createElement('button');
+            exportBtn.textContent = '↓ Export';
+            exportBtn.title = 'Download JSON + PNG to local files';
+            exportBtn.style.cssText = 'margin-top: 8px; padding: 4px 10px; font-size: 11px; cursor: pointer; background: #0057b7; color: #fff; border: none; border-radius: 3px;';
+            exportBtn.onclick = (e) => {
+                e.stopPropagation();
+                PackerScene.offlineAtlas(key, atlasData);
+            };
+
             card.appendChild(name);
             card.appendChild(info);
             card.appendChild(preview);
+            card.appendChild(exportBtn);
             card.onclick = () => {
                 this.selectedAtlasKey = key;
                 this.selectedAtlas = atlasData;
