@@ -43,18 +43,47 @@ jobs:
           # copy the zip back into dist so it will be served by GitHub Pages
           cp site.zip dist/site.zip
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: web-dist
           path: ./dist
 
   deploy:
-    needs: web
+    needs:
+      - web
+      - cordova
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: evil-invaders-android-apk
+          path: apk-artifact
+
+      - name: Copy APK to site root as game.apk
+        run: |
+          APK_PATH=$(find apk-artifact -type f -name '*.apk' | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No APK found in artifact output"
+            exit 1
+          fi
+          cp "$APK_PATH" dist/game.apk
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
       - id: deployment
         uses: actions/deploy-pages@v4
 
