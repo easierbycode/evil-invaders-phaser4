@@ -56,6 +56,7 @@ export default class TitleScene extends Phaser.Scene {
   private startBtn!: Phaser.GameObjects.Sprite;
   private storyOverlay: HTMLDivElement | null = null;
   private storyCloseHandler: (() => void) | null = null;
+  private storyShown = false;
 
   // Write your code here
 
@@ -63,8 +64,8 @@ export default class TitleScene extends Phaser.Scene {
 
     this.editorCreate();
 
-    // Secret touch: tap top-right + bottom-left simultaneously → show story
-    setupSecretTouchHandler(this, GAME_WIDTH, GAME_HEIGHT, () => this.showStoryOverlay());
+    // Secret touch: first time → show story, second time → skip to GameScene
+    setupSecretTouchHandler(this, GAME_WIDTH, GAME_HEIGHT, () => this.handleSecretTouch());
 
     // Play title background music
     Sound.bgmPlayLoop("title_bgm", 0.4);
@@ -159,8 +160,19 @@ export default class TitleScene extends Phaser.Scene {
     this.pollStoryCloseGamepad();
   }
 
+  private handleSecretTouch() {
+    if (this.storyShown) {
+      this.closeStoryOverlay();
+      Sound.bgmPlayLoop("main_bgm", 0.4);
+      this.scene.start("GameScene");
+      return;
+    }
+    this.showStoryOverlay();
+  }
+
   private showStoryOverlay() {
     if (this.storyOverlay) return;
+    this.storyShown = true;
 
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;';
