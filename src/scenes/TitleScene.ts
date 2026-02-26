@@ -3,6 +3,8 @@
 import CONSTANTS from "./../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import Sound from './../soundManager';
+import { setupSecretTouchHandler } from "./../utils/helper-checkForSecretTouch";
+import { requestFullscreen } from "./../utils/fullscreen";
 
 /* START OF COMPILED CODE */
 
@@ -52,12 +54,17 @@ export default class TitleScene extends Phaser.Scene {
   /* START-USER-CODE */
 
   private startBtn!: Phaser.GameObjects.Sprite;
+  private storyOverlay: HTMLDivElement | null = null;
+  private storyCloseHandler: (() => void) | null = null;
 
   // Write your code here
 
   create() {
 
     this.editorCreate();
+
+    // Secret touch: tap top-right + bottom-left simultaneously → show story
+    setupSecretTouchHandler(this, GAME_WIDTH, GAME_HEIGHT, () => this.showStoryOverlay());
 
     // Play title background music
     Sound.bgmPlayLoop("title_bgm", 0.4);
@@ -149,6 +156,62 @@ export default class TitleScene extends Phaser.Scene {
 
   update() {
     this.bg.tilePositionX -= 0.5;
+    this.pollStoryCloseGamepad();
+  }
+
+  private showStoryOverlay() {
+    if (this.storyOverlay) return;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = 'assets/story.html';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;';
+    iframe.allowFullscreen = true;
+    overlay.appendChild(iframe);
+
+    document.body.appendChild(overlay);
+    this.storyOverlay = overlay;
+
+    requestFullscreen(overlay);
+
+    // Close on Escape key
+    this.storyCloseHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') this.closeStoryOverlay();
+    };
+    document.addEventListener('keydown', this.storyCloseHandler as EventListener);
+  }
+
+  private closeStoryOverlay() {
+    if (!this.storyOverlay) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+
+    this.storyOverlay.remove();
+    this.storyOverlay = null;
+
+    if (this.storyCloseHandler) {
+      document.removeEventListener('keydown', this.storyCloseHandler as EventListener);
+      this.storyCloseHandler = null;
+    }
+  }
+
+  private pollStoryCloseGamepad() {
+    if (!this.storyOverlay) return;
+
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      const gp = gamepads[i];
+      if (!gp) continue;
+      // Right face button (B / Circle / O) = button index 1
+      if (gp.buttons[1]?.pressed) {
+        this.closeStoryOverlay();
+        return;
+      }
+    }
   }
 
   /* END-USER-CODE */
