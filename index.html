@@ -110,8 +110,17 @@
                             }
                         }
 
-                        // Reload - Left Trigger button (typically index 10)
-                        if (idx === 10) location.reload();
+                        // Fullscreen - L3 button (left stick press, index 10)
+                        if (idx === 10) {
+                            if (document.documentElement.requestFullscreen) {
+                                document.documentElement.requestFullscreen();
+                            } else if (document.documentElement.webkitRequestFullscreen) {
+                                document.documentElement.webkitRequestFullscreen();
+                            }
+                        }
+
+                        // Reload - R3 button (right stick press, index 11)
+                        if (idx === 11) location.reload();
 
                         if (!fullscreenToggled) {
                             if (document.documentElement.requestFullscreen) {
