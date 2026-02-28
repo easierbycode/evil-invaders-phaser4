@@ -434,6 +434,7 @@ export class PackerScene extends Phaser.Scene {
             const preview = document.createElement('img') as HTMLImageElement;
             preview.style.cssText = 'max-width: 100%; max-height: 100px; margin-top: 10px;';
             preview.src = atlasData.png.startsWith('data:') ? atlasData.png : `data:image/png;base64,${atlasData.png}`;
+            this.enableImageContextMenu(preview, `${key}.png`);
 
             const exportBtn = document.createElement('button');
             exportBtn.textContent = '↓ Export';
@@ -548,6 +549,7 @@ export class PackerScene extends Phaser.Scene {
                 const spriteImg = document.createElement('img') as HTMLImageElement;
                 spriteImg.style.cssText = 'max-width: 100%; max-height: 80px;';
                 spriteImg.src = spriteDataUrl;
+                this.enableImageContextMenu(spriteImg, frameName);
                 cell.insertBefore(spriteImg, cell.firstChild);
             };
             atlasImg.src = this.selectedAtlas.png.startsWith('data:')
@@ -627,6 +629,7 @@ export class PackerScene extends Phaser.Scene {
             const img = document.createElement('img') as HTMLImageElement;
             img.style.cssText = 'max-width: 100%; max-height: 80px;';
             img.src = spriteData.startsWith('data:') ? spriteData : `data:image/png;base64,${spriteData}`;
+            this.enableImageContextMenu(img, `${name}.png`);
 
             const label = document.createElement('div');
             label.textContent = name;
@@ -839,6 +842,28 @@ export class PackerScene extends Phaser.Scene {
 
         document.body.appendChild(this.editorDiv);
         return this.editorDiv;
+    }
+
+    /**
+     * Make an <img> element show the native context menu on right-click
+     * and long-press (tap-and-hold) so the user can "Save Image As…".
+     */
+    private enableImageContextMenu(img: HTMLImageElement, filename: string): void {
+        // Allow the native context menu to appear (stop propagation so
+        // no parent handler can call preventDefault on it).
+        img.addEventListener('contextmenu', (e) => e.stopPropagation());
+
+        // Mobile Safari / iOS: allow the long-press callout
+        img.style.setProperty('-webkit-touch-callout', 'default');
+        // Ensure the image is selectable / long-pressable
+        img.style.setProperty('-webkit-user-select', 'auto');
+        img.style.setProperty('user-select', 'auto');
+
+        // Give the image a meaningful download filename via a hidden <a> wrapper.
+        // Browsers use the <a download="…"> attribute when offering "Save Image As…"
+        // only for same-origin URLs, but for data-URIs it still provides the hint
+        // in some browsers. As a bonus the alt attribute acts as a filename hint too.
+        img.alt = filename;
     }
 
     /** Helper: Create button */
