@@ -15,7 +15,7 @@
     "build:android": "vite build && cordova-icon && cordova-splash && cordova build android",
     "electron": "vite --config vite.electron.config.ts",
     "build:linux": "vite build && electron-builder",
-    "ngrok": "ngrok http 5173 --authtoken=7TyVYr6rw5hXcJt3pH6NX_5k5BcKw4jUFnEncQbNRoY --domain=d.codemonkey.games"
+    "ngrok": "ngrok http 5173 --authtoken=7TyVYr6rw5hXcJt3pH6NX_5k5BcKw4jUFnEncQbNRoY --url=d.codemonkey.games"
   },
   "keywords": [],
   "author": {
