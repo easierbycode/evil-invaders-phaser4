@@ -41,6 +41,7 @@ interface SpriteDimensions {
 }
 
 export class PackerScene extends Phaser.Scene {
+    private static readonly FRAME_DOWNLOAD_LONG_PRESS_MS = 500;
     private editorDiv!: HTMLDivElement;
     private selectedAtlasKey: string = '';
     private selectedAtlas: AtlasData | null = null;
@@ -487,6 +488,11 @@ export class PackerScene extends Phaser.Scene {
         currentTitle.textContent = 'Current Sprites in Atlas';
         currentSection.appendChild(currentTitle);
 
+        const currentHint = document.createElement('div');
+        currentHint.textContent = 'Right-click or long-press a frame to download it as a PNG.';
+        currentHint.style.cssText = 'font-size: 12px; color: #bbb; margin-top: 6px;';
+        currentSection.appendChild(currentHint);
+
         const currentGrid = document.createElement('div');
         Object.assign(currentGrid.style, {
             display: 'grid',
@@ -524,6 +530,7 @@ export class PackerScene extends Phaser.Scene {
                 align-items: center;
                 position: relative;
             `;
+            cell.title = 'Right-click or long-press to download this frame';
 
             // Extract sprite from atlas
             const canvas = document.createElement('canvas') as HTMLCanvasElement;
@@ -531,6 +538,14 @@ export class PackerScene extends Phaser.Scene {
             canvas.height = frameData.frame.h;
             const ctx = canvas.getContext('2d');
             if (!ctx) throw new Error('Could not get canvas context');
+
+            let spriteDataUrl = '';
+            const downloadFrame = () => {
+                if (!spriteDataUrl) return;
+                this.downloadPng(frameName, spriteDataUrl);
+            };
+
+            this.attachFrameDownloadGesture(cell, downloadFrame);
 
             const atlasImg = new Image();
             atlasImg.onload = () => {
@@ -542,7 +557,7 @@ export class PackerScene extends Phaser.Scene {
                     frameData.frame.w, frameData.frame.h
                 );
 
-                const spriteDataUrl = canvas.toDataURL();
+                spriteDataUrl = canvas.toDataURL();
                 this.extractedSprites[frameName] = spriteDataUrl;
 
                 const spriteImg = document.createElement('img') as HTMLImageElement;
@@ -848,5 +863,66 @@ export class PackerScene extends Phaser.Scene {
         btn.style.cssText = 'padding: 10px 20px; font-size: 14px; cursor: pointer;';
         btn.onclick = onClick;
         return btn;
+    }
+
+    private downloadPng(filename: string, dataUrl: string): void {
+        const downloadName = filename.endsWith('.png') ? filename : `${filename}.png`;
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = downloadName;
+        link.click();
+    }
+
+    private attachFrameDownloadGesture(element: HTMLElement, onDownload: () => void): void {
+        let longPressTimer: number | null = null;
+        let pointerId: number | null = null;
+        let startX = 0;
+        let startY = 0;
+        let suppressContextMenuUntil = 0;
+
+        const isIgnoredTarget = (target: EventTarget | null): boolean => {
+            return target instanceof Element && target.closest('button, input, label') !== null;
+        };
+
+        const clearLongPress = (): void => {
+            if (longPressTimer !== null) {
+                window.clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            pointerId = null;
+        };
+
+        element.addEventListener('contextmenu', (event: MouseEvent) => {
+            if (isIgnoredTarget(event.target)) return;
+            event.preventDefault();
+            if (Date.now() < suppressContextMenuUntil) return;
+            onDownload();
+        });
+
+        element.addEventListener('pointerdown', (event: PointerEvent) => {
+            if (isIgnoredTarget(event.target)) return;
+            if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+
+            clearLongPress();
+            pointerId = event.pointerId;
+            startX = event.clientX;
+            startY = event.clientY;
+            longPressTimer = window.setTimeout(() => {
+                clearLongPress();
+                suppressContextMenuUntil = Date.now() + PackerScene.FRAME_DOWNLOAD_LONG_PRESS_MS;
+                onDownload();
+            }, PackerScene.FRAME_DOWNLOAD_LONG_PRESS_MS);
+        });
+
+        element.addEventListener('pointermove', (event: PointerEvent) => {
+            if (pointerId !== event.pointerId || longPressTimer === null) return;
+            if (Math.hypot(event.clientX - startX, event.clientY - startY) > 10) {
+                clearLongPress();
+            }
+        });
+
+        element.addEventListener('pointerup', clearLongPress);
+        element.addEventListener('pointercancel', clearLongPress);
+        element.addEventListener('pointerleave', clearLongPress);
     }
 }
