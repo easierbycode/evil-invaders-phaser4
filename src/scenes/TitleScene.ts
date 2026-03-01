@@ -4,7 +4,7 @@ import CONSTANTS from "./../constants";
 const { GAME_WIDTH, GAME_HEIGHT } = CONSTANTS;
 import Sound from './../soundManager';
 import { setupSecretTouchHandler } from "./../utils/helper-checkForSecretTouch";
-import { requestFullscreen } from "./../utils/fullscreen";
+import { exitFullscreen, isFullscreenActive, requestFullscreen } from "./../utils/fullscreen";
 
 /* START OF COMPILED CODE */
 
@@ -174,7 +174,7 @@ export default class TitleScene extends Phaser.Scene {
     document.body.appendChild(overlay);
     this.storyOverlay = overlay;
 
-    requestFullscreen(overlay);
+    void requestFullscreen(overlay);
 
     // Close on Escape key
     this.storyCloseHandler = (e: KeyboardEvent) => {
@@ -186,8 +186,8 @@ export default class TitleScene extends Phaser.Scene {
   private closeStoryOverlay() {
     if (!this.storyOverlay) return;
 
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
+    if (isFullscreenActive()) {
+      void exitFullscreen();
     }
 
     this.storyOverlay.remove();

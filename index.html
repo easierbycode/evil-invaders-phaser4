@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <title>Evil Invaders Phaser4</title>
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- Include Bootstrap CSS for styling UI elements -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
@@ -16,6 +16,12 @@
             padding: 5px;
         }
 
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
         body {
             background-color: #000000;
             cursor: none;
@@ -23,7 +29,8 @@
             padding: 0;
             overflow: hidden;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
+            min-height: -webkit-fill-available;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,7 +41,9 @@
         }
 
         #game {
-            /* Remove width and height to let Phaser handle it */
+            width: 100%;
+            height: 100%;
+            touch-action: none;
         }
     </style>
     <script src="assets/TweenMax.min.js"></script>
@@ -81,6 +90,20 @@
         });
 
         function pollGamepads() {
+            function safeRequestFullscreen(target) {
+                const request =
+                    target.requestFullscreen ||
+                    target.webkitRequestFullscreen ||
+                    target.webkitRequestFullScreen ||
+                    target.mozRequestFullScreen ||
+                    target.msRequestFullscreen;
+                if (!request) return;
+                const result = request.call(target);
+                if (result && typeof result.catch === "function") {
+                    result.catch(() => { });
+                }
+            }
+
             const gamepads = navigator.getGamepads();
             for (let i = 0; i < gamepads.length; i++) {
                 const gp = gamepads[i];
@@ -112,27 +135,16 @@
 
                         // Fullscreen - L3 button (left stick press, index 10)
                         if (idx === 10) {
-                            if (document.documentElement.requestFullscreen) {
-                                document.documentElement.requestFullscreen();
-                            } else if (document.documentElement.webkitRequestFullscreen) {
-                                document.documentElement.webkitRequestFullscreen();
-                            }
+                            safeRequestFullscreen(document.documentElement);
                         }
 
                         // Reload - R3 button (right stick press, index 11)
                         if (idx === 11) location.reload();
 
                         if (!fullscreenToggled) {
-                            if (document.documentElement.requestFullscreen) {
-                                document.documentElement.requestFullscreen();
-                            } else if (document.documentElement.mozRequestFullScreen) { // Firefox
-                                document.documentElement.mozRequestFullScreen();
-                            } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
-                                document.documentElement.webkitRequestFullscreen();
-                            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
-                                document.documentElement.msRequestFullscreen();
-                            }
-                            document.getElementById("gamepadAlert").style.display = "none";
+                            safeRequestFullscreen(document.documentElement);
+                            const gamepadAlert = document.getElementById("gamepadAlert");
+                            if (gamepadAlert) gamepadAlert.style.display = "none";
                             fullscreenToggled = true;
                         }
                     }

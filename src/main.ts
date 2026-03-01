@@ -67,8 +67,8 @@ export class GameScene extends Phaser.Scene {
       .setInteractive();
 
     this.#startBtn.on('pointerup', () => {
+      void requestFullscreen(this.game.canvas);
       Sound.bgmPlayLoop("main_bgm", 0.4);
-      requestFullscreen(this.game.canvas);
       const pads = this.input.gamepad.gamepads;
       createPlayer(pads[0] || null);
     });
