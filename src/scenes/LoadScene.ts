@@ -116,6 +116,14 @@ export class LoadScene extends Phaser.Scene {
       console.log(`Queued ${key} atlas from local assets`);
     };
 
+    // Normalize atlas JSON: convert Texture Packer "textures" format to standard "frames" format
+    const normalizeAtlasJson = (json: any): any => {
+      if (json && Array.isArray(json.textures) && json.textures[0]?.frames) {
+        return { frames: json.textures[0].frames, meta: json.meta || {} };
+      }
+      return json;
+    };
+
     // Helper to fetch a base64 png + json atlas from Firebase and queue it
     const queueAtlasFromFirebase = async (
       key: string,
@@ -130,7 +138,12 @@ export class LoadScene extends Phaser.Scene {
         if (!base64Data || !atlasJson) throw new Error("Empty atlas data");
 
         const dataUri = "data:image/png;base64," + base64Data;
-        this.load.atlas(key, dataUri, atlasJson);
+        const normalized = normalizeAtlasJson(atlasJson);
+        // Convert JSON to blob URL so Phaser's loader can fetch it properly
+        const jsonBlobUrl = URL.createObjectURL(
+          new Blob([JSON.stringify(normalized)], { type: 'application/json' })
+        );
+        this.load.atlas(key, dataUri, jsonBlobUrl);
         console.log(`Queued ${key} atlas from Firebase`);
         return true;
       } catch (err) {
@@ -182,6 +195,16 @@ export class LoadScene extends Phaser.Scene {
       uiAtlasPromise,
       gameDataPromise,
     ]);
+
+    // Fall back to local assets if Firebase atlas loading failed
+    if (!assetFromFB) {
+      console.log("Falling back to local game_asset atlas");
+      queueAtlasFromLocal("game_asset");
+    }
+    if (!uiFromFB) {
+      console.log("Falling back to local game_ui atlas");
+      queueAtlasFromLocal("game_ui");
+    }
 
     /* ---------------- 2️⃣  Cache game.json (Firebase) or queue fallback ---------------- */
     // We don't set PROPERTIES.resource here: if Firebase provided a gameData, we

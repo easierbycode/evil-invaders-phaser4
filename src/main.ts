@@ -76,11 +76,15 @@ export class GameScene extends Phaser.Scene {
     const createPlayer = (gamepad: Phaser.Input.Gamepad.Gamepad) => {
       if (this.player) return;
 
+      const d = PROPERTIES.resource?.recipe?.data?.playerData;
+      if (!d) {
+        console.warn("Player data not available, cannot create player");
+        return;
+      }
+
       if (this.#startBtn) this.#startBtn.destroy();
       const alert = document.getElementById('gamepadAlert');
       if (alert) alert.style.display = 'none';
-
-      const d = PROPERTIES.resource.recipe.data.playerData;
 
       this.player = new Player(d);
       this.player.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 48);
@@ -100,11 +104,9 @@ export class GameScene extends Phaser.Scene {
 
     this.enemyGroup = this.physics.add.group();
 
-    this.stageEnemyPositionList = PROPERTIES.resource.recipe.data[
-      "stage" + PROPERTIES.stageId
-    ].enemylist
-      .slice()
-      .reverse();
+    const stageKey = "stage" + PROPERTIES.stageId;
+    const stageData = PROPERTIES.resource?.recipe?.data?.[stageKey];
+    this.stageEnemyPositionList = stageData?.enemylist?.slice()?.reverse() ?? [];
   }
 
   update() {
@@ -130,8 +132,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   enemyWave() {
-    if (this.waveCount >= this.stageEnemyPositionList.length) {
-      console.log("All waves completed");
+    if (!this.stageEnemyPositionList || this.waveCount >= this.stageEnemyPositionList.length) {
       return;
     }
 
@@ -200,10 +201,12 @@ export class GameScene extends Phaser.Scene {
   async handleSecretEntry() {
     if (!this.canTriggerSecret()) return;
 
+    // Disable the start button immediately to prevent double-triggers
+    if (this.#startBtn) this.#startBtn.disableInteractive();
+
     await this.runSecretTransition();
 
     this.scene.start('LevelSelectScene');
-    this.scene.launch('PackerScene', { resumeScene: 'LevelSelectScene' });
   }
 
   private canTriggerSecret() {
