@@ -100,7 +100,10 @@ export class OverloadScene extends Phaser.Scene {
                 get(ref(db, "characters/dukeNukem")),
             ]);
 
-            if (enemySnapshot.exists()) {
+            if (enemySnapshot.exists() && PROPERTIES.resource?.recipe?.data) {
+                if (!PROPERTIES.resource.recipe.data.enemyData) {
+                    PROPERTIES.resource.recipe.data.enemyData = {};
+                }
                 PROPERTIES.resource.recipe.data.enemyData.enemyR = enemySnapshot.val();
 
                 const enemyChar = enemySnapshot.val();
@@ -123,7 +126,7 @@ export class OverloadScene extends Phaser.Scene {
                 console.log("Enemy character data not found");
             }
 
-            if (playerSnapshot.exists()) {
+            if (playerSnapshot.exists() && PROPERTIES.resource?.recipe?.data) {
                 PROPERTIES.resource.recipe.data.playerData = playerSnapshot.val();
 
                 const playerChar = playerSnapshot.val();
