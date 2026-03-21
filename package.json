@@ -27,7 +27,7 @@
     "cordova-android": "^14.0.1",
     "express": "^5.1.0",
     "glob": "^11.0.3",
-    "phaser": "^4.0.0-rc.4"
+    "phaser": "^4.0.0-rc.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
