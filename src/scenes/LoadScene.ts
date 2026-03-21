@@ -125,7 +125,7 @@ export class LoadScene extends Phaser.Scene {
     };
 
     // Helper to fetch a base64 png + json atlas from Firebase and queue it
-    const queueAtlasFromFirebase = async (
+    const loadAtlasFromFirebase = async (
       key: string,
       pngUrl: string,
       jsonUrl: string
@@ -137,17 +137,22 @@ export class LoadScene extends Phaser.Scene {
         const [base64Data, atlasJson] = await Promise.all([pngRes.json(), jsonRes.json()]);
         if (!base64Data || !atlasJson) throw new Error("Empty atlas data");
 
-        const dataUri = "data:image/png;base64," + base64Data;
         const normalized = normalizeAtlasJson(atlasJson);
-        // Convert JSON to blob URL so Phaser's loader can fetch it properly
-        const jsonBlobUrl = URL.createObjectURL(
-          new Blob([JSON.stringify(normalized)], { type: 'application/json' })
-        );
-        this.load.atlas(key, dataUri, jsonBlobUrl);
-        console.log(`Queued ${key} atlas from Firebase`);
+
+        // Create Image directly and add via textures.addAtlas() to avoid
+        // ERR_INVALID_URL when Phaser's loader tries to fetch long data URIs
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = (err) => reject(err);
+          image.src = "data:image/png;base64," + base64Data;
+        });
+
+        this.textures.addAtlas(key, img, normalized);
+        console.log(`Loaded ${key} atlas from Firebase`);
         return true;
       } catch (err) {
-        console.warn(`Failed to fetch ${key} atlas from Firebase:`, err);
+        console.warn(`Failed to load ${key} atlas from Firebase:`, err);
         return false;
       }
     };
@@ -165,13 +170,13 @@ export class LoadScene extends Phaser.Scene {
       uiAtlasPromise = Promise.resolve(true);
     } else {
       // Online mode: try Firebase first
-      assetAtlasPromise = queueAtlasFromFirebase(
+      assetAtlasPromise = loadAtlasFromFirebase(
         "game_asset",
         "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/png.json",
         "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_asset/json.json"
       );
 
-      uiAtlasPromise = queueAtlasFromFirebase(
+      uiAtlasPromise = loadAtlasFromFirebase(
         "game_ui",
         "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/png.json",
         "https://evil-invaders-default-rtdb.firebaseio.com/atlases/game_ui/json.json"
