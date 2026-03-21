@@ -136,16 +136,20 @@ export class LoadScene extends Phaser.Scene {
 
         const [base64Data, atlasJson] = await Promise.all([pngRes.json(), jsonRes.json()]);
         if (!base64Data || !atlasJson) throw new Error("Empty atlas data");
+        if (typeof base64Data !== 'string') throw new Error(`Expected string for png, got ${typeof base64Data}`);
 
         const normalized = normalizeAtlasJson(atlasJson);
 
         // Create Image directly and add via textures.addAtlas() to avoid
         // ERR_INVALID_URL when Phaser's loader tries to fetch long data URIs
+        const pngSrc = typeof base64Data === 'string' && base64Data.startsWith('data:')
+          ? base64Data
+          : `data:image/png;base64,${base64Data}`;
         const img = await new Promise<HTMLImageElement>((resolve, reject) => {
           const image = new Image();
           image.onload = () => resolve(image);
           image.onerror = (err) => reject(err);
-          image.src = "data:image/png;base64," + base64Data;
+          image.src = pngSrc;
         });
 
         this.textures.addAtlas(key, img, normalized);
