@@ -13,8 +13,6 @@ import { applyAtlasOverrides } from './utils/helper-applyAtlasOverrides';
 import { setupSecretTouchHandler } from "./utils/helper-checkForSecretTouch";
 import { PackerScene } from "./scenes/PackerScene";
 import MutoidScene from "./scenes/MutoidScene";
-import { LevelSelectScene } from "./scenes/LevelSelectScene";
-import { HighScoreScene } from "./scenes/HighScoreScene";
 
 export class GameScene extends Phaser.Scene {
   #startBtn!: Phaser.GameObjects.Sprite;
@@ -206,7 +204,8 @@ export class GameScene extends Phaser.Scene {
 
     await this.runSecretTransition();
 
-    this.scene.start('LevelSelectScene');
+    this.scene.pause();
+    this.scene.launch('PackerScene', { resumeScene: 'GameScene' });
   }
 
   private canTriggerSecret() {
@@ -267,13 +266,11 @@ function onDeviceReady() {
     "GameScene": GameScene,
     "EditorScene": EditorScene,
     "PackerScene": PackerScene,
-    "LevelSelectScene": LevelSelectScene,
-    "HighScoreScene": HighScoreScene,
   };
 
   const sceneNameRequested = new URL(window.location.href).searchParams.get("scene");
   const sceneClass = sceneNameRequested && SCENE_NAMES[sceneNameRequested];
-  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, LevelSelectScene, GameScene, HighScoreScene, EditorScene, PackerScene];
+  const scene = sceneClass ? [LoadScene, OverloadScene, sceneClass] : [LoadScene, OverloadScene, TitleScene, GameScene, EditorScene, PackerScene];
 
   globalThis.__PHASER_GAME__ = new Phaser.Game({
     parent: "game",

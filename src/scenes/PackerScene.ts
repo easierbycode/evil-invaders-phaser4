@@ -147,7 +147,7 @@ export class PackerScene extends Phaser.Scene {
         sceneButton.tabIndex = 0;
         sceneButton.setAttribute('autofocus', 'true');
 
-        const scenes = ["MutoidScene", "TitleScene", "LevelSelectScene", "HighScoreScene", "GameScene", "EditorScene", "PackerScene"];
+        const scenes = ["MutoidScene", "TitleScene", "GameScene", "EditorScene", "PackerScene"];
         const currentScene = new URL(window.location.href).searchParams.get("scene") || "PackerScene";
         let modalOpen = false;
         let modalSelectedIndex = Math.max(0, scenes.indexOf(currentScene));

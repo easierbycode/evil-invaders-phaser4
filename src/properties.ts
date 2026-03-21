@@ -19,7 +19,6 @@ export default {
   continueCnt: 0,
   highScore: 0,
   frame: 0,
-  beforeHighScore: 0,
   enemyBulletList: [],
   resource: {},
   shootMode: Player.SHOOT_NAME_NORMAL
