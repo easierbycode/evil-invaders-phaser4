@@ -13,28 +13,16 @@ export class OverloadScene extends Phaser.Scene {
      *
      *   1. Scene start data  — this.scene.start('OverloadScene', { overwriteLocal: true })
      *   2. URL param         — ?overwriteLocal=1  (any value other than '0' / 'false' = on)
-     *   3. Config file       — assets/overload-flags.json  (written by `set-overload-flag` MCP tool)
      *
      * Default: false  (existing behaviour — RTDB data is loaded into memory only)
      */
-    private async resolveOverwriteLocal(data?: { overwriteLocal?: boolean }): Promise<boolean> {
+    private resolveOverwriteLocal(data?: { overwriteLocal?: boolean }): boolean {
         // 1) Scene data
         if (data?.overwriteLocal !== undefined) return Boolean(data.overwriteLocal);
 
         // 2) URL param
         const urlParam = new URL(window.location.href).searchParams.get('overwriteLocal');
         if (urlParam !== null) return urlParam !== '0' && urlParam !== 'false';
-
-        // 3) Config file set by the `set-overload-flag` MCP tool
-        try {
-            const base = PROPERTIES.baseUrl || './';
-            const sep  = base.endsWith('/') ? '' : '/';
-            const res  = await fetch(`${base}${sep}assets/overload-flags.json`, { cache: 'no-store' });
-            if (res.ok) {
-                const flags = await res.json();
-                if (typeof flags?.overwriteLocal === 'boolean') return flags.overwriteLocal;
-            }
-        } catch { /* file absent or parse error — fall through to default */ }
 
         return false;
     }
