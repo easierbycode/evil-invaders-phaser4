@@ -36,7 +36,8 @@ export default class MutoidScene extends Phaser.Scene {
 
 
   init(data: { secondLoop?: boolean }) {
-    this.secondLoop = data.secondLoop || false;
+    const loopParam = new URL(window.location.href).searchParams.get("loop");
+    this.secondLoop = loopParam === "2" || data.secondLoop || false;
     this.playerData = PROPERTIES.resource.recipe.data.playerData;
     this.explosionTextures = Array.from({ length: 7 }, (_, s) => `explosion0${s}.png`);
     this.playerData.explosionTextures = this.explosionTextures;
