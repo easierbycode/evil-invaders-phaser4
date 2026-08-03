@@ -221,6 +221,7 @@
 		"name"			: "G",
 		"maxHp"			: 3,
 		"caDamage"		: 50,
+		"speed"			: 150,
 		"defaultShootName"  : "normal",
 		"defaultShootSpeed" : "speed_normal",
 		"texture"		: ["cyberLiberty0.png", "cyberLiberty1.png"],
@@ -636,6 +637,19 @@
 		}
 	},
 
+
+	"mutoidData": {
+		"height"			: 94,
+		"armHp"				: 15,
+		"torsoHp"			: 25,
+		"headHp"			: 5,
+		"torsoDamagedAt"	: 15,
+		"treadFps"			: 4,
+		"floatDuration"		: 2000,
+		"floatDelay"		: 3500,
+		"headForwardFps"	: 5,
+		"headBackFps"		: 2
+	},
 
 	"meta": {
 		 "version": "1.0"

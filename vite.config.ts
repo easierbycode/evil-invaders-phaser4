@@ -28,7 +28,12 @@ export default defineConfig(({ mode }) => {
     plugins: [
       viteStaticCopy({
         targets: [
-          { src: "assets/**/*", dest: "assets" } // → dist/assets/** or cordova/www/assets/**
+          // Copy the directory itself, not "assets/**/*" — that glob matches
+          // directories as well as files, so every nested file was copied
+          // twice: once at assets/sounds/x.mp3 (the path CONSTANTS.RESOURCE
+          // actually asks for) and again flattened at assets/x.mp3. That
+          // doubled the build to ~41 MB.
+          { src: "assets", dest: "." } // → dist/assets/** or cordova/www/assets/**
         ]
       })
     ],

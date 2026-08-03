@@ -91,7 +91,8 @@ export class GameScene extends Phaser.Scene {
       this.player.gamepad = gamepad ?? null;
       this.player.gamepadIndex = gamepad ? gamepad.index : -1;
       this.player.gamepadVibration = gamepad?.vibrationActuator ?? null;
-      this.player.speed = 150;
+      // Data-driven so the mod designer's "player speed" field is real.
+      this.player.speed = d?.speed ?? 150;
     };
 
     // Existing game‑pad hookup

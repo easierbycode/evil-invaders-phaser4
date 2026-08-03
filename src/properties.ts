@@ -21,5 +21,9 @@ export default {
   frame: 0,
   enemyBulletList: [],
   resource: {},
+  // Set by LoadScene when the page carries a valid ?mod=<dir>. Non-null means
+  // the recipe and any overridden atlases came from that directory, and the
+  // shared Firebase data must not be layered over them.
+  mod: null,
   shootMode: Player.SHOOT_NAME_NORMAL
 };

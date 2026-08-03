@@ -34,6 +34,47 @@ const files = [
 ];
 
 
+/**
+ * A mod is a data-only directory served alongside the game:
+ *
+ *   mod.json              this manifest
+ *   game.json             the full recipe, replacing the base one
+ *   atlas/<key>.{png,json}  one sheet per overridden texture key
+ *   audio/<key>.<ext>     one file per overridden CONSTANTS.RESOURCE key
+ *
+ * Nothing executable ever comes out of it — the launcher builds the URL from
+ * its own catalog and only ever points `?mod=` at a directory it unpacked.
+ */
+type ModManifest = {
+  schema?: number;
+  id?: string;
+  gameId?: string;
+  title?: string;
+  atlases?: string[];
+  audio?: Record<string, string>;
+};
+
+/**
+ * Read `?mod=` and reduce it to a safe directory prefix, or null.
+ *
+ * Root-relative only, on purpose: an absolute or protocol-relative URL would
+ * turn the game into an open asset loader for anyone who can get a player to
+ * follow a link, and the mod directory is by definition attacker-authored.
+ * Same posture as the launcher's own sanitizeLevelEditor().
+ */
+function resolveModBase(): string | null {
+  let raw: string | null = null;
+  try {
+    raw = new URL(window.location.href).searchParams.get("mod");
+  } catch (_err) {
+    return null;
+  }
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  if (raw.includes("..") || /%2e/i.test(raw)) return null;
+  return raw.endsWith("/") ? raw : raw + "/";
+}
+
 export class LoadScene extends Phaser.Scene {
 
   baseUrl!: HTMLElement | null;
@@ -67,6 +108,31 @@ export class LoadScene extends Phaser.Scene {
 
     let audioFiles: string[] = [];
 
+    // Resolve the mod BEFORE anything is queued: the audio loop below needs to
+    // know which keys the mod replaces, because Phaser ignores a second
+    // load call for a key it already has queued.
+    const modBase = resolveModBase();
+    let mod: { base: string; manifest: ModManifest } | null = null;
+    if (modBase) {
+      try {
+        const res = await fetch(modBase + "mod.json", { cache: "no-store" });
+        if (res.ok) {
+          const manifest = (await res.json()) || {};
+          mod = { base: modBase, manifest };
+          (PROPERTIES as any).mod = mod;
+          console.log(`[mod] "${manifest.title ?? "(untitled)"}" from ${modBase}`);
+        } else {
+          console.warn(`[mod] mod.json returned HTTP ${res.status} — ignoring ?mod=`);
+        }
+      } catch (err) {
+        console.warn("[mod] could not read mod.json — ignoring ?mod=", err);
+      }
+    }
+    const modAudio: Record<string, string> =
+      (mod && mod.manifest.audio && typeof mod.manifest.audio === "object")
+        ? mod.manifest.audio
+        : {};
+
     if (new URL(window.location.href).searchParams.get("audio") != "0") {
       let fileTypes = {
         jpg: "image",
@@ -77,12 +143,22 @@ export class LoadScene extends Phaser.Scene {
       };
 
       for (var n in CONSTANTS.RESOURCE) {
+        if (modAudio[n]) continue; // replaced by the mod; queued just below
         let resourceUrl = CONSTANTS.RESOURCE[n];
         let fileType = resourceUrl.match(/\w+$/)[0];
         if (fileTypes[fileType] === "audio") audioFiles.push(n);
         // Handle external URLs (don't prepend baseUrl for http/https)
         const finalUrl = resourceUrl.startsWith("http") ? resourceUrl : PROPERTIES.baseUrl + resourceUrl;
         this.load[fileTypes[fileType]](n, finalUrl);
+      }
+
+      // Mod audio, queued under the same keys the game already asks for, so
+      // the COMPLETE handler below wires them into Sound.resource unchanged.
+      for (const key of Object.keys(modAudio)) {
+        const rel = modAudio[key];
+        if (typeof rel !== "string" || !rel || rel.includes("..")) continue;
+        audioFiles.push(key);
+        this.load.audio(key, mod!.base + rel);
       }
     }
 
@@ -100,8 +176,14 @@ export class LoadScene extends Phaser.Scene {
       console.warn("Load error:", f.type, f.key, f.src)
     );
 
-    // Initialize Firebase (will skip if offline)
-    const firebaseReady = await initFirebase();
+    // Initialize Firebase (will skip if offline).
+    //
+    // A modded run skips it outright. The shared RTDB is a single global
+    // namespace — `game`, `characters/*`, `atlases/*` — so letting it load
+    // would overwrite exactly the values the mod author chose. Skipping also
+    // means a modded run makes no network calls at all beyond the mod
+    // directory itself, which is what lets mods play offline in the launcher.
+    const firebaseReady = mod ? false : await initFirebase();
     const db = getDB();
     const assetsPath = (base.endsWith("/") ? base : base + "/") + "assets/";
 
@@ -199,10 +281,25 @@ export class LoadScene extends Phaser.Scene {
       }
     })();
 
-    const [assetFromFB, uiFromFB, gameData] = await Promise.all([
+    // The mod's recipe, fetched alongside the atlases. Failing to read it is
+    // not fatal — the mod may only be reskinning — so fall through to the base.
+    const modGamePromise = (async () => {
+      if (!mod) return null;
+      try {
+        const res = await fetch(mod.base + "game.json", { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.warn("[mod] could not read game.json — using the base recipe", err);
+        return null;
+      }
+    })();
+
+    const [assetFromFB, uiFromFB, gameData, modGameJson] = await Promise.all([
       assetAtlasPromise,
       uiAtlasPromise,
       gameDataPromise,
+      modGamePromise,
     ]);
 
     // Fall back to local assets if Firebase atlas loading failed
@@ -232,11 +329,13 @@ export class LoadScene extends Phaser.Scene {
         });
 
         // Ensure PROPERTIES.resource.recipe.data is set from any source:
-        // 1) Firebase (already added to cache above), or
-        // 2) Local assets/game.json (loaded via this.load.json)
-        const finalGameJson = gameData || this.cache.json.get("game.json") || null;
-        if (finalGameJson && gameData) console.log("Using Firebase game.json");
-        if (finalGameJson && !gameData) console.log("Using local assets/game.json as fallback");
+        // 1) the mod's game.json (wins outright — it is the whole point), or
+        // 2) Firebase (already added to cache above), or
+        // 3) Local assets/game.json (loaded via this.load.json)
+        const finalGameJson = modGameJson || gameData || this.cache.json.get("game.json") || null;
+        if (modGameJson) console.log("[mod] using the mod's game.json");
+        if (finalGameJson && !modGameJson && gameData) console.log("Using Firebase game.json");
+        if (finalGameJson && !modGameJson && !gameData) console.log("Using local assets/game.json as fallback");
         if (finalGameJson) {
           if (!PROPERTIES.resource) (PROPERTIES as any).resource = {};
           (PROPERTIES as any).resource.recipe = { data: finalGameJson };
@@ -248,9 +347,38 @@ export class LoadScene extends Phaser.Scene {
       this.load.start();
     });
 
+    /* ---------------- 3️⃣.5  Apply the mod's atlases ---------------- */
+    // After the loader, so the base textures exist and can be swapped out.
+    if (mod) {
+      const keys = Array.isArray(mod.manifest.atlases) ? mod.manifest.atlases : [];
+      for (const key of keys) {
+        if (typeof key !== "string" || !key || key.includes("/") || key.includes("..")) continue;
+        try {
+          const [jsonRes, img] = await Promise.all([
+            fetch(`${mod.base}atlas/${key}.json`, { cache: "no-store" }),
+            new Promise<HTMLImageElement>((resolve, reject) => {
+              const image = new Image();
+              image.onload = () => resolve(image);
+              image.onerror = (err) => reject(err);
+              image.src = `${mod!.base}atlas/${key}.png`;
+            }),
+          ]);
+          if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status}`);
+          const normalized = normalizeAtlasJson(await jsonRes.json());
+          // addAtlas() warns and no-ops on a key that already exists, so the
+          // base texture has to go first.
+          if (this.textures.exists(key)) this.textures.remove(key);
+          this.textures.addAtlas(key, img, normalized);
+          console.log(`[mod] applied atlas ${key}`);
+        } catch (err) {
+          console.warn(`[mod] could not apply atlas ${key}:`, err);
+        }
+      }
+    }
+
     /* ---------------- 4️⃣  Choose next scene ---------------- */
-    // Prefer game data from Firebase but fall back to the cached local game.json.
-    const finalGameJson = gameData || this.cache.json.get("game.json") || null;
+    // Prefer the mod's recipe, then Firebase, then the cached local game.json.
+    const finalGameJson = modGameJson || gameData || this.cache.json.get("game.json") || null;
     if (finalGameJson) {
       this.scene.start("OverloadScene");
     } else {

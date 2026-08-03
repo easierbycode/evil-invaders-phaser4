@@ -74,6 +74,17 @@ export class OverloadScene extends Phaser.Scene {
     }
 
     async create(data?: { overwriteLocal?: boolean }) {
+        // A modded run stops here. Everything below reads the shared RTDB and
+        // assigns it straight over the recipe — `recipe.data.playerData =
+        // playerSnapshot.val()` would erase every stat and skin the mod author
+        // chose, silently and after the fact. The URL-param texture overrides
+        // in preload() still ran, so nothing else is lost.
+        if (PROPERTIES.mod) {
+            const sceneRequested = new URL(window.location.href).searchParams.get("scene");
+            this.scene.start(sceneRequested || "TitleScene");
+            return;
+        }
+
         const overwriteLocal = await this.resolveOverwriteLocal(data);
         if (overwriteLocal) {
             console.log('[OverloadScene] overwriteLocal=true — RTDB atlas data will be saved as local files');

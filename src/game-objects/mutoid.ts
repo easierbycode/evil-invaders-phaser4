@@ -1,6 +1,7 @@
 import { Player } from "./player";
 import { Bullet } from "./bullet";
 import MutoidScene from "../scenes/MutoidScene";
+import PROPERTIES from "../properties";
 
 // These constants define the positioning of the mutoid parts.
 const MUTOID_HEIGHT = 94; // Reduced by 10px to fix tank positioning
@@ -27,12 +28,27 @@ export class Mutoid extends Phaser.GameObjects.Container {
   public treadFrontLeft?: Phaser.GameObjects.Sprite;
   public treadFrontRight?: Phaser.GameObjects.Sprite;
 
-  // State & HP tracking
+  // State & HP tracking. The initializers are the shipped defaults; the
+  // constructor re-seeds them from recipe.data.mutoidData so a mod can retune
+  // the fight without touching code.
   public armLeftHp: number = 15;
   public armRightHp: number = 15;
   public torsoHp: number = 25;
   public headHealth: number = 5;
   public isTorsoDestroying: boolean = false;
+
+  // Tunables, all resolved from mutoidData with today's values as defaults.
+  private mutoidHeight: number = MUTOID_HEIGHT;
+  private treadFps: number = TREAD_FPS;
+  private torsoDamagedAt: number = 15;
+  private floatDuration: number = 2000;
+  private floatDelay: number = 3500;
+  private headForwardFps: number = 5;
+  private headBackFps: number = 2;
+  private tex!: {
+    head: string; torso: string; arm: string;
+    tank: string; tread: string; treadFront: string;
+  };
 
   // Animations & tweens
   private floatTween: Phaser.Tweens.Tween | null = null;
@@ -52,8 +68,12 @@ export class Mutoid extends Phaser.GameObjects.Container {
     const params = new URLSearchParams(window.location.search);
     this.isMutoidReplacement = params.get("isMutoidReplacement") === "1";
 
+    // Must run before setupAnimations()/createParts() below — they read every
+    // field seeded here.
+    this.applyMutoidData();
+
     scene.add.existing(this);
-    
+
     // Initialize components in the correct order
     this.setupAnimations();
     this.createParts();
@@ -62,8 +82,46 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.animate();
   }
 
+  /**
+   * Seed the tunables from `recipe.data.mutoidData`. Every field falls back to
+   * the value the boss shipped with, so an absent or partial block behaves
+   * exactly as before. `??` (not `||`) throughout: 0 is a legitimate value for
+   * several of these.
+   */
+  private applyMutoidData() {
+    const md = (PROPERTIES as any).resource?.recipe?.data?.mutoidData ?? {};
+    const num = (v: unknown, fallback: number) =>
+      typeof v === "number" && Number.isFinite(v) ? v : fallback;
+
+    this.mutoidHeight = num(md.height, MUTOID_HEIGHT);
+    this.treadFps = num(md.treadFps, TREAD_FPS);
+    this.torsoDamagedAt = num(md.torsoDamagedAt, 15);
+    this.floatDuration = num(md.floatDuration, 2000);
+    this.floatDelay = num(md.floatDelay, 3500);
+    this.headForwardFps = num(md.headForwardFps, 5);
+    this.headBackFps = num(md.headBackFps, 2);
+
+    this.armLeftHp = this.armRightHp = num(md.armHp, 15);
+    this.torsoHp = num(md.torsoHp, 25);
+    this.headHealth = num(md.headHp, 5);
+
+    // Phase 3 keeps its own sprite set; a mod retunes the base fight.
+    const p3 = this.isMutoidReplacement;
+    const t = (md.textures ?? {}) as Record<string, unknown>;
+    const pick = (name: string, base: string) =>
+      p3 ? base : (typeof t[name] === "string" && t[name] ? String(t[name]) : base);
+    this.tex = {
+      head: p3 ? "mutoid-phase3-head" : pick("head", "mutoid-head"),
+      torso: p3 ? "mutoid-phase3-torso" : pick("torso", "mutoid-torso"),
+      arm: p3 ? "mutoid-phase3-arm" : pick("arm", "mutoid-arm"),
+      tank: pick("tank", "mutoid-tank"),
+      tread: pick("tread", "mutoid-tank-tread"),
+      treadFront: pick("treadFront", "mutoid-tank-tread-front"),
+    };
+  }
+
   private setupAnimations() {
-    const headTexture = this.isMutoidReplacement ? "mutoid-phase3-head" : "mutoid-head";
+    const headTexture = this.tex.head;
     // Only create animations if they don't exist
     if (!this.scene.anims.exists('head_explosion_anim')) {
       this.scene.anims.create({
@@ -74,14 +132,14 @@ export class Mutoid extends Phaser.GameObjects.Container {
       });
     }
 
-    this.ensureAnimation("mutoid-tank-tread-spin", "mutoid-tank-tread");
-    this.ensureAnimation("mutoid-tank-tread-front-spin", "mutoid-tank-tread-front");
+    this.ensureAnimation("mutoid-tank-tread-spin", this.tex.tread);
+    this.ensureAnimation("mutoid-tank-tread-front-spin", this.tex.treadFront);
 
-    this.ensureExplicitAnimation("mutoid-head-forward", headTexture, ["atlas_s5", "atlas_s0"], 5, -1);
+    this.ensureExplicitAnimation("mutoid-head-forward", headTexture, ["atlas_s5", "atlas_s0"], this.headForwardFps, -1);
     const headBackFrames = this.secondLoop
       ? ["atlas_s1", "atlas_s2", "atlas_s3"]
       : ["atlas_s2", "atlas_s3", "atlas_s3"];
-    this.ensureExplicitAnimation("mutoid-head-back", headTexture, headBackFrames, 2, 0);
+    this.ensureExplicitAnimation("mutoid-head-back", headTexture, headBackFrames, this.headBackFps, 0);
   }
 
   private createParts() {
@@ -91,9 +149,9 @@ export class Mutoid extends Phaser.GameObjects.Container {
   }
 
   private createAllSprites() {
-    const headTexture = this.isMutoidReplacement ? "mutoid-phase3-head" : "mutoid-head";
-    const torsoTexture = this.isMutoidReplacement ? "mutoid-phase3-torso" : "mutoid-torso";
-    const armTexture = this.isMutoidReplacement ? "mutoid-phase3-arm" : "mutoid-arm";
+    const headTexture = this.tex.head;
+    const torsoTexture = this.tex.torso;
+    const armTexture = this.tex.arm;
     // First create head at top
     this.head = this.scene.add.sprite(0, -HEAD_OFFSET_FROM_TORSO_TOP, headTexture, HEAD_FRAME)
       .setOrigin(0.5, 0);
@@ -113,15 +171,15 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.armRight = this.scene.add.image(0, 2, armTexture).setOrigin(1, 0).setFlipX(true);
 
     // Create tank parts
-    this.tankLeft = this.scene.add.image(0, MUTOID_HEIGHT, "mutoid-tank").setOrigin(0, 1);
-    this.tankRight = this.scene.add.image(0, MUTOID_HEIGHT, "mutoid-tank").setOrigin(0, 1).setFlipX(true);
+    this.tankLeft = this.scene.add.image(0, this.mutoidHeight, this.tex.tank).setOrigin(0, 1);
+    this.tankRight = this.scene.add.image(0, this.mutoidHeight, this.tex.tank).setOrigin(0, 1).setFlipX(true);
 
     // Create treads
-    this.treadLeft = this.scene.add.sprite(0, MUTOID_HEIGHT, "mutoid-tank-tread", TREAD_FRAME).setOrigin(1, 1);
-    this.treadRight = this.scene.add.sprite(0, MUTOID_HEIGHT, "mutoid-tank-tread", TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
+    this.treadLeft = this.scene.add.sprite(0, this.mutoidHeight, this.tex.tread, TREAD_FRAME).setOrigin(1, 1);
+    this.treadRight = this.scene.add.sprite(0, this.mutoidHeight, this.tex.tread, TREAD_FRAME).setOrigin(0, 1).setFlipX(true);
 
-    this.treadFrontLeft = this.scene.add.sprite(0, MUTOID_HEIGHT - 1, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(0, 0);
-    this.treadFrontRight = this.scene.add.sprite(0, MUTOID_HEIGHT - 1, "mutoid-tank-tread-front", TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
+    this.treadFrontLeft = this.scene.add.sprite(0, this.mutoidHeight - 1, this.tex.treadFront, TREAD_FRAME).setOrigin(0, 0);
+    this.treadFrontRight = this.scene.add.sprite(0, this.mutoidHeight - 1, this.tex.treadFront, TREAD_FRAME).setOrigin(1, 0).setFlipX(true);
   }
 
   private positionAllParts() {
@@ -140,12 +198,12 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.armRight?.setPosition(armWidth + torsoWidth - 15, 2);
 
     // Position tank parts
-    this.tankLeft.setPosition(-tankWidth, MUTOID_HEIGHT);
-    this.tankRight?.setPosition(0, MUTOID_HEIGHT);
+    this.tankLeft.setPosition(-tankWidth, this.mutoidHeight);
+    this.tankRight?.setPosition(0, this.mutoidHeight);
 
     // Position treads
-    this.treadLeft?.setPosition(-tankWidth, MUTOID_HEIGHT);
-    this.treadRight?.setPosition(tankWidth, MUTOID_HEIGHT);
+    this.treadLeft?.setPosition(-tankWidth, this.mutoidHeight);
+    this.treadRight?.setPosition(tankWidth, this.mutoidHeight);
 
     if (this.treadLeft && this.treadRight) {
       const treadLeftX = this.treadLeft.x - this.treadLeft.displayWidth;
@@ -280,12 +338,12 @@ export class Mutoid extends Phaser.GameObjects.Container {
     this.floatTween = this.scene.tweens.add({
       targets: this,
       y: this.y + (400 - this.height),
-      duration: 2000,
+      duration: this.floatDuration,
       yoyo: true,
       hold: 0,
-      repeatDelay: 3500,
+      repeatDelay: this.floatDelay,
       repeat: -1,
-      delay: 3500,
+      delay: this.floatDelay,
       ease,
       onStart: () => this.playHeadForward(),
       onYoyo: () => this.playHeadBackward(),
@@ -313,7 +371,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
 
   private playHeadForward() {
     if (this.head?.scene) {
-      this.head.play({ key: "mutoid-head-forward", repeat: -1, frameRate: 5 });
+      this.head.play({ key: "mutoid-head-forward", repeat: -1, frameRate: this.headForwardFps });
     }
   }
 
@@ -322,7 +380,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
       const mutoidCenterX = this.x + this.displayWidth / 2;
       this.head.setFlipX(this.player.x > mutoidCenterX);
 
-      this.head.play({ key: "mutoid-head-back", repeat: 0, frameRate: 2 });
+      this.head.play({ key: "mutoid-head-back", repeat: 0, frameRate: this.headBackFps });
 
       this.head.off(Phaser.Animations.Events.ANIMATION_UPDATE);
       this.head.on(Phaser.Animations.Events.ANIMATION_UPDATE, 
@@ -371,7 +429,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
       if ((part === this.torsoLeft || part === this.torsoRight) && !this.isTorsoDestroying) {
         this.torsoHp -= damageDealt;
 
-        if (this.torsoHp <= 15 && this.torsoLeft && this.torsoRight) {
+        if (this.torsoHp <= this.torsoDamagedAt && this.torsoLeft && this.torsoRight) {
           this.torsoLeft.setFrame("atlas_s1");
           this.torsoRight.setFrame("atlas_s1");
         }
@@ -465,7 +523,7 @@ export class Mutoid extends Phaser.GameObjects.Container {
     key: string,
     textureKey: string,
     frames: string[] = ["atlas_s0", "atlas_s1", "atlas_s2"],
-    fps: number = TREAD_FPS,
+    fps: number = this.treadFps,
     repeat: number = -1
   ) {
     if (!this.scene.anims.exists(key)) {
